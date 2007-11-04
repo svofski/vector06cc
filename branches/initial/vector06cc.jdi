@@ -1,0 +1,76 @@
+<sld_project_info>
+  <hub_info ir_width="5" node_count="1"/>
+  <node_info>
+    <node hpath="lpm_rom0:bootrom|altsyncram:altsyncram_component|altsyncram_jp91:auto_generated|sld_mod_ram_rom:mgl_prim2" instance_id="0" mfg_id="110" node_id="3" sld_node_info="0x8186E00" version="1">
+      <parameters>
+        <parameter name="sld_node_info" type="dec" value="135818752"/>
+        <parameter name="sld_auto_instance_index" type="string" value="yes"/>
+        <parameter name="sld_ip_version" type="dec" value="1"/>
+        <parameter name="sld_ip_minor_version" type="dec" value="3"/>
+        <parameter name="sld_common_ip_version" type="dec" value="0"/>
+        <parameter name="width_word" type="unknown" value="8"/>
+        <parameter name="numwords" type="unknown" value="2048"/>
+        <parameter name="widthad" type="unknown" value="11"/>
+        <parameter name="shift_count_bits" type="unknown" value="4"/>
+        <parameter name="cvalue" type="unknown" value="00000000"/>
+        <parameter name="is_data_in_ram" type="unknown" value="1"/>
+        <parameter name="is_readable" type="unknown" value="1"/>
+        <parameter name="node_name" type="unknown" value="1380928768"/>
+      </parameters>
+      <inputs>
+        <port name="data_read[0]" source="lpm_rom0:bootrom|altsyncram:altsyncram_component|altsyncram_jp91:auto_generated|altsyncram_g492:altsyncram1|q_b[0]"/>
+        <port name="data_read[1]" source="lpm_rom0:bootrom|altsyncram:altsyncram_component|altsyncram_jp91:auto_generated|altsyncram_g492:altsyncram1|q_b[1]"/>
+        <port name="data_read[2]" source="lpm_rom0:bootrom|altsyncram:altsyncram_component|altsyncram_jp91:auto_generated|altsyncram_g492:altsyncram1|q_b[2]"/>
+        <port name="data_read[3]" source="lpm_rom0:bootrom|altsyncram:altsyncram_component|altsyncram_jp91:auto_generated|altsyncram_g492:altsyncram1|q_b[3]"/>
+        <port name="data_read[4]" source="lpm_rom0:bootrom|altsyncram:altsyncram_component|altsyncram_jp91:auto_generated|altsyncram_g492:altsyncram1|q_b[4]"/>
+        <port name="data_read[5]" source="lpm_rom0:bootrom|altsyncram:altsyncram_component|altsyncram_jp91:auto_generated|altsyncram_g492:altsyncram1|q_b[5]"/>
+        <port name="data_read[6]" source="lpm_rom0:bootrom|altsyncram:altsyncram_component|altsyncram_jp91:auto_generated|altsyncram_g492:altsyncram1|q_b[6]"/>
+        <port name="data_read[7]" source="lpm_rom0:bootrom|altsyncram:altsyncram_component|altsyncram_jp91:auto_generated|altsyncram_g492:altsyncram1|q_b[7]"/>
+        <port name="raw_tck" source="sld_hub:sld_hub_inst"/>
+        <port name="tdi" source="sld_hub:sld_hub_inst"/>
+        <port name="usr1" source="sld_hub:sld_hub_inst"/>
+        <port name="jtag_state_cdr" source="sld_hub:sld_hub_inst"/>
+        <port name="jtag_state_sdr" source="sld_hub:sld_hub_inst"/>
+        <port name="jtag_state_e1dr" source="sld_hub:sld_hub_inst"/>
+        <port name="jtag_state_udr" source="sld_hub:sld_hub_inst"/>
+        <port name="jtag_state_uir" source="sld_hub:sld_hub_inst"/>
+        <port name="clrn" source="sld_hub:sld_hub_inst"/>
+        <port name="ena" source="sld_hub:sld_hub_inst"/>
+        <port name="ir_in[0]" source="sld_hub:sld_hub_inst"/>
+        <port name="ir_in[1]" source="sld_hub:sld_hub_inst"/>
+        <port name="ir_in[2]" source="sld_hub:sld_hub_inst"/>
+        <port name="ir_in[3]" source="sld_hub:sld_hub_inst"/>
+        <port name="ir_in[4]" source="sld_hub:sld_hub_inst"/>
+      </inputs>
+      <outputs>
+        <port name="tck_usr"/>
+        <port name="address[0]"/>
+        <port name="address[1]"/>
+        <port name="address[2]"/>
+        <port name="address[3]"/>
+        <port name="address[4]"/>
+        <port name="address[5]"/>
+        <port name="address[6]"/>
+        <port name="address[7]"/>
+        <port name="address[8]"/>
+        <port name="address[9]"/>
+        <port name="address[10]"/>
+        <port name="enable_write"/>
+        <port name="data_write[0]"/>
+        <port name="data_write[1]"/>
+        <port name="data_write[2]"/>
+        <port name="data_write[3]"/>
+        <port name="data_write[4]"/>
+        <port name="data_write[5]"/>
+        <port name="data_write[6]"/>
+        <port name="data_write[7]"/>
+        <port name="ir_out[0]"/>
+        <port name="ir_out[1]"/>
+        <port name="ir_out[2]"/>
+        <port name="ir_out[3]"/>
+        <port name="ir_out[4]"/>
+        <port name="tdo"/>
+      </outputs>
+    </node>
+  </node_info>
+</sld_project_info>
