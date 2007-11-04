@@ -48,3 +48,5 @@ SEG7_LUT	u2	(	oSEG2,iDIG[11:8]	);
 SEG7_LUT	u3	(	oSEG3,iDIG[15:12]	);
 
 endmodule
+
+// $Id$

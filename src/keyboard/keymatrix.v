@@ -14,3 +14,5 @@ always @(posedge clk)
 		km[addr] <= d;
 
 endmodule
+
+// $Id$

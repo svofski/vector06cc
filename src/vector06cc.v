@@ -93,7 +93,9 @@ assign GPIO_0[3:0] = {cpu_ce, vm55int_sel, io_read, io_write};
 assign GPIO_0[7:4] = {blksbr_reset_pulse, kbd_rowselect[7], vm55int_cs_n, vm55int_oe_n};
 assign GPIO_0[8] = clk24;
 
-// CPU SECTION
+/////////////////
+// CPU SECTION //
+/////////////////
 wire RESET_n = mreset_n & !blksbr_reset_pulse;
 wire READY = 1;
 wire HOLD = 0;
@@ -149,9 +151,9 @@ end
 
 
 
-//
-// MEMORIES
-//
+//////////////
+// MEMORIES //
+//////////////
 
 wire[7:0] ROM_DO;
 lpm_rom0 bootrom(A[11:0], clk24, ROM_DO);
@@ -160,13 +162,14 @@ lpm_rom0 bootrom(A[11:0], clk24, ROM_DO);
 assign SRAM_CE_N = 0;
 assign SRAM_OE_N = !rom_access && !ram_write_n && !video_slice;
 
+reg [7:0] address_bus_r;	// registered address for i/o
+
 wire [15:0] address_bus = video_slice & regular_clock_enabled ? VIDEO_A : A;
 
 wire rom_access = (!disable_rom) & (A < 2048);
 wire [7:0] sram_data_in;
 assign DI = interrupt_ack ? 8'hFF : io_read ? peripheral_data_in : rom_access ? ROM_DO : sram_data_in;
 
-//sram_map sram_map(SRAM_ADDR, SRAM_DQ, SRAM_WE_N, SRAM_UB_N, SRAM_LB_N, WRN_BUFFERED /*WR_n | (~cpu_ce)*/, address_bus, DO, sram_data_in);
 sram_map sram_map(SRAM_ADDR[14:0], SRAM_DQ, SRAM_WE_N, SRAM_UB_N, SRAM_LB_N, WRN_CPUCE | ram_write_n | io_write, address_bus, DO, sram_data_in);
 assign SRAM_ADDR[17:15] = 3'b000;
 
@@ -219,14 +222,7 @@ wire int_request;
 // RST38 //
 ///////////
 oneshot retrace_irq(clk24, cpu_ce, retrace, int_request);
-//always @(posedge clk24) begin
-//	if (retrace) begin
-//		int_request <= 1;
-//	end
-//	if (interrupt_ack) begin
-//		int_request <= 0;
-//	end
-//end
+
 
 ///////////////////
 // PS/2 KEYBOARD //
@@ -250,18 +246,7 @@ vectorkeys (clk24, mreset, PS2_CLK, PS2_DAT,
 ///////////////
 
 reg [7:0] peripheral_data_in;
-//always peripheral_data_in = (!vm55int_oe_n) ? vm55int_odata : 8'b0;
 always peripheral_data_in = vm55int_oe_n ? 8'hFF : vm55int_odata;
-
-//reg wr_n_io;
-//always @(posedge clk24) begin
-//	port0C_cs <= iports_write & iports_palette_sel;
-//	if (cpu_ce & ~WR_n) 
-//		wr_n_io <= 0;
-//	else
-//		wr_n_io <= 1;
-//end
-
 
 
 // Devices:
@@ -273,11 +258,6 @@ always peripheral_data_in = vm55int_oe_n ? 8'hFF : vm55int_odata;
 //						01-11: joystick inputs
 //		100: ramdisk bank switching
 //		110,111: FDC ports
-
-reg [7:0] address_bus_r;
-//always @(posedge clk24) begin
-//	if (io_read | io_write) address_bus_r <= address_bus[7:0];
-//end
 
 reg [2:0] portmap_device;				
 always portmap_device = address_bus_r[4:2];
@@ -291,16 +271,11 @@ wire		vm55int_sel = portmap_device == 3'b000;
 wire [1:0] 	vm55int_addr = 	~address_bus_r[1:0];
 wire [7:0] 	vm55int_idata = DO;	
 wire [7:0] 	vm55int_odata;
-//reg  [7:0]	vm55int_odata_reg;
 wire		vm55int_oe_n;
 
 wire vm55int_cs_n = !(/*~ram_write_n &*/ (io_read | io_write) & vm55int_sel);
 wire vm55int_rd_n = ~io_read;//~DBIN;
 wire vm55int_wr_n = WR_n | ~cpu_ce;
-
-//wire		vm55int_cs_n = !((io_read | io_write) & vm55int_sel & cpu_ce);
-//wire		vm55int_rd_n = !(io_read & vm55int_sel);
-//wire		vm55int_wr_n = !(io_write & vm55int_sel) | WRN_BUFFERED;
 
 reg [7:0]	vm55int_pa_in;
 reg [7:0]	vm55int_pb_in;
@@ -365,7 +340,6 @@ always @(posedge clk24) begin
 	//end
 end	
 
-//always @(posedge clk24) vm55int_pb_in <= 8'hFF;
 always @(kbd_rowbits) vm55int_pb_in <= ~kbd_rowbits;
 always @(kbd_key_shift or kbd_key_ctrl or kbd_key_rus) begin
 	vm55int_pc_in[5] <= ~kbd_key_shift;
@@ -373,27 +347,18 @@ always @(kbd_key_shift or kbd_key_ctrl or kbd_key_rus) begin
 	vm55int_pc_in[7] <= ~kbd_key_rus;
 end
 
-//always @(vm55int_oe_n) if (!vm55int_oe_n) vm55int_odata_reg <= vm55int_odata;
 
 ////////////////////////////
 // Internal ports, $0C -- //
 ////////////////////////////
 wire		iports_sel 		= portmap_device == 3'b011;
-wire		iports_write 	= ~ram_write_n & io_write & iports_sel; // this repeats as a series of 3 _|||_ wtf
+wire		iports_write 	= /*~ram_write_n &*/ io_write & iports_sel; // this repeats as a series of 3 _|||_ wtf
 
-// port $0C: palette value out
+// port $0C-$0F: palette value out
 wire iports_palette_sel = address_bus[1:0] == 2'b00;
 
-reg port0C_cs;
 always @(posedge clk24) begin
-	if (cpu_ce & SYNC) begin
-		port0C_cs <= DO[4] && address_bus[7:2] == 6'h03; // $0C-$0F
-	end
-end
-
-reg [1:0] vpwren_cnt;
-always @(posedge clk24) begin
-	if (port0C_cs & ~WR_n & cpu_ce) begin
+	if (iports_write & ~WR_n & cpu_ce) begin
 		video_palette_value <= DO;
 		video_palette_wren <= 1'b1;
 	end 
@@ -428,4 +393,4 @@ I2C_AV_Config 		u7(clk24,mreset_n,I2C_SCLK,I2C_SDAT);
 endmodule
 
 
-
+// $Id$
