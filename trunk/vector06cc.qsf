@@ -229,3 +229,4 @@ set_global_assignment -name VERILOG_FILE src/clockster.v
 set_global_assignment -name VERILOG_FILE src/oneshot.v
 set_global_assignment -name VERILOG_FILE src/singleclockster.v
 set_global_assignment -name VERILOG_FILE src/sram_map.v
+set_global_assignment -name PROJECT_OUTPUT_DIRECTORY "C:\\altera\\71\\qdesigns\\vector06cc\\reports"
