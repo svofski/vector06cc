@@ -204,7 +204,8 @@ set_instance_assignment -name IO_STANDARD LVTTL -to UART_RXD
 set_instance_assignment -name IO_STANDARD LVTTL -to UART_TXD
 
 
-set_global_assignment -name VERILOG_FILE src/keyboard/keymatrix.v
+set_global_assignment -name PROJECT_OUTPUT_DIRECTORY "C:\\altera\\71\\qdesigns\\vector06cc\\reports"
+set_global_assignment -name VERILOG_FILE src/altmodules/mclk24mhz.v
 set_global_assignment -name VERILOG_FILE src/keyboard/ps2k.v
 set_global_assignment -name VERILOG_FILE src/keyboard/scan2matrix.v
 set_global_assignment -name VERILOG_FILE src/keyboard/vectorkeys.v
@@ -215,7 +216,6 @@ set_global_assignment -name VERILOG_FILE src/DE1/I2C_AV_Config.v
 set_global_assignment -name VERILOG_FILE src/DE1/I2C_Controller.v
 set_global_assignment -name VERILOG_FILE src/DE1/SEG7_LUT.v
 set_global_assignment -name VERILOG_FILE src/lpm_rom0.v
-set_global_assignment -name VERILOG_FILE src/mclk24mhz.v
 set_global_assignment -name VERILOG_FILE src/vector06cc.v
 set_global_assignment -name VERILOG_FILE src/video/video.v
 set_global_assignment -name VERILOG_FILE src/video/shiftreg2.v
@@ -229,4 +229,3 @@ set_global_assignment -name VERILOG_FILE src/clockster.v
 set_global_assignment -name VERILOG_FILE src/oneshot.v
 set_global_assignment -name VERILOG_FILE src/singleclockster.v
 set_global_assignment -name VERILOG_FILE src/sram_map.v
-set_global_assignment -name PROJECT_OUTPUT_DIRECTORY "C:\\altera\\71\\qdesigns\\vector06cc\\reports"

@@ -685,4 +685,4 @@ begin
 
 end architecture RTL;
 
-// $Id$
+-- $Id$
