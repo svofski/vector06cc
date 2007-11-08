@@ -90,14 +90,14 @@ wire cpu_ce 	= singleclock_enabled ? singleclock : slowclock_enabled ? (slowcloc
 /////////////////
 //assign GPIO_0[4:0] = {disable_rom, blksbr_reset_pulse, iports_palette_sel, cpu_ce, clk24};
 assign GPIO_0[3:0] = {cpu_ce, vm55int_sel, io_read, io_write};
-assign GPIO_0[7:4] = {blksbr_reset_pulse, kbd_rowselect[7], vm55int_cs_n, vm55int_oe_n};
+assign GPIO_0[7:4] = {blksbr_reset_pulse, rst0toggle, vm55int_cs_n, vm55int_oe_n};
 assign GPIO_0[8] = clk24;
 
 /////////////////
 // CPU SECTION //
 /////////////////
 wire RESET_n = mreset_n & !blksbr_reset_pulse;
-wire READY = 1;
+reg READY;
 wire HOLD = 0;
 wire INT = int_request;
 wire INTE;
@@ -144,7 +144,10 @@ always @(posedge clk24) begin
 		if (WR_n == 0) gledreg[7:0] <= DO;
 		if (SYNC) begin
 			status_word <= DO;
-		end
+			READY <= 0;			// insert one wait state on every cycle, it seems to be close to the original
+		end 
+		else READY <= 1;
+		
 		address_bus_r <= address_bus[7:0];
 	end
 end
@@ -328,7 +331,7 @@ always @(posedge clk24) begin
 		
 		// port B
 		if (retrace) begin
-			video_palette_address <= vm55int_pb_out;
+			video_palette_address <= vm55int_pb_out[3:0];
 		end
 		else begin
 			video_border_index <= vm55int_pb_out[3:0];
@@ -378,15 +381,16 @@ always @(posedge clk24) begin
 		rst0toggle <= 0;
 		gledreg[8] <= 0;
 	end
-	else if (cpu_ce && (KEY[3] == 1'b0 || kbd_key_blksbr == 1'b1)) begin
-		disable_rom <= 1;
-		rst0toggle <= 1;
-		gledreg[8] <= 1;
+	else if (cpu_ce) begin
+		if (KEY[3] == 1'b0 || kbd_key_blksbr == 1'b1) begin
+			disable_rom <= 1;
+			rst0toggle <= 1;
+			gledreg[8] <= 1;
+		end
+		else rst0toggle <= 0;
 	end 
-	else 
-		rst0toggle <= 0;
 end
-oneshot blksbr(clk24, cpu_ce, disable_rom, blksbr_reset_pulse);
+oneshot blksbr(clk24, cpu_ce, rst0toggle, blksbr_reset_pulse);
 
 I2C_AV_Config 		u7(clk24,mreset_n,I2C_SCLK,I2C_SDAT);
 

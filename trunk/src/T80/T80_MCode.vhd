@@ -269,6 +269,9 @@ begin
 			|"01101000"|"01101001"|"01101010"|"01101011"|"01101100"|"01101101"|"01101111"
 			|"01111000"|"01111001"|"01111010"|"01111011"|"01111100"|"01111101"|"01111111" =>
 			-- LD r,r'
+			if (Mode = 2) then
+				TStates <= "101"; -- svo: 8080 timing
+			end if;
 			Set_BusB_To(2 downto 0) <= SSS;
 			ExchangeRp <= '1';
 			Set_BusA_To(2 downto 0) <= DDD;
@@ -718,6 +721,9 @@ begin
 			end if;
 		when "00000100"|"00001100"|"00010100"|"00011100"|"00100100"|"00101100"|"00111100" =>
 			-- INC r
+			if (Mode = 2) then
+				TStates <= "101"; -- svo: 8080 timing
+			end if;
 			Set_BusB_To <= "1010";
 			Set_BusA_To(2 downto 0) <= DDD;
 			Read_To_Reg <= '1';
@@ -745,6 +751,9 @@ begin
 			end case;
 		when "00000101"|"00001101"|"00010101"|"00011101"|"00100101"|"00101101"|"00111101" =>
 			-- DEC r
+			if (Mode = 2) then
+				TStates <= "101"; -- svo: 8080 timing
+			end if;
 			Set_BusB_To <= "1010";
 			Set_BusA_To(2 downto 0) <= DDD;
 			Read_To_Reg <= '1';
@@ -1075,6 +1084,9 @@ begin
 			end if;
 		when "11101001" =>
 			-- JP (HL)
+			if (Mode = 2) then
+				TStates <= "101"; -- svo: 8080 timing
+			end if;
 			JumpXY <= '1';
 		when "00010000" =>
 			if Mode = 3 then

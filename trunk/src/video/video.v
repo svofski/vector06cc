@@ -23,7 +23,7 @@ module video(
 
 parameter SCREENWIDTH = 10'd640;	// constants, don't even try using other values
 //parameter SCREENHEIGHT = 10'd600;
-parameter SCREENHEIGHT = 10'd576;
+parameter SCREENHEIGHT = 10'd584;//10'd576;
 
 // input clocks
 input 			clk24;
@@ -90,7 +90,7 @@ always @(posedge clk24) begin
 			case (scanyy_state)
 			state0:
 					begin
-						scanyy <= 1 + 24;
+						scanyy <= 1 + 24 - 8;
 						scanyy_state <= state1;
 						videoActiveY <= 0;
 					end

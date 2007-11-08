@@ -6,17 +6,18 @@ input 		trigger;
 output reg 	q;
 
 reg [7:0] n_shot;
+reg trigsample;
+
 always @(posedge clk) begin
 	if (ce) begin
-		if (trigger) begin
-			if (n_shot == 8'd0) begin 
-				q <= 1;
-			end
+		trigsample <= trigger;
+		if (~trigsample & trigger) begin
+			q <= 1'b1;
+			n_shot <= CLOCKS;
+		end else begin
+			if (q) n_shot <= n_shot - 1'b1;
+			if (n_shot == 0) q <= 1'b0;
 		end
-		else n_shot <= 8'd0;
-		
-		if (q) n_shot <= n_shot + 1'b1;
-		if (n_shot == CLOCKS) q <= 1'b0;
 	end
 end
 endmodule
