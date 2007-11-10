@@ -608,6 +608,8 @@ begin
 			elsif Mode < 2 then
 				-- EX AF,AF'
 				ExchangeAF <= '1';
+			elsif Mode = 2 then
+				-- NOP
 			end if;
 		when "11011001" =>
 			if Mode = 3 then
@@ -630,6 +632,22 @@ begin
 			elsif Mode < 2 then
 				-- EXX
 				ExchangeRS <= '1';
+			elsif Mode = 2 then
+				-- svo: 8080: D9 same as RET
+				MCycles <= "011";
+				case to_integer(unsigned(MCycle)) is
+				when 1 =>
+					TStates <= "101";
+					Set_Addr_TO <= aSP;
+				when 2 =>
+					IncDec_16 <= "0111";
+					Set_Addr_To <= aSP;
+					LDZ <= '1';
+				when 3 =>
+					Jump <= '1';
+					IncDec_16 <= "0111";
+				when others => null;
+				end case;
 			end if;
 		when "11100011" =>
 			if Mode /= 3 then
@@ -1013,6 +1031,8 @@ begin
 					TStates <= "101";
 				when others => null;
 				end case;
+			else
+				-- NOP
 			end if;
 		when "00111000" =>
 			if Mode /= 2 then
@@ -1030,6 +1050,8 @@ begin
 					TStates <= "101";
 				when others => null;
 				end case;
+			else
+				-- NOP;
 			end if;
 		when "00110000" =>
 			if Mode /= 2 then
@@ -1047,6 +1069,8 @@ begin
 					TStates <= "101";
 				when others => null;
 				end case;
+			else
+				-- NOP
 			end if;
 		when "00101000" =>
 			if Mode /= 2 then
@@ -1064,6 +1088,8 @@ begin
 					TStates <= "101";
 				when others => null;
 				end case;
+			else
+				-- NOP
 			end if;
 		when "00100000" =>
 			if Mode /= 2 then
@@ -1081,6 +1107,8 @@ begin
 					TStates <= "101";
 				when others => null;
 				end case;
+			else
+				-- NOP
 			end if;
 		when "11101001" =>
 			-- JP (HL)
@@ -1112,6 +1140,8 @@ begin
 					TStates <= "101";
 				when others => null;
 				end case;
+			elsif Mode = 2 then
+				-- NOP
 			end if;
 
 -- CALL AND RETURN GROUP
@@ -1334,16 +1364,77 @@ begin
 		when "11001011" =>
 			if Mode /= 2 then
 				Prefix <= "01";
+			else
+				-- svo: 8080 CB executes as C3:JMP
+				-- JP nn
+				MCycles <= "011";
+				case to_integer(unsigned(MCycle)) is
+				when 2 =>
+					Inc_PC <= '1';
+					LDZ <= '1';
+				when 3 =>
+					Inc_PC <= '1';
+					Jump <= '1';
+				when others => null;
+				end case;
 			end if;
 
 		when "11101101" =>
 			if Mode < 2 then
 				Prefix <= "10";
+			elsif Mode = 2 then
+				-- CALL nn
+				MCycles <= "101";
+				case to_integer(unsigned(MCycle)) is
+				when 2 =>
+					Inc_PC <= '1';
+					LDZ <= '1';
+				when 3 =>
+					IncDec_16 <= "1111";
+					Inc_PC <= '1';
+					TStates <= "100";
+					Set_Addr_To <= aSP;
+					LDW <= '1';
+					Set_BusB_To <= "1101";
+				when 4 =>
+					Write <= '1';
+					IncDec_16 <= "1111";
+					Set_Addr_To <= aSP;
+					Set_BusB_To <= "1100";
+				when 5 =>
+					Write <= '1';
+					Call <= '1';
+				when others => null;
+				end case;
 			end if;
 
 		when "11011101"|"11111101" =>
 			if Mode < 2 then
 				Prefix <= "11";
+			elsif Mode = 2 then
+				-- CALL nn
+				MCycles <= "101";
+				case to_integer(unsigned(MCycle)) is
+				when 2 =>
+					Inc_PC <= '1';
+					LDZ <= '1';
+				when 3 =>
+					IncDec_16 <= "1111";
+					Inc_PC <= '1';
+					TStates <= "100";
+					Set_Addr_To <= aSP;
+					LDW <= '1';
+					Set_BusB_To <= "1101";
+				when 4 =>
+					Write <= '1';
+					IncDec_16 <= "1111";
+					Set_Addr_To <= aSP;
+					Set_BusB_To <= "1100";
+				when 5 =>
+					Write <= '1';
+					Call <= '1';
+				when others => null;
+				end case;
 			end if;
 
 		end case;

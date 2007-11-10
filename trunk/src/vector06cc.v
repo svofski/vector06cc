@@ -1,6 +1,6 @@
 `default_nettype none
 
-module vector06cc(clk50mhz, KEY[3:0], LEDr[9:0], LEDg[7:0], SW[9:0], HEX0, HEX1, HEX2, HEX3, 
+module vector06cc(/*clk50mhz*/CLOCK_27, KEY[3:0], LEDr[9:0], LEDg[7:0], SW[9:0], HEX0, HEX1, HEX2, HEX3, 
 		////////////////////	SRAM Interface		////////////////
 		SRAM_DQ,						//	SRAM Data bus 16 Bits
 		SRAM_ADDR,						//	SRAM Address bus 18 Bits
@@ -19,6 +19,11 @@ module vector06cc(clk50mhz, KEY[3:0], LEDr[9:0], LEDg[7:0], SW[9:0], HEX0, HEX1,
 		////////////////////	I2C		////////////////////////////
 		I2C_SDAT,						//	I2C Data
 		I2C_SCLK,						//	I2C Clock
+		
+		AUD_BCLK, 
+		AUD_DACDAT, 
+		AUD_DACLRCK,
+		AUD_XCK,
 
 		PS2_CLK,
 		PS2_DAT,
@@ -26,7 +31,7 @@ module vector06cc(clk50mhz, KEY[3:0], LEDr[9:0], LEDg[7:0], SW[9:0], HEX0, HEX1,
 		// TEST PIN
 		GPIO_0
 );
-input clk50mhz;
+input [1:0] CLOCK_27;
 input [3:0] KEY;
 output [9:0] LEDr;
 output [7:0] LEDg;
@@ -56,6 +61,10 @@ output	[3:0] 	VGA_B;
 ////////////////////////	I2C		////////////////////////////////
 inout			I2C_SDAT;				//	I2C Data
 output			I2C_SCLK;				//	I2C Clock
+output			AUD_BCLK;
+output			AUD_DACDAT;
+output			AUD_DACLRCK;
+output			AUD_XCK;
 
 input			PS2_CLK;
 input			PS2_DAT;
@@ -66,11 +75,13 @@ output [10:0] GPIO_0;
 // CLOCK SETUP
 wire mreset_n = KEY[0];
 wire mreset = !mreset_n;
-wire clk24;
-wire ce12, ce3, ce3v, cepipe1, cepipe2, video_slice, pipe_ab;
+wire clk24, clk18;
+wire ce12, ce3, ce3v, vi53_timer_ce, video_slice, pipe_ab;
 
-clockster clockmaker(clk50mhz, clk24, ce12, ce3, ce3v, video_slice, pipe_ab, cepipe1, cepipe2);
+clockster clockmaker(CLOCK_27[0], clk24, clk18, ce12, ce3, ce3v, video_slice, pipe_ab, vi53_timer_ce);
 
+assign AUD_XCK = clk18;
+soundcodec soundnik(clk18, {vm55int_pc_out[0],vi53_out}, mreset_n, AUD_BCLK, AUD_DACDAT, AUD_DACLRCK);
 
 reg [15:0] slowclock;
 always @(posedge clk24) if (ce3) slowclock <= slowclock + 1'b1;
@@ -89,8 +100,9 @@ wire cpu_ce 	= singleclock_enabled ? singleclock : slowclock_enabled ? (slowcloc
 // DEBUG PINS  //
 /////////////////
 //assign GPIO_0[4:0] = {disable_rom, blksbr_reset_pulse, iports_palette_sel, cpu_ce, clk24};
-assign GPIO_0[3:0] = {cpu_ce, vm55int_sel, io_read, io_write};
-assign GPIO_0[7:4] = {blksbr_reset_pulse, rst0toggle, vm55int_cs_n, vm55int_oe_n};
+//~WR_n & io_write & vi53_sel
+assign GPIO_0[3:0] = {cpu_ce, WR_n, vi53_sel, io_write};
+assign GPIO_0[7:4] = {vi53_wren, vi53_out};
 assign GPIO_0[8] = clk24;
 
 /////////////////
@@ -249,7 +261,8 @@ vectorkeys (clk24, mreset, PS2_CLK, PS2_DAT,
 ///////////////
 
 reg [7:0] peripheral_data_in;
-always peripheral_data_in = vm55int_oe_n ? 8'hFF : vm55int_odata;
+always peripheral_data_in = ~vm55int_oe_n ? vm55int_odata :
+							vi53_rden ? vi53_odata : 8'hFF;
 
 
 // Devices:
@@ -349,6 +362,34 @@ always @(kbd_key_shift or kbd_key_ctrl or kbd_key_rus) begin
 	vm55int_pc_in[6] <= ~kbd_key_ctrl;
 	vm55int_pc_in[7] <= ~kbd_key_rus;
 end
+
+
+////////////////////////////////
+// 580VI53 timer: ports 08-0B //
+////////////////////////////////
+wire			vi53_sel = portmap_device == 3'b010;
+wire			vi53_wren = ~WR_n & io_write & vi53_sel; 
+wire			vi53_rden = io_read & vi53_sel;
+wire	[2:0] 	vi53_out;
+wire	[7:0]	vi53_odata;
+wire	[9:0]	vi53_testpin;
+
+
+//reg vi53_timer_ce;
+//always @(posedge clk24) if (cpu_ce) vi53_timer_cereg <= ~vi53_timer_ce;
+
+pit8253 vi53(
+			clk24, 
+			cpu_ce, 
+			vi53_timer_ce, 
+			~address_bus_r[1:0], 
+			vi53_wren, 
+			vi53_rden, 
+			DO, 
+			vi53_odata, 
+			3'b111, 
+			vi53_out, 
+			vi53_testpin);
 
 
 ////////////////////////////
