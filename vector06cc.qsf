@@ -57,6 +57,8 @@ set_location_assignment PIN_U18 -to LEDr[7]
 set_location_assignment PIN_R18 -to LEDr[8]
 set_location_assignment PIN_R17 -to LEDr[9]
 set_location_assignment PIN_L1 -to clk50mhz
+set_location_assignment PIN_D12 -to CLOCK_27[0]
+set_location_assignment PIN_E12 -to CLOCK_27[1]
 set_global_assignment -name SMART_RECOMPILE ON
 set_global_assignment -name POWER_PRESET_COOLING_SOLUTION "23 MM HEAT SINK WITH 200 LFPM AIRFLOW"
 set_global_assignment -name POWER_BOARD_THERMAL_MODEL "NONE (CONSERVATIVE)"
@@ -205,6 +207,8 @@ set_instance_assignment -name IO_STANDARD LVTTL -to UART_TXD
 
 
 set_global_assignment -name PROJECT_OUTPUT_DIRECTORY "C:\\altera\\71\\qdesigns\\vector06cc\\reports"
+set_global_assignment -name VERILOG_FILE src/DE1/AUDIO_DAC.v
+set_global_assignment -name VERILOG_FILE src/i8253/8253.v
 set_global_assignment -name VERILOG_FILE src/altmodules/mclk24mhz.v
 set_global_assignment -name VERILOG_FILE src/keyboard/ps2k.v
 set_global_assignment -name VERILOG_FILE src/keyboard/scan2matrix.v
@@ -229,3 +233,4 @@ set_global_assignment -name VERILOG_FILE src/clockster.v
 set_global_assignment -name VERILOG_FILE src/oneshot.v
 set_global_assignment -name VERILOG_FILE src/singleclockster.v
 set_global_assignment -name VERILOG_FILE src/sram_map.v
+set_global_assignment -name VERILOG_FILE src/DE1/soundcodec.v

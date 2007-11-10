@@ -24,6 +24,8 @@ module vector06cc(/*clk50mhz*/CLOCK_27, KEY[3:0], LEDr[9:0], LEDg[7:0], SW[9:0],
 		AUD_DACDAT, 
 		AUD_DACLRCK,
 		AUD_XCK,
+		AUD_ADCLRCK,
+		AUD_ADCDAT,
 
 		PS2_CLK,
 		PS2_DAT,
@@ -61,10 +63,15 @@ output	[3:0] 	VGA_B;
 ////////////////////////	I2C		////////////////////////////////
 inout			I2C_SDAT;				//	I2C Data
 output			I2C_SCLK;				//	I2C Clock
-output			AUD_BCLK;
+
+inout			AUD_BCLK;
 output			AUD_DACDAT;
 output			AUD_DACLRCK;
 output			AUD_XCK;
+
+output			AUD_ADCLRCK;			//	Audio CODEC ADC LR Clock
+input			AUD_ADCDAT;				//	Audio CODEC ADC Data
+
 
 input			PS2_CLK;
 input			PS2_DAT;
@@ -81,7 +88,8 @@ wire ce12, ce3, ce3v, vi53_timer_ce, video_slice, pipe_ab;
 clockster clockmaker(CLOCK_27[0], clk24, clk18, ce12, ce3, ce3v, video_slice, pipe_ab, vi53_timer_ce);
 
 assign AUD_XCK = clk18;
-soundcodec soundnik(clk18, {vm55int_pc_out[0],vi53_out}, mreset_n, AUD_BCLK, AUD_DACDAT, AUD_DACLRCK);
+wire tape_input;
+soundcodec soundnik(clk18, {vm55int_pc_out[0],vi53_out}, tape_input, mreset_n, AUD_BCLK, AUD_DACDAT, AUD_DACLRCK, AUD_ADCDAT, AUD_ADCLRCK);
 
 reg [15:0] slowclock;
 always @(posedge clk24) if (ce3) slowclock <= slowclock + 1'b1;
@@ -362,6 +370,7 @@ always @(kbd_key_shift or kbd_key_ctrl or kbd_key_rus) begin
 	vm55int_pc_in[6] <= ~kbd_key_ctrl;
 	vm55int_pc_in[7] <= ~kbd_key_rus;
 end
+always @(tape_input) vm55int_pc_in[4] <= tape_input;
 
 
 ////////////////////////////////
