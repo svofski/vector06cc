@@ -14,10 +14,13 @@ module AUDIO_DAC (// Audio Side
 					oAUD_BCK,
 					oAUD_DATA,
 					oAUD_LRCK,
+					iAUD_ADCDAT,
+					oAUD_ADCLRCK,
 					//	Control Signals
 				    iCLK_18_4,
 					iRST_N,
-					pulses);				
+					pulses,
+					linein);				
 
 parameter	REF_CLK			=	18432000;	//	18.432	MHz
 parameter	SAMPLE_RATE		=	48000;		//	48		KHz
@@ -32,10 +35,13 @@ parameter	SIN_SANPLE		=	0;
 output			oAUD_DATA;
 output			oAUD_LRCK;
 output	reg		oAUD_BCK;
+input			iAUD_ADCDAT;
+output			oAUD_ADCLRCK;
 //	Control Signals
 input			iCLK_18_4;
 input			iRST_N;
 input	[15:0]	pulses;
+output	[15:0]	linein;
 
 //	Internal Registers and Wires
 reg		[3:0]	BCK_DIV;
@@ -111,7 +117,9 @@ begin
 		LRCK_4X_DIV		<=	LRCK_4X_DIV+1;		
 	end
 end
+
 assign	oAUD_LRCK	=	LRCK_1X;
+assign 	oAUD_ADCLRCK=	oAUD_LRCK;
 //////////////////////////////////////////////////
 //////////	Sin LUT ADDR Generator	//////////////
 always@(negedge LRCK_1X or negedge iRST_N)
@@ -138,15 +146,23 @@ begin
 end
 
 
-wire [4:0]  pulsesum = {1'b0,pulses[3:0]} + {1'b0,pulses[7:4]} + {1'b0,pulses[11:8]} + {1'b0,pulses[15:12]};
-reg  [15:0] pulsesummed;
-always @(pulsesum) begin
-	pulsesummed <= {pulsesum,9'b0};
+reg [15:0] pulsebuf;
+always @(negedge LRCK_1X) begin
+	pulsebuf <= pulses;
 end
 
-assign	oAUD_DATA	=	pulsesummed[~SEL_Cont];//Sin_Out[~SEL_Cont];
+assign	oAUD_DATA	=	pulsebuf[~SEL_Cont];//Sin_Out[~SEL_Cont];
 
+assign linein = inputsample;
+reg [15:0] inputsample;
+reg [15:0] inputbuf;
+always @(negedge oAUD_BCK) begin
+	inputbuf[~SEL_Cont] <= iAUD_ADCDAT;
+end
 
+always @(negedge LRCK_1X) begin
+	inputsample <= inputbuf;
+end
 
 //////////////////////////////////////////////////
 ////////////	Sin Wave ROM Table	//////////////
