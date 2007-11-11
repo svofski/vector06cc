@@ -303,9 +303,9 @@ output [15:0] q;
 
 reg  [15:0] counter;
 
-wire [15:0] c_1 = counter - 1;
-wire [15:0] c_2 = counter - 2;
-wire [15:0] c_3 = counter - 3;
+wire [15:0] c_1 = counter - 16'd1;
+wire [15:0] c_2 = counter - 16'd2;
+wire [15:0] c_3 = counter - 16'd3;
 
 wire [15:0] next = ~halfmode ? c_1 :
 						counter[0] == 1'b0 ? c_2 : 

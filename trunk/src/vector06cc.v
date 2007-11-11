@@ -107,8 +107,6 @@ wire cpu_ce 	= singleclock_enabled ? singleclock : slowclock_enabled ? (slowcloc
 /////////////////
 // DEBUG PINS  //
 /////////////////
-//assign GPIO_0[4:0] = {disable_rom, blksbr_reset_pulse, iports_palette_sel, cpu_ce, clk24};
-//~WR_n & io_write & vi53_sel
 assign GPIO_0[3:0] = {cpu_ce, WR_n, vi53_sel, io_write};
 assign GPIO_0[7:4] = {vi53_wren, vi53_out};
 assign GPIO_0[8] = clk24;
@@ -258,7 +256,7 @@ wire		kbd_key_ctrl;
 wire		kbd_key_rus;
 wire		kbd_key_blksbr;
 
-vectorkeys (clk24, mreset, PS2_CLK, PS2_DAT, 
+vectorkeys kbdmatrix(clk24, mreset, PS2_CLK, PS2_DAT, 
 	kbd_mod_rus, 
 	kbd_rowselect, 
 	kbd_rowbits, 
@@ -383,9 +381,6 @@ wire	[2:0] 	vi53_out;
 wire	[7:0]	vi53_odata;
 wire	[9:0]	vi53_testpin;
 
-
-//reg vi53_timer_ce;
-//always @(posedge clk24) if (cpu_ce) vi53_timer_cereg <= ~vi53_timer_ce;
 
 pit8253 vi53(
 			clk24, 

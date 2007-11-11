@@ -10,13 +10,13 @@ input	iAUD_ADCDAT;
 output	oAUD_ADCLRCK;
 
 reg [8:0] decimator;
-always @(posedge clk18) decimator <= decimator + 1;
+always @(posedge clk18) decimator <= decimator + 1'd1;
 
 wire ma_ce = decimator == 0;
 
 
-wire [15:0] linein;
-reg [15:0] ma_pulse;
+wire [15:0] linein;			// comes from codec
+reg [15:0] ma_pulse;		// goes to codec
 
 reg [7:0] pulses_sample[0:3];
 
@@ -48,12 +48,12 @@ reg [7:0] highest;
 reg [7:0] abs_low;
 reg [7:0] abs_high;
 
-reg [15:0] slowcount;
-
 wire [7:0] line8in = linein[15:8];
 
+// a really slow counter to adjust min/max envelopes
+reg [15:0] slowcount;
 always @(posedge oAUD_LRCK) begin
-	slowcount <= slowcount + 1;
+	slowcount <= slowcount + 1'd1;
 end
 
 wire [15:0] acc_plus = level_avg + line8in;
@@ -62,16 +62,22 @@ wire [7:0] h_l_diff = abs_high - abs_low;
 
 reg [7:0] the_middle;
 
-always @(negedge oAUD_LRCK) begin
-	if (line8in < abs_low) 	abs_low <= line8in;
-	if (line8in > abs_high) abs_high <= line8in;
-	
-	if (slowcount == 0 && abs_low < level_avg) abs_low <= abs_low + 1;
-	if (slowcount == 0 && abs_high > level_avg) abs_high <= abs_high - 1;
-	
-	level_avg <= acc_plus[15:1];
-	
-	the_middle <= abs_low + h_l_diff[7:1];
+always @(negedge oAUD_LRCK or negedge reset_n) begin
+	if (!reset_n) begin
+		abs_low <= 127;
+		abs_high <= 128;
+		level_avg <= 127;
+	end else begin
+		if (line8in < abs_low) 	abs_low <= line8in;
+		if (line8in > abs_high) abs_high <= line8in;
+		
+		if (slowcount == 0 && abs_low < level_avg) abs_low <= abs_low + 1'd1;
+		if (slowcount == 0 && abs_high > level_avg) abs_high <= abs_high - 1'd1;
+		
+		level_avg <= acc_plus[15:1];
+		
+		the_middle <= abs_low + h_l_diff[7:1];
+	end
 end
 
 assign tapein = line8in > the_middle;
