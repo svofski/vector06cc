@@ -49,41 +49,35 @@ reg				LRCK_1X;
 ////////////	AUD_BCK Generator	//////////////
 always@(posedge iCLK_18_4 or negedge iRST_N)
 begin
-	if(!iRST_N)
-	begin
+	if(!iRST_N)	begin
 		BCK_DIV		<=	0;
 		oAUD_BCK	<=	0;
 	end
-	else
-	begin
+	else begin
 		if(BCK_DIV >= REF_CLK/(SAMPLE_RATE*DATA_WIDTH*CHANNEL_NUM*2)-1 )
 		begin
 			BCK_DIV		<=	0;
 			oAUD_BCK	<=	~oAUD_BCK;
 		end
 		else
-		BCK_DIV		<=	BCK_DIV + 1'd1;
+			BCK_DIV		<=	BCK_DIV + 1'd1;
 	end
 end
 //////////////////////////////////////////////////
 ////////////	AUD_LRCK Generator	//////////////
 always@(posedge iCLK_18_4 or negedge iRST_N)
 begin
-	if(!iRST_N)
-	begin
+	if(!iRST_N)	begin
 		LRCK_1X_DIV	<=	0;
 		LRCK_1X		<=	0;
 	end
-	else
-	begin
+	else begin
 		//	LRCK 1X
-		if(LRCK_1X_DIV >= REF_CLK/(SAMPLE_RATE*2)-1 )
-		begin
+		if(LRCK_1X_DIV >= REF_CLK/(SAMPLE_RATE*2)-1 ) begin
 			LRCK_1X_DIV	<=	0;
 			LRCK_1X	<=	~LRCK_1X;
-		end
-		else
-		LRCK_1X_DIV		<=	LRCK_1X_DIV+1'd1;
+		end	else
+			LRCK_1X_DIV		<=	LRCK_1X_DIV+1'd1;
 	end
 end
 
@@ -95,9 +89,9 @@ assign 	oAUD_ADCLRCK=	oAUD_LRCK;
 always@(negedge oAUD_BCK or negedge iRST_N)
 begin
 	if(!iRST_N)
-	SEL_Cont	<=	0;
+		SEL_Cont	<=	0;
 	else
-	SEL_Cont	<=	SEL_Cont+1'd1;
+		SEL_Cont	<=	SEL_Cont+1'd1;
 end
 
 
@@ -106,7 +100,7 @@ always @(negedge LRCK_1X) begin
 	pulsebuf <= pulses;
 end
 
-assign	oAUD_DATA	=	pulsebuf[~SEL_Cont];//Sin_Out[~SEL_Cont];
+assign	oAUD_DATA	=	pulsebuf[~SEL_Cont];
 
 assign linein = inputsample;
 reg [15:0] inputsample;
@@ -121,6 +115,6 @@ end
 
 endmodule
 								
-			
+// $Id$			
 					
 
