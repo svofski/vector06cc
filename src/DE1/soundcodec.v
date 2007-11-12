@@ -1,3 +1,5 @@
+`default_nettype none
+
 module soundcodec(clk18, pulses, tapein, reset_n, oAUD_BCK, oAUD_DATA, oAUD_LRCK, iAUD_ADCDAT, oAUD_ADCLRCK);
 input	clk18;
 input	[3:0] pulses;
@@ -40,7 +42,7 @@ always @(posedge clk18) begin
 	end
 end
 
-AUDIO_DAC audiodac(oAUD_BCK, oAUD_DATA, oAUD_LRCK, iAUD_ADCDAT, oAUD_ADCLRCK, clk18, reset_n, ma_pulse, linein);		
+audio_io audioio(oAUD_BCK, oAUD_DATA, oAUD_LRCK, iAUD_ADCDAT, oAUD_ADCLRCK, clk18, reset_n, ma_pulse, linein);		
 
 reg [15:0] level_avg;
 reg [7:0] lowest;
