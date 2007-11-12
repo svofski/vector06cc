@@ -10,17 +10,15 @@
 //or its authorized distributors.  Please refer to the applicable
 //agreement for further details.
 
-module AUDIO_DAC (// Audio Side
-					oAUD_BCK,
-					oAUD_DATA,
-					oAUD_LRCK,
-					iAUD_ADCDAT,
-					oAUD_ADCLRCK,
-					//	Control Signals
-				    iCLK_18_4,
-					iRST_N,
-					pulses,
-					linein);				
+module audio_io(oAUD_BCK,
+				oAUD_DATA,
+				oAUD_LRCK,
+				iAUD_ADCDAT,
+				oAUD_ADCLRCK,
+				iCLK_18_4,
+				iRST_N,
+				pulses,
+				linein);				
 
 parameter	REF_CLK			=	18432000;	//	18.432	MHz
 parameter	SAMPLE_RATE		=	48000;		//	48		KHz
@@ -117,4 +115,3 @@ endmodule
 								
 // $Id$			
 					
-

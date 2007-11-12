@@ -139,7 +139,10 @@ assign LEDr[7:0] = SW[0] == 0 ? DI : SW[1] == 0 ? DO : gledreg[7:0];
 assign LEDr[9:8] = gledreg[9:8];
 //assign LEDg = SW[2] ? status_word : {vm55int_pb_out[3:0],video_palette_value[3:0]};
 wire [1:0] sw23 = {SW[3],SW[2]};
-assign LEDg = sw23 == 0 ? status_word : sw23 == 1 ? {kbd_rowselect} : sw23 == 2 ? vm55int_pb_in : peripheral_data_in;
+
+wire [7:0] kbd_keystatus = {kbd_mod_rus, kbd_key_shift, kbd_key_ctrl, kbd_key_rus, kbd_key_blksbr};
+
+assign LEDg = sw23 == 0 ? status_word : sw23 == 1 ? {kbd_keystatus} : sw23 == 2 ? vm55int_pb_in : peripheral_data_in;
 SEG7_LUT_4 seg7display(HEX0, HEX1, HEX2, HEX3, A);
 
 

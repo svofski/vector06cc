@@ -1,3 +1,6 @@
+// See http://www.quadibloc.com/comp/scan.htm
+// for information about why shift key is being de-pressed and pressed when grey arrows are pressed
+
 `default_nettype none
 module vectorkeys(clkk, reset, ps2_clk, ps2_dat, mod_rus, rowselect, rowbits, key_shift, key_ctrl, key_rus, key_blksbr);
 input 		clkk;
@@ -35,10 +38,19 @@ wire [7:0]	decoded_col;
 
 scan2matrix scan2xy(clkk, ps2q, qey_shift, mod_rus, matrix_row, matrix_col, matrix_shift, neo);
 
-assign key_shift = qey_shift ^ qmatrix_shift;
-reg	qmatrix_shift;
+assign 	key_shift = qey_shift ^ qmatrix_shift; 
+reg		qmatrix_shift;
 
 keycolumndecoder column_dc(matrix_col,decoded_col);
+
+
+wire	saved_shift;			// grey arrow keys send break-shift code and then make shift after release
+reg		saved_shift_trigger;
+
+reg		[8:0] slow_ce_ctr;
+always 	@(posedge clkk) slow_ce_ctr <= slow_ce_ctr + 1;
+wire	slow_ce = slow_ce_ctr == 0;
+oneshot #(255)(clkk, slow_ce, saved_shift_trigger, saved_shift);
 
 reg [2:0] lastrownum;
 reg [7:0] lastrowbits;
@@ -59,6 +71,7 @@ always @(posedge clkk) begin
 		key_ctrl  <= 0;
 		key_rus	  <= 0;
 		key_blksbr <= 0;
+		saved_shift_trigger <= 0;
 		state <= 0;
 	end 
 	else begin
@@ -100,14 +113,19 @@ always @(posedge clkk) begin
 					8'h14:	key_ctrl  <= 1;
 					8'h58:	key_rus	  <= 1;
 					8'h07:	key_blksbr<= 1;
+					// special treatment of grey arrow keys
 					8'hE0:	;// do nada plz
-					8'hFF:  ;
-					default: 
-						if (!neo) begin
-							keymatrix[matrix_row] <= tmp | decoded_col;
-							qmatrix_shift <= matrix_shift;
+					default: begin
+							case (ps2q) 
+								8'h75,8'h72,8'h6b,8'h74: qey_shift <= saved_shift;
+							endcase
+							if (!neo) begin
+								keymatrix[matrix_row] <= tmp | decoded_col;
+								qmatrix_shift <= qmatrix_shift | matrix_shift;
+							end
 						end
 				endcase
+				saved_shift_trigger	<= 0;
 				state <= 0;
 			end
 			
@@ -133,13 +151,15 @@ always @(posedge clkk) begin
 			
 		9:	begin
 				case(ps2q)
-					8'h12:	qey_shift <= 0;
-					8'h59:	qey_shift <= 0;
+					8'h12,8'h59: 
+						begin 
+							qey_shift <= 0; 
+							saved_shift_trigger <= 1'b1; 
+						end
 					8'h14:	key_ctrl  <= 0;
 					8'h58:	key_rus	  <= 0;
 					8'h07:	key_blksbr<= 0;
 					8'hE0:	;// do nada plz
-					8'hFF:  ;
 					default: 
 						if (!neo) begin
 							keymatrix[matrix_row] <=  tmp & ~decoded_col;
