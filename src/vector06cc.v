@@ -271,7 +271,7 @@ vectorkeys kbdmatrix(clk24, mreset, PS2_CLK, PS2_DAT,
 
 reg [7:0] peripheral_data_in;
 always peripheral_data_in = ~vm55int_oe_n ? vm55int_odata :
-							vi53_rden ? vi53_odata : 8'hFF;
+							vi53_rden ? vi53_odata : 8'h00;
 
 
 // Devices:

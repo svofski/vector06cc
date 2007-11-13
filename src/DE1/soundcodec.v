@@ -11,7 +11,7 @@ output	oAUD_LRCK;
 input	iAUD_ADCDAT;
 output	oAUD_ADCLRCK;
 
-reg [8:0] decimator;
+reg [7:0] decimator;
 always @(posedge clk18) decimator <= decimator + 1'd1;
 
 wire ma_ce = decimator == 0;
@@ -35,11 +35,12 @@ always @(posedge clk18) begin
 		pulses_sample[3] <= pulses_sample[2];
 		pulses_sample[2] <= pulses_sample[1];
 		pulses_sample[1] <= pulses_sample[0];
-		pulses_sample[0] <= m04 + m14 + m24 + m34;
-		
+		pulses_sample[0] <= m04 + m14 + m24/* + m34*/;
 		sum <= pulses_sample[0] + pulses_sample[1] + pulses_sample[2] + pulses_sample[3];
-		ma_pulse <= {sum[7:2], 8'b0};
 	end
+
+	ma_pulse <= {sum[7:2], 9'b0} + {m34,10'b0};
+	
 end
 
 audio_io audioio(oAUD_BCK, oAUD_DATA, oAUD_LRCK, iAUD_ADCDAT, oAUD_ADCLRCK, clk18, reset_n, ma_pulse, linein);		
