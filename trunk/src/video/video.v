@@ -90,7 +90,7 @@ always @(posedge clk24) begin
 			case (scanyy_state)
 			state0:
 					begin
-						scanyy <= 1 + 24 - 8;
+						scanyy <= 1 + 24 - 8 + 24 - 14;
 						scanyy_state <= state1;
 						videoActiveY <= 0;
 					end
@@ -106,7 +106,7 @@ always @(posedge clk24) begin
 					end
 			state3:
 					begin
-						scanyy <= SCREENHEIGHT;
+						scanyy <= SCREENHEIGHT + 14;
 						scanyy_state <= state0;
 						videoActiveY <= 1;
 						realy <= 0;
@@ -147,7 +147,7 @@ always @(posedge clk24) begin
 					end
 			state2:	// enter BACK PORCH + RIGHT BORDER
 					begin
-						scanxx <= 10'd61 - 1'b1;
+						scanxx <= 10'd61 - 1'b1 - 32;
 						scanxx_state <= state3;
 					end
 			state3:	// enter VISIBLE AREA
