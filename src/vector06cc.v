@@ -165,7 +165,7 @@ always @(posedge clk24) begin
 		if (WR_n == 0) gledreg[7:0] <= DO;
 		if (SYNC) begin
 			status_word <= DO;
-			READY <= 0;			// insert one wait state on every cycle, it seems to be close to the original
+			READY <= ~(DO[7] | ~DO[4]);			// insert one wait state on every cycle, it seems to be close to the original
 		end 
 		else READY <= 1;
 		
