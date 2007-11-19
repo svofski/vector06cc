@@ -105,6 +105,7 @@ entity T80 is
 		BUSRQ_n         : in  std_logic;
 		M1_n            : out std_logic;
 		IORQ            : out std_logic;
+		STACKRQ			: out std_logic;
 		NoRead          : out std_logic;
 		Write           : out std_logic;
 		RFSH_n          : out std_logic;
@@ -229,6 +230,7 @@ architecture rtl of T80 is
 	signal LDW                  : std_logic;
 	signal LDSPHL               : std_logic;
 	signal IORQ_i               : std_logic;
+	signal STACKRQ_i			: std_logic;
 	signal Special_LD           : std_logic_vector(2 downto 0);
 	signal ExchangeDH           : std_logic;
 	signal ExchangeRp           : std_logic;
@@ -286,6 +288,7 @@ begin
 			Arith16     => Arith16,
 			Set_Addr_To => Set_Addr_To,
 			IORQ        => IORQ_i,
+			STACKRQ		=> STACKRQ_i,
 			Jump        => Jump,
 			JumpE       => JumpE,
 			JumpXY      => JumpXY,
@@ -935,6 +938,7 @@ begin
 	IntCycle_n <= not IntCycle;
 	IntE <= IntE_FF1;
 	IORQ <= IORQ_i;
+	STACKRQ <= STACKRQ_i;
 	Stop <= I_DJNZ;
 
 -------------------------------------------------------------------------

@@ -82,6 +82,7 @@ package T80_Pack is
 		BUSRQ_n         : in std_logic;
 		M1_n            : out std_logic;
 		IORQ            : out std_logic;
+		STACKRQ         : out std_logic;
 		NoRead          : out std_logic;
 		Write           : out std_logic;
 		RFSH_n          : out std_logic;
@@ -155,6 +156,7 @@ package T80_Pack is
 		Arith16                 : out std_logic;
 		Set_Addr_To             : out std_logic_vector(2 downto 0); -- aNone,aXY,aIOA,aSP,aBC,aDE,aZI
 		IORQ                    : out std_logic;
+		STACKRQ         		: out std_logic;
 		Jump                    : out std_logic;
 		JumpE                   : out std_logic;
 		JumpXY                  : out std_logic;

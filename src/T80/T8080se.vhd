@@ -100,6 +100,7 @@ architecture rtl of T8080se is
 	signal NoRead               : std_logic;
 	signal Write                : std_logic;
 	signal IORQ                 : std_logic;
+	signal STACK				: std_logic;
 	signal INT_n                : std_logic;
 	signal HALT_n               : std_logic;
 	signal BUSRQ_n              : std_logic;
@@ -121,7 +122,7 @@ begin
 
 	DO(0) <= not IntCycle_n when TState = "001" else DO_i(0);   -- INTA
 	DO(1) <= not Write when TState = "001" else DO_i(1);    -- WO_n
-	DO(2) <= '0' when TState = "001" else DO_i(2);   -- STACK not supported !!!!!!!!!!
+	DO(2) <= STACK when TState = "001" else DO_i(2);   -- STACK yes supported !!!!!!!!!!
 	DO(3) <= not HALT_n when TState = "001" else DO_i(3);       -- HLTA
 	DO(4) <= IORQ and Write when TState = "001" else DO_i(4);   -- OUT
 	DO(5) <= DO_i(5) when TState /= "001" else '1' when MCycle = "001" else '0';        -- M1
@@ -136,6 +137,7 @@ begin
 			CEN => CLKEN,
 			M1_n => open,
 			IORQ => IORQ,
+			STACKRQ => STACK,
 			NoRead => NoRead,
 			Write => Write,
 			RFSH_n => open,
