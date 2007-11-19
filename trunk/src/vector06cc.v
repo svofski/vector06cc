@@ -142,7 +142,7 @@ wire [1:0] sw23 = {SW[3],SW[2]};
 
 wire [7:0] kbd_keystatus = {kbd_mod_rus, kbd_key_shift, kbd_key_ctrl, kbd_key_rus, kbd_key_blksbr};
 
-assign LEDg = sw23 == 0 ? status_word : sw23 == 1 ? {kbd_keystatus} : sw23 == 2 ? vm55int_pb_in : peripheral_data_in;
+assign LEDg = sw23 == 0 ? status_word : sw23 == 1 ? {kbd_keystatus} : sw23 == 2 ? kvaz_debug : {WR_n, io_stack, SRAM_ADDR[17:15]};
 SEG7_LUT_4 seg7display(HEX0, HEX1, HEX2, HEX3, A);
 
 
@@ -151,6 +151,7 @@ T8080se CPU(RESET_n, clk24, cpu_ce, READY, HOLD, INT, INTE, DBIN, SYNC, VAIT, HL
 wire ram_read = status_word[7];
 wire ram_write_n = status_word[1];
 wire io_write = status_word[4];
+wire io_stack = status_word[2];
 wire io_read  = status_word[6];
 wire interrupt_ack = status_word[0];
 wire WRN_CPUCE = WR_n | ~cpu_ce;
@@ -194,8 +195,27 @@ wire rom_access = (!disable_rom) & (A < 2048);
 wire [7:0] sram_data_in;
 assign DI = interrupt_ack ? 8'hFF : io_read ? peripheral_data_in : rom_access ? ROM_DO : sram_data_in;
 
+wire [2:0]	ramdisk_page;
+
 sram_map sram_map(SRAM_ADDR[14:0], SRAM_DQ, SRAM_WE_N, SRAM_UB_N, SRAM_LB_N, WRN_CPUCE | ram_write_n | io_write, address_bus, DO, sram_data_in);
-assign SRAM_ADDR[17:15] = 3'b000;
+assign SRAM_ADDR[17:15] = video_slice ? 3'b000 : ramdisk_page;
+
+wire [7:0] 	kvaz_debug;
+wire		ramdisk_control_write = address_bus_r == 8'h10 && io_write & ~WR_n; 
+kvaz ramdisk(
+	.clk(clk24), 
+	.clke(cpu_ce), 
+	.reset(mreset),
+	.address(address_bus),
+	.select(ramdisk_control_write),
+	.data_in(DO),
+	.stack(io_stack), 
+	.memwr(~ram_write_n), 
+	.memrd(ram_read), 
+	.bigram_addr(ramdisk_page),
+	.debug(kvaz_debug)
+);
+
 
 ///////////
 // VIDEO //
@@ -240,11 +260,11 @@ always @(posedge clk24) begin
 end
 
 
-wire int_request;
-
 ///////////
 // RST38 //
 ///////////
+wire int_request;
+
 oneshot retrace_irq(clk24, cpu_ce, retrace, int_request);
 
 
@@ -284,8 +304,8 @@ always peripheral_data_in = ~vm55int_oe_n ? vm55int_odata :
 //		100: ramdisk bank switching
 //		110,111: FDC ports
 
-reg [2:0] portmap_device;				
-always portmap_device = address_bus_r[4:2];
+reg [5:0] portmap_device;				
+always portmap_device = address_bus_r[7:2];
 
 ///////////////////////
 // VM55 #1, internal //
@@ -383,7 +403,6 @@ wire			vi53_rden = io_read & vi53_sel;
 wire	[2:0] 	vi53_out;
 wire	[7:0]	vi53_odata;
 wire	[9:0]	vi53_testpin;
-
 
 pit8253 vi53(
 			clk24, 

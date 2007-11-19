@@ -113,6 +113,7 @@ entity T80_MCode is
 		Arith16                 : out std_logic;
 		Set_Addr_To             : out std_logic_vector(2 downto 0); -- aNone,aXY,aIOA,aSP,aBC,aDE,aZI
 		IORQ                    : out std_logic;
+		STACKRQ					: out std_logic;
 		Jump                    : out std_logic;
 		JumpE                   : out std_logic;
 		JumpXY                  : out std_logic;
@@ -218,6 +219,7 @@ begin
 		PreserveC <= '0';
 		Arith16 <= '0';
 		IORQ <= '0';
+		STACKRQ <= '0';
 		Set_Addr_To <= aNone;
 		Jump <= '0';
 		JumpE <= '0';
@@ -545,8 +547,10 @@ begin
 					Set_BusB_To(3) <= '0';
 				end if;
 				Write <= '1';
+				STACKRQ <= '1';
 			when 3 =>
 				Write <= '1';
+				STACKRQ <= '1';
 			when others => null;
 			end case;
 		when "11000001"|"11010001"|"11100001"|"11110001" =>
@@ -565,6 +569,7 @@ begin
 					Set_BusA_To(2 downto 1) <= DPAIR;
 					Set_BusA_To(0) <= '1';
 				end if;
+				STACKRQ <= '1';
 			when 3 =>
 				IncDec_16 <= "0111";
 				Read_To_Reg <= '1';
@@ -574,6 +579,7 @@ begin
 					Set_BusA_To(2 downto 1) <= DPAIR;
 					Set_BusA_To(0) <= '0';
 				end if;
+				STACKRQ <= '1';
 			when others => null;
 			end case;
 
