@@ -1,6 +1,11 @@
 `default_nettype none
 
-module vector06cc(/*clk50mhz*/CLOCK_27, KEY[3:0], LEDr[9:0], LEDg[7:0], SW[9:0], HEX0, HEX1, HEX2, HEX3, 
+//`define DOUBLE_BUFFER
+`define WITH_CPU
+`define WITH_KEYBOARD
+`define WITH_VI53
+
+module vector06cc(CLOCK_27, KEY[3:0], LEDr[9:0], LEDg[7:0], SW[9:0], HEX0, HEX1, HEX2, HEX3, 
 		////////////////////	SRAM Interface		////////////////
 		SRAM_DQ,						//	SRAM Data bus 16 Bits
 		SRAM_ADDR,						//	SRAM Address bus 18 Bits
@@ -33,16 +38,16 @@ module vector06cc(/*clk50mhz*/CLOCK_27, KEY[3:0], LEDr[9:0], LEDg[7:0], SW[9:0],
 		// TEST PIN
 		GPIO_0
 );
-input [1:0] CLOCK_27;
-input [3:0] KEY;
-output [9:0] LEDr;
-output [7:0] LEDg;
-input [9:0] SW; 
+input [1:0]		CLOCK_27;
+input [3:0] 	KEY;
+output [9:0] 	LEDr;
+output [7:0] 	LEDg;
+input [9:0] 	SW; 
 
-output [6:0] HEX0;
-output [6:0] HEX1;
-output [6:0] HEX2;
-output [6:0] HEX3;
+output [6:0] 	HEX0;
+output [6:0] 	HEX1;
+output [6:0] 	HEX2;
+output [6:0] 	HEX3;
 
 ////////////////////////	SRAM Interface	////////////////////////
 inout	[15:0]	SRAM_DQ;				//	SRAM Data bus 16 Bits
@@ -76,7 +81,7 @@ input			AUD_ADCDAT;				//	Audio CODEC ADC Data
 input			PS2_CLK;
 input			PS2_DAT;
 
-output [10:0] GPIO_0;
+output [10:0] 	GPIO_0;
 
 
 // CLOCK SETUP
@@ -146,20 +151,33 @@ assign LEDg = sw23 == 0 ? status_word : sw23 == 1 ? {kbd_keystatus} : sw23 == 2 
 SEG7_LUT_4 seg7display(HEX0, HEX1, HEX2, HEX3, A);
 
 
-T8080se CPU(RESET_n, clk24, cpu_ce, READY, HOLD, INT, INTE, DBIN, SYNC, VAIT, HLDA, WR_n, A, DI, DO);
-
-wire ram_read = status_word[7];
-wire ram_write_n = status_word[1];
-wire io_write = status_word[4];
-wire io_stack = status_word[2];
-wire io_read  = status_word[6];
-wire interrupt_ack = status_word[0];
+wire ram_read;
+wire ram_write_n;
+wire io_write;
+wire io_stack;
+wire io_read;
+wire interrupt_ack;
 wire WRN_CPUCE = WR_n | ~cpu_ce;
- 
-//// for CPU-less builds
-//assign WR_n = 1;
-//assign A = 16'hffff;
-//wire ram_write_n = 1;
+
+`ifdef WITH_CPU
+	T8080se CPU(RESET_n, clk24, cpu_ce, READY, HOLD, INT, INTE, DBIN, SYNC, VAIT, HLDA, WR_n, A, DI, DO);
+	assign ram_read = status_word[7];
+	assign ram_write_n = status_word[1];
+	assign io_write = status_word[4];
+	assign io_stack = status_word[2];
+	assign io_read  = status_word[6];
+	assign interrupt_ack = status_word[0];
+`else
+	assign WR_n = 1;
+	assign DO = 8'h00;
+	assign A = 16'hffff;
+	assign ram_read = 0;
+	assign ram_write_n = 1;
+	assign io_write = 0;
+	assign io_stack = 0;
+	assign io_read  = 0;
+	assign interrupt_ack = 1;
+`endif
 
 always @(posedge clk24) begin
 	if (cpu_ce) begin
@@ -279,11 +297,19 @@ wire		kbd_key_ctrl;
 wire		kbd_key_rus;
 wire		kbd_key_blksbr;
 
-vectorkeys kbdmatrix(clk24, mreset, PS2_CLK, PS2_DAT, 
-	kbd_mod_rus, 
-	kbd_rowselect, 
-	kbd_rowbits, 
-	kbd_key_shift, kbd_key_ctrl, kbd_key_rus, kbd_key_blksbr);
+`ifdef WITH_KEYBOARD
+	vectorkeys kbdmatrix(clk24, mreset, PS2_CLK, PS2_DAT, 
+		kbd_mod_rus, 
+		kbd_rowselect, 
+		kbd_rowbits, 
+		kbd_key_shift, kbd_key_ctrl, kbd_key_rus, kbd_key_blksbr);
+`else
+	assign kbd_rowbits = 8'hff;
+	assign kbd_key_shift = 0;
+	assign kbd_key_ctrl = 0;
+	assign kbd_key_rus = 0;
+	assign kbd_key_blksbr = 0;
+`endif
 
 ///////////////
 // I/O PORTS //
@@ -377,7 +403,11 @@ always @(posedge clk24) begin
 		end
 		else begin
 			video_border_index <= vm55int_pb_out[3:0];
+`ifdef WITH_CPU
 			video_mode512 <= vm55int_pb_out[4];
+`else
+			video_mode512 <= 1'b0;
+`endif
 		end
 
 		// port C
@@ -404,6 +434,7 @@ wire	[2:0] 	vi53_out;
 wire	[7:0]	vi53_odata;
 wire	[9:0]	vi53_testpin;
 
+`ifdef WITH_VI53
 pit8253 vi53(
 			clk24, 
 			cpu_ce, 
@@ -416,7 +447,7 @@ pit8253 vi53(
 			3'b111, 
 			vi53_out, 
 			vi53_testpin);
-
+`endif
 
 ////////////////////////////
 // Internal ports, $0C -- //

@@ -9,7 +9,7 @@ output video_slice = qvideo_slice;
 output pipe_ab = qpipe_ab;
 output ce1m5 = qce1m5;
 
-reg[4:0] ctr;
+reg[5:0] ctr;
 reg[4:0] initctr;
 //wire[4:0] ctr_2 = ctr - 4;
 
@@ -23,14 +23,17 @@ always @(posedge clk24) begin
 		initctr <= initctr + 1'b1;
 	end // latch
 	else begin
-		qce12 <= ctr[0];
+`ifdef DOUBLE_BUFFER	
+		qce12 <= ctr[1] & ctr[0];			// pixel push @6mhz
+		qpipe_ab <= ctr[5]; 				// pipe a/b 2x slower
+`else
+		qce12 <= ctr[0]; 					// pixel push @12mhz
+		qpipe_ab <= ctr[4]; 
+`endif		
 		qce3 <= ctr[2] & !ctr[1] & ctr[0];
 		qce3v <= ctr[2] & ctr[1] & !ctr[0];
 		qvideo_slice <= !ctr[2];
-		qpipe_ab <= ctr[4];
 		qce1m5 <= ctr[3] & ctr[2] & !ctr[1] & ctr[0];
-		//qcepipe1 <= !ctr[2] & (clk24 & !ctr[0]);
-		//qcepipe2 <= !ctr[2] & (clk24 & ctr[0]);
 		ctr <= ctr + 1'b1;
 	end
 end
