@@ -207,8 +207,8 @@ set_instance_assignment -name IO_STANDARD LVTTL -to UART_TXD
 
 
 set_global_assignment -name PROJECT_OUTPUT_DIRECTORY "C:\\altera\\71\\qdesigns\\vector06cc\\reports"
-set_global_assignment -name VERILOG_FILE src/ramdisk/kvaz.v
 set_global_assignment -name VECTOR_WAVEFORM_FILE clk50mhz.vwf
+set_global_assignment -name VERILOG_FILE src/ramdisk/kvaz.v
 set_global_assignment -name VERILOG_FILE src/vector06cc.v
 set_global_assignment -name VERILOG_FILE src/lpm_rom0.v
 set_global_assignment -name VERILOG_FILE src/clockster.v
@@ -216,6 +216,7 @@ set_global_assignment -name VERILOG_FILE src/sram_map.v
 set_global_assignment -name VERILOG_FILE src/singleclockster.v
 set_global_assignment -name VERILOG_FILE src/oneshot.v
 set_global_assignment -name VERILOG_FILE src/video/video.v
+set_global_assignment -name VERILOG_FILE src/video/framebuffer.v
 set_global_assignment -name VERILOG_FILE src/video/shiftreg2.v
 set_global_assignment -name VHDL_FILE src/i82c55/i82c55.vhd
 set_global_assignment -name VERILOG_FILE src/i8253/8253.v
