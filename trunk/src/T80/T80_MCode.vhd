@@ -917,12 +917,20 @@ begin
 			end case;
 		when "00000011"|"00010011"|"00100011"|"00110011" =>
 			-- INC ss
-			TStates <= "110";
+			if (Mode = 2) then
+				TStates <= "101"; -- svo: 8080 timing
+			else
+				TStates <= "110";
+			end if;
 			IncDec_16(3 downto 2) <= "01";
 			IncDec_16(1 downto 0) <= DPair;
 		when "00001011"|"00011011"|"00101011"|"00111011" =>
 			-- DEC ss
-			TStates <= "110";
+			if (Mode = 2) then
+				TStates <= "101"; -- svo: 8080 timing
+			else
+				TStates <= "110";
+			end if;
 			IncDec_16(3 downto 2) <= "11";
 			IncDec_16(1 downto 0) <= DPair;
 

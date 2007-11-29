@@ -11,7 +11,7 @@ input 			ce12;
 input			video_slice;
 input 			pipe_abx;		// pipe selector, should be fed from clockster
 
-input	[7:0]	fb_row;
+input	[8:0]	fb_row;
 
 input hsync;
 
@@ -31,7 +31,7 @@ assign testpin[4] = pipe_abx;
 assign testpin[5] = video_slice;
 
 
-reg [4:0]	column;				// byte column number
+reg [5:0]	column;				// byte column number
 
 reg [2:0] ax;					// position counter for generating write pulses
 								// advances on every clk24 when normal scanning speed
@@ -44,26 +44,25 @@ assign SRAM_ADDR = sram_addr;
 reg [15:0] sram_addr;
 
 reg borderxreg;
-reg [3:0] borderdelay;
 assign borderx = borderdelay[0];
+reg [4:0] borderdelay;
 always @(posedge clk24) begin
-	borderdelay <= {borderxreg, borderdelay[3:1]};
+	if (ce12) begin
+		borderdelay <= {borderxreg, borderdelay[4:1]};
+	end
 end
 
-`ifdef DOUBLE_BUFFER
-reg div2;
-always @(posedge clk24) div2 <= ~div2;
-`else
-wire div2 = 1'b1;
-`endif
-
 always @(posedge clk24) begin
-	if (video_slice & div2) begin
+	if (video_slice) begin
 		if (ax == 3'b111) begin 
-			if (!hsync) column <= 5'h1A; else column <= column + 1'b1;
+			if (!hsync & fb_row[0]) begin
+				column <= /*5'h1A*/ 6'b111111-6'd11; 
+				borderxreg <= 1;
+			end
+			else column <= column + 2'b01;
 			if (column == 0) borderxreg <= ~borderxreg;
 		end
-		sram_addr <= {1'b1,ax[2:1],column,fb_row};
+		sram_addr <= {1'b1,ax[2:1],column[5:1],fb_row[8:1]};
 		ax <= ax + 1'b1;
 		wr[0] <= ax == (3'b000  + 3'b000);
 		wr[1] <= ax == (3'b010  + 3'b000);
@@ -78,6 +77,7 @@ pipelinx pipdx_0(clk24, ce12, pipe_abx, wr[0], SRAM_DQ, coloridx[3]);
 pipelinx pipdx_1(clk24, ce12, pipe_abx, wr[1], SRAM_DQ, coloridx[2]);
 pipelinx pipdx_2(clk24, ce12, pipe_abx, wr[2], SRAM_DQ, coloridx[1]);
 pipelinx pipdx_3(clk24, ce12, pipe_abx, wr[3], SRAM_DQ, coloridx[0]);
+
 
 endmodule
 
@@ -104,3 +104,57 @@ shiftreg2 pipa(clk, ce & n_ab, din, writeplz & ab,   bouta);
 shiftreg2 pipb(clk, ce & ab,   din, writeplz & n_ab, boutb);
 
 endmodule
+
+
+module rambuffer(clk, cerd, cewr, wren, resetrd, resetwr, din, dout);
+parameter FUCK = 4;
+input clk;
+input cerd;
+input cewr;
+input wren;
+input resetrd;
+input resetwr;
+input [7:0] din;
+output reg[7:0] dout;
+
+reg [7:0] pixelram[1023:0];
+
+wire [9:0] rdaddr;
+wire [9:0] wraddr;
+
+rdwrctr c1(clk, cerd, resetrd, rdaddr);
+rdwrctr c2(clk, cewr, resetwr, wraddr);
+
+wire [9:0] addr = wren ? wraddr : rdaddr;
+
+always @(posedge clk) begin
+	if (wren) begin
+		pixelram[wraddr] <= din;
+	end
+	dout <= pixelram[rdaddr];
+end
+
+endmodule
+
+module rdwrctr(clk, ce, reset, q);
+input clk;
+input ce;
+input reset;
+output [9:0] q;
+
+/*
+always @(posedge clk) begin
+	if (ce) begin
+		if (reset) 
+			q <= 0;
+		else
+			q <= q + 1'b1;
+	end
+end
+*/
+lpm_counter ctr(.clock(clk), .clk_en(ce), .aclr(reset), .q(q));
+defparam ctr.LPM_WIDTH = 10,
+		 ctr.LPM_DIRECTION = "UP";
+
+endmodule
+
