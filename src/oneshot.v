@@ -5,7 +5,7 @@ input 		ce;
 input 		trigger;
 output reg 	q;
 
-reg [7:0] n_shot;
+reg [8:0] n_shot;
 reg trigsample;
 
 always @(posedge clk) begin
