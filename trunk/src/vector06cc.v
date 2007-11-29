@@ -134,8 +134,17 @@ always @(posedge clk24) ws_counter <= ws_counter + 1;
 wire [3:0] ws_rom = ws_counter[4:1];
 wire ws_cpu_time = ws_rom[2] & ws_rom[1] & ws_rom[3];
 
-//wire ws_req_n = ~(DO[7] | ~DO[1]) | DO[4];	// == 0 when cpu wants cock
-wire ws_req_n = ~(DO[7] | ~DO[1] | DO[4]);	// == 0 when cpu wants cock
+/////////////////
+// WAIT STATES //
+/////////////////
+
+// adding a waitstate for OUT screws up writes into timer registers
+// subjectively, OUT WS makes DIZREK2 look more stable
+// objectively, lack of OUT WS makes sound proper
+// also, it seems that originally a WS for OUT only makes sense because of the palette
+// but it's known that Vector had an error with that.. Undecided.
+wire ws_req_n = ~(DO[7] | ~DO[1]) | DO[4];	// == 0 when cpu wants cock
+//wire ws_req_n = ~(DO[7] | ~DO[1] | DO[4]);	
 
 always @(posedge clk24) begin
 	if (cpu_ce) begin
