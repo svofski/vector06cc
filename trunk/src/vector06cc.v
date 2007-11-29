@@ -1,6 +1,7 @@
 `default_nettype none
 
-//`define DOUBLE_BUFFER
+`define DOUBLE_BUFFER
+//`define x800x600
 `define WITH_CPU
 `define WITH_KEYBOARD
 `define WITH_VI53
@@ -88,9 +89,19 @@ output [10:0] 	GPIO_0;
 wire mreset_n = KEY[0];
 wire mreset = !mreset_n;
 wire clk24, clk18;
-wire ce12, ce3, ce3v, vi53_timer_ce, video_slice, pipe_ab;
+wire ce12, ce6, ce3, ce3v, vi53_timer_ce, video_slice, pipe_ab;
 
-clockster clockmaker(CLOCK_27[0], clk24, clk18, ce12, ce3, ce3v, video_slice, pipe_ab, vi53_timer_ce);
+clockster clockmaker(
+	.clk(CLOCK_27[0]), 
+	.clk24(clk24), 
+	.clk18(clk18), 
+	.ce12(ce12), 
+	.ce6(ce6),
+	.ce3(ce3), 
+	.ce3v(ce3v), 
+	.video_slice(video_slice), 
+	.pipe_ab(pipe_ab), 
+	.ce1m5(vi53_timer_ce));
 
 assign AUD_XCK = clk18;
 wire tape_input;
@@ -108,13 +119,48 @@ singleclockster keytapclock(clk24, singleclock_enabled, KEY[1], singleclock);
 
 wire cpu_ce 	= singleclock_enabled ? singleclock : slowclock_enabled ? (slowclock == 0) & ce3 : ce3;
 
+reg [15:0] clock_counter;
+always @(posedge clk24) begin
+	if (~RESET_n) 
+		clock_counter <= 0;
+	else if (cpu_ce & ~halt_ack) 
+		clock_counter <= clock_counter + 1'b1;
+end
+
+// a very special waitstate generator
+reg [4:0] 	ws_counter;
+reg 		ws_latch;
+always @(posedge clk24) ws_counter <= ws_counter + 1;
+wire [3:0] ws_rom = ws_counter[4:1];
+wire ws_cpu_time = ws_rom[2] & ws_rom[1] & ws_rom[3];
+
+//wire ws_req_n = ~(DO[7] | ~DO[1]) | DO[4];	// == 0 when cpu wants cock
+wire ws_req_n = ~(DO[7] | ~DO[1] | DO[4]);	// == 0 when cpu wants cock
+
+always @(posedge clk24) begin
+	if (cpu_ce) begin
+		if (SYNC) begin
+			// if this is not a cpu slice (ws_rom[2]) and cpu wants access, latch the ws flag
+			if (~ws_req_n & ~ws_cpu_time) begin
+				READY <= 0;
+			end
+		end 
+	end
+	// reset the latch when it's time
+	if (ws_cpu_time) begin
+		READY <= 1;
+	end
+end
+
+
+
 
 /////////////////
 // DEBUG PINS  //
 /////////////////
-assign GPIO_0[3:0] = {cpu_ce, WR_n, vi53_sel, io_write};
-assign GPIO_0[7:4] = {vi53_wren, vi53_out};
-assign GPIO_0[8] = clk24;
+assign GPIO_0[4:0] = {VAIT, cpu_ce, READY, ws_cpu_time, ~ws_req_n};
+//assign GPIO_0[7:4] = {vi53_wren, vi53_out};
+//assign GPIO_0[8] = clk24;
 
 /////////////////
 // CPU SECTION //
@@ -148,7 +194,7 @@ wire [1:0] sw23 = {SW[3],SW[2]};
 wire [7:0] kbd_keystatus = {kbd_mod_rus, kbd_key_shift, kbd_key_ctrl, kbd_key_rus, kbd_key_blksbr};
 
 assign LEDg = sw23 == 0 ? status_word : sw23 == 1 ? {kbd_keystatus} : sw23 == 2 ? kvaz_debug : {WR_n, io_stack, SRAM_ADDR[17:15]};
-SEG7_LUT_4 seg7display(HEX0, HEX1, HEX2, HEX3, A);
+SEG7_LUT_4 seg7display(HEX0, HEX1, HEX2, HEX3, SW[4] ? clock_counter : A);
 
 
 wire ram_read;
@@ -157,6 +203,7 @@ wire io_write;
 wire io_stack;
 wire io_read;
 wire interrupt_ack;
+wire halt_ack;
 wire WRN_CPUCE = WR_n | ~cpu_ce;
 
 `ifdef WITH_CPU
@@ -166,6 +213,7 @@ wire WRN_CPUCE = WR_n | ~cpu_ce;
 	assign io_write = status_word[4];
 	assign io_stack = status_word[2];
 	assign io_read  = status_word[6];
+	assign halt_ack = status_word[3];
 	assign interrupt_ack = status_word[0];
 `else
 	assign WR_n = 1;
@@ -184,9 +232,9 @@ always @(posedge clk24) begin
 		if (WR_n == 0) gledreg[7:0] <= DO;
 		if (SYNC) begin
 			status_word <= DO;
-			READY <= ~(DO[7] | ~DO[4]);			// insert one wait state on every cycle, it seems to be close to the original
+			//READY <= ~(DO[7] | ~DO[1]) | DO[4];			// insert one wait state on every cycle, it seems to be close to the original
 		end 
-		else READY <= 1;
+		//else READY <= 1;
 		
 		address_bus_r <= address_bus[7:0];
 	end
@@ -238,30 +286,37 @@ kvaz ramdisk(
 ///////////
 // VIDEO //
 ///////////
-reg	[7:0] 	video_scroll_reg;
-reg [3:0] 	video_palette_address;
+wire [7:0] 	video_scroll_reg = vm55int_pa_out;
+//reg [3:0] 	video_palette_address;
 reg [7:0] 	video_palette_value;
 reg [3:0]	video_border_index;
 reg			video_palette_wren;
 reg			video_mode512;
 
 wire [3:0] coloridx;
-wire border;
+//wire border;
 wire videoActive;
 wire retrace;		// 1 == retrace in progress
 
-video vidi(clk24, ce12, video_slice, pipe_ab,
-		   video_mode512, 
-		   sram_data_in, VIDEO_A, 
-		   VGA_HS, VGA_VS, videoActive, coloridx, border,
-		   retrace,
-		   video_scroll_reg,
-		   GPIO_0[10:9]);
+video vidi(.clk24(clk24), .ce12(ce12), .ce6(ce6), .video_slice(video_slice), .pipe_ab(pipe_ab),
+		   .mode512(video_mode512), 
+		   .SRAM_DQ(sram_data_in), .SRAM_ADDR(VIDEO_A), 
+		   .hsync(VGA_HS), .vsync(VGA_VS), 
+		   .videoActive(videoActive),
+		   .coloridx(coloridx),
+		   .realcolor_in(realcolor_buf),
+		   .realcolor_out(realcolor),
+		   .retrace(retrace),
+		   .video_scroll_reg(video_scroll_reg),
+		   .border_idx(video_border_index),
+		   .testpin(GPIO_0[10:7]));
 		
 wire [7:0] realcolor;		
+wire [7:0] realcolor_buf;		
 
-wire [3:0] paletteram_adr = (retrace|video_palette_wren) ? video_palette_address : border ? video_border_index : coloridx;
-palette_ram paletteram(paletteram_adr, video_palette_value, clk24, clk24, video_palette_wren, realcolor);
+//wire [3:0] paletteram_adr = (retrace|video_palette_wren) ? video_palette_address : border ? video_border_index : coloridx;
+wire [3:0] paletteram_adr = (retrace|video_palette_wren) ? video_border_index : coloridx;
+palette_ram paletteram(paletteram_adr, video_palette_value, clk24, clk24, video_palette_wren, realcolor_buf);
 
 reg [3:0] video_r;
 reg [3:0] video_g;
@@ -281,16 +336,18 @@ end
 ///////////
 // RST38 //
 ///////////
+wire int_delay;
 wire int_request;
-
-oneshot retrace_irq(clk24, cpu_ce, retrace, int_request);
+oneshot #(36) retrace_delay(clk24, cpu_ce, retrace, int_delay);
+oneshot retrace_irq(clk24, cpu_ce, ~int_delay, int_request);
+//oneshot retrace_irq(clk24, cpu_ce, retrace, int_request);
 
 
 ///////////////////
 // PS/2 KEYBOARD //
 ///////////////////
 reg 		kbd_mod_rus;
-reg	 [7:0]	kbd_rowselect;
+wire [7:0]	kbd_rowselect = ~vm55int_pa_out;
 wire [7:0]	kbd_rowbits;
 wire 		kbd_key_shift;
 wire		kbd_key_ctrl;
@@ -390,26 +447,20 @@ I82C55 vm55int(
 always @(posedge clk24) begin
 	//if (cpu_ce) begin
 		// port A
-		if (retrace) begin
-			kbd_rowselect <= ~vm55int_pa_out;
-		end
-		else begin
-			video_scroll_reg <= vm55int_pa_out;
-		end
+		//if (retrace) begin
+		//	kbd_rowselect <= ~vm55int_pa_out;
+		//end
+		//else begin
+		//	video_scroll_reg <= vm55int_pa_out;
+		//end
 		
 		// port B
-		if (retrace) begin
-			video_palette_address <= vm55int_pb_out[3:0];
-		end
-		else begin
-			video_border_index <= vm55int_pb_out[3:0];
+		video_border_index <= vm55int_pb_out[3:0];
 `ifdef WITH_CPU
-			video_mode512 <= vm55int_pb_out[4];
+		video_mode512 <= vm55int_pb_out[4];
 `else
-			video_mode512 <= 1'b0;
+		video_mode512 <= 1'b0;
 `endif
-		end
-
 		// port C
 		gledreg[9] <= vm55int_pc_out[3];		// RUS/LAT LED
 	//end
