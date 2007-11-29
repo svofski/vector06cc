@@ -1,5 +1,31 @@
+// ====================================================================
+//                         VECTOR-06C FPGA REPLICA
+//
+// 					Copyright (C) 2007, Viacheslav Slavinsky
+//
+// This core is distributed under modified BSD license. 
+// For complete licensing information see LICENSE.TXT.
+// -------------------------------------------------------------------- 
+//
+// An open implementation of Vector-06C home computer
+//
+// Author: Viacheslav Slavinsky, http://sensi.org/~svo
+// 
+// Design File: vectorkeys.v
+//
+// Keyboard interface. This module maps PS/2 keyboard keypresses
+// and releases into a keyboard matrix model used in Vector-06C.
+// 
+// Can be optimized space-wise by reducing the giant rowbits
+// expression into a sequential process. 
+//
 // See http://www.quadibloc.com/comp/scan.htm
-// for information about why shift key is being de-pressed and pressed when grey arrows are pressed
+// for information about why shift key is being de-pressed and pressed 
+// when grey arrows are pressed
+//
+// --------------------------------------------------------------------
+
+
 
 `default_nettype none
 module vectorkeys(clkk, reset, ps2_clk, ps2_dat, mod_rus, rowselect, rowbits, key_shift, key_ctrl, key_rus, key_blksbr);
@@ -172,16 +198,6 @@ always @(posedge clkk) begin
 	end
 end
 
-//wire [2:0] 	rowaddr;
-//wire		nosel;
-//prioencoder rowencoder(rowselect, rowaddr, nosel);
-//always @(posedge clkk) begin
-//	if (nosel) 
-//		rowbits <= 8'h00;
-//	else 
-//		rowbits <= keymatrix[rowaddr];
-//end
-
 reg  [7:0] 	rowbits;
 always @(posedge clkk) begin
 	rowbits <= 
@@ -217,36 +233,5 @@ always begin
 end
 endmodule
 
-// 
-// from http://asic.co.in/Index_files/verilogexamples.htm
-//
-module prioencoder(sel, code, error);
-input  		[7:0] sel;
-output reg 	[2:0] code;
-output reg		  error;
-always @(sel) begin
-   if (sel[0]) 
-	  code <= 3'b000;
-   else if (sel[1]) 
-	  code <= 3'b001;
-   else if (sel[2]) 
-	  code <= 3'b010;
-   else if (sel[3]) 
-	  code <= 3'b011;
-   else if (sel[4]) 
-	  code <= 3'b100;
-   else if (sel[5]) 
-	  code <= 3'b101;
-   else if (sel[6]) 
-	  code <= 3'b110;
-   else if (sel[7]) 
-	  code <= 3'b111;
-   else 
-	  code <= 3'bxxx;
-
-   error <= (&sel == 1) | (sel == 0);
-
-end
-endmodule
 
 // $Id$

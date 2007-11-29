@@ -1,8 +1,53 @@
+// ====================================================================
+//                         VECTOR-06C FPGA REPLICA
+//
+// 					Copyright (C) 2007, Viacheslav Slavinsky
+//
+// This core is distributed under modified BSD license. 
+// For complete licensing information see LICENSE.TXT.
+// -------------------------------------------------------------------- 
+//
+// An open implementation of Vector-06C home computer
+//
+// Author: Viacheslav Slavinsky, http://sensi.org/~svo
+// 
+// Design File: vector06cc.v
+//
+// Top-level design file of Vector-06C replica.
+//
+// Switches, as they are configured now:
+//	SW1:SW0			red LED[7:0] display selector: 
+// 						00:	Data In
+//						01: Data Out
+//						11: registered Data Out
+//
+// 	SW3:SW2			green LED group display selector
+//						00:	registered CPU status word
+//						01: keyboard status/testpins
+//						10: RAM disk test pins
+//						11: WR_n, io_stack, SRAM_ADDR[17:15] (RAM disk page)
+//
+//	SW4				HEX display
+//						 0:	CPU address bus
+//						 1: TState counter
+//
+//	SW7-5			not used
+//
+//					These must be 1 for normal operation:
+//	SW8				slow clock, code is executed at eyeballable speed
+//	SW9				single-clock, tap clock by KEY[1]
+//			
+//
+// --------------------------------------------------------------------
+
+
 `default_nettype none
 
-`define DOUBLE_BUFFER
-//`define x800x600
-`define WITH_CPU
+//`define x800x600		-- 	marginal, only kept for possible monitor issues; 
+//							not compatible with Vector-06C
+
+// Undefine following for smaller/faster builds
+`define WITH_CPU			
 `define WITH_KEYBOARD
 `define WITH_VI53
 
@@ -296,22 +341,18 @@ kvaz ramdisk(
 // VIDEO //
 ///////////
 wire [7:0] 	video_scroll_reg = vm55int_pa_out;
-//reg [3:0] 	video_palette_address;
 reg [7:0] 	video_palette_value;
 reg [3:0]	video_border_index;
 reg			video_palette_wren;
 reg			video_mode512;
 
 wire [3:0] coloridx;
-//wire border;
-wire videoActive;
-wire retrace;		// 1 == retrace in progress
+wire retrace;			// 1 == retrace in progress
 
 video vidi(.clk24(clk24), .ce12(ce12), .ce6(ce6), .video_slice(video_slice), .pipe_ab(pipe_ab),
 		   .mode512(video_mode512), 
 		   .SRAM_DQ(sram_data_in), .SRAM_ADDR(VIDEO_A), 
 		   .hsync(VGA_HS), .vsync(VGA_VS), 
-		   .videoActive(videoActive),
 		   .coloridx(coloridx),
 		   .realcolor_in(realcolor_buf),
 		   .realcolor_out(realcolor),
@@ -336,9 +377,9 @@ assign VGA_G = video_g;
 assign VGA_B = video_b;
 
 always @(posedge clk24) begin
-	video_r <= !videoActive ? 4'b0 : {realcolor[2:0], 1'b0};
-	video_g <= !videoActive ? 4'b0 : {realcolor[5:3], 1'b0};
-	video_b <= !videoActive ? 4'b0 : {realcolor[7:6], 2'b00};
+	video_r <= {realcolor[2:0], 1'b0};
+	video_g <= {realcolor[5:3], 1'b0};
+	video_b <= {realcolor[7:6], 2'b00};
 end
 
 
@@ -454,25 +495,16 @@ I82C55 vm55int(
 	clk24);
 
 always @(posedge clk24) begin
-	//if (cpu_ce) begin
-		// port A
-		//if (retrace) begin
-		//	kbd_rowselect <= ~vm55int_pa_out;
-		//end
-		//else begin
-		//	video_scroll_reg <= vm55int_pa_out;
-		//end
-		
-		// port B
-		video_border_index <= vm55int_pb_out[3:0];
+	// port B
+	video_border_index <= vm55int_pb_out[3:0];
+
 `ifdef WITH_CPU
-		video_mode512 <= vm55int_pb_out[4];
+	video_mode512 <= vm55int_pb_out[4];
 `else
-		video_mode512 <= 1'b0;
+	video_mode512 <= 1'b0;
 `endif
-		// port C
-		gledreg[9] <= vm55int_pc_out[3];		// RUS/LAT LED
-	//end
+	// port C
+	gledreg[9] <= vm55int_pc_out[3];		// RUS/LAT LED
 end	
 
 always @(kbd_rowbits) vm55int_pb_in <= ~kbd_rowbits;

@@ -1,3 +1,24 @@
+// ====================================================================
+//                         VECTOR-06C FPGA REPLICA
+//
+// 					Copyright (C) 2007, Viacheslav Slavinsky
+//
+// This core is distributed under modified BSD license. 
+// For complete licensing information see LICENSE.TXT.
+// -------------------------------------------------------------------- 
+//
+// An open implementation of Vector-06C home computer
+//
+// Author: Viacheslav Slavinsky, http://sensi.org/~svo
+// 
+// Design File: soundcodec.v
+//
+// Audio interface between raw audio pulses from 8253, tape i/o and
+// sound codec. Includes simple moving average filter for all but
+// tape signals.
+//
+// --------------------------------------------------------------------
+
 `default_nettype none
 
 module soundcodec(clk18, pulses, tapein, reset_n, oAUD_BCK, oAUD_DATA, oAUD_LRCK, iAUD_ADCDAT, oAUD_ADCLRCK);

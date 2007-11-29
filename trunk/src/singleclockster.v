@@ -1,3 +1,24 @@
+// ====================================================================
+//                         VECTOR-06C FPGA REPLICA
+//
+// 					Copyright (C) 2007, Viacheslav Slavinsky
+//
+// This core is distributed under modified BSD license. 
+// For complete licensing information see LICENSE.TXT.
+// -------------------------------------------------------------------- 
+//
+// An open implementation of Vector-06C home computer
+//
+// Author: Viacheslav Slavinsky, http://sensi.org/~svo
+// 
+// Design File: singleclockster.v
+//
+// Generate single CPU clocks for key-tapped code execution.
+//
+// --------------------------------------------------------------------
+
+`default_nettype none
+
 module singleclockster(clk24, singleclock_enabled, n_key, singleclock);
 input 		clk24;
 input 		singleclock_enabled;

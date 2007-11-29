@@ -1,19 +1,42 @@
+// ====================================================================
+//                         VECTOR-06C FPGA REPLICA
+//
+// 					Copyright (C) 2007, Viacheslav Slavinsky
+//
+// This core is distributed under modified BSD license. 
+// For complete licensing information see LICENSE.TXT.
+// -------------------------------------------------------------------- 
+//
+// An open implementation of Vector-06C home computer
+//
+// Author: Viacheslav Slavinsky, http://sensi.org/~svo
+// 
+// Design File: pit8253.v
+//
+// This module approximates Intel 8253 interval timer. Only modes that can
+// be useful for sound generation are implemented. Gate input is not used.
+// Modes 1 and 5 are not implemented at all. This model is far from being
+// optimal, probably can be heavily optimized if counter units are
+// implemented in RTL level.
+//
+// --------------------------------------------------------------------
+
 `default_nettype none
 
 
 module pit8253(clk, ce, tce, a, wr, rd, din, dout, gate, out, testpin, tpsel);
-input clk;
-input ce;
-input tce;
-input [1:0] a;
-input wr;
-input rd;
-input [7:0] din;
-output[7:0] dout;
-input [2:0] gate;
-output [2:0] out;
-output	[9:0] testpin;
-input tpsel;
+	input 			clk;		// i: i/o clock
+	input 			ce;			// i: i/o clock enable
+	input 			tce;		// i: timer clock enable, one for all 3 timers
+	input [1:0] 	a;			// i: address bus
+	input 			wr;			// i: data write
+	input 			rd;			// i: data read
+	input [7:0] 	din;		// i: data input bus
+	output[7:0] 	dout;		// o: data output bus
+	input [2:0] 	gate;		// i: gate inputs, NOT USED
+	output [2:0] 	out;		// o: timer outputs
+	output [9:0] 	testpin;	// o: test pins
+	input 			tpsel;		// i: test pin group selector
 
 wire	[7:0] 	q0;
 wire	[7:0]	q1;
@@ -74,29 +97,26 @@ pit8253_counterunit cu2(clk, ce, tce, din, wren[3] & cwsel[2], din, wren[2], rde
 endmodule
 
 module pit8253_counterunit(clk, ce, tce, cword, cwset, d, wren, rden, dout, gate, out, testpins);
-input	clk;			// whatever main clk
-input	ce;				// bus clock enable, e.g. 3MHz
-input	tce;			// timer clock enable, e.g. 1.5MHz
-input 	[5:0] cword;	// control word from top sans counter select: 6 bits
-input	cwset;			// control word set
-input	[7:0] d;		// data in for load
-input	wren;			// data load enable
-input	rden;			// data read enable
-output	reg[7:0] dout;	// read value
-input	gate;			// gate pin
-output	out;			// out pin according to mode
+	input	clk;			// whatever main clk
+	input	ce;				// bus clock enable, e.g. 3MHz
+	input	tce;			// timer clock enable, e.g. 1.5MHz
+	input 	[5:0] cword;	// control word from top sans counter select: 6 bits
+	input	cwset;			// control word set
+	input	[7:0] d;		// data in for load
+	input	wren;			// data load enable
+	input	rden;			// data read enable
+	output	reg[7:0] dout;	// read value
+	input	gate;			// gate pin
+	output	out;			// out pin according to mode
 
-output [9:0] testpins;
+	output [9:0] testpins;
 
 assign testpins = {read_msb, counter_loaded, counter_loading, rl_mode, cw_mode};
-//assign testpins = {};
 
 parameter M0 = 3'd0, M1 = 3'd1, M2 = 3'd2, M3 = 3'd3, M4 = 3'd4, M5 = 3'd5;
 
 reg		outreg;
 assign 	out = outreg;
-
-//assign	q = counter_q;
 
 // control word breakdown
 reg  [5:0] 	cwreg;
@@ -293,13 +313,13 @@ endmodule
 
 
 module pit8253_downcounter(clk, ce, halfmode, o, d, wren, q);
-input clk;
-input ce;
-input halfmode;	// for square wave gen
-input o;		// current state of out for M3
-input [15:0] d;
-input wren;
-output [15:0] q;
+	input clk;
+	input ce;
+	input halfmode;	// for square wave gen
+	input o;		// current state of out for M3
+	input [15:0] d;
+	input wren;
+	output [15:0] q;
 
 reg  [15:0] counter;
 
@@ -324,4 +344,4 @@ always @(negedge clk or posedge wren) begin
 end
 endmodule
 
-
+// $Id$

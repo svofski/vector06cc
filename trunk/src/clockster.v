@@ -1,3 +1,24 @@
+// ====================================================================
+//                         VECTOR-06C FPGA REPLICA
+//
+// 					Copyright (C) 2007, Viacheslav Slavinsky
+//
+// This core is distributed under modified BSD license. 
+// For complete licensing information see LICENSE.TXT.
+// -------------------------------------------------------------------- 
+//
+// An open implementation of Vector-06C home computer
+//
+// Author: Viacheslav Slavinsky, http://sensi.org/~svo
+// 
+// Design File: clockster.v
+//
+// Vector-06C clock generator.
+//
+// --------------------------------------------------------------------
+
+`default_nettype none
+
 module clockster(clk, clk24, clk18, ce12, ce6, ce3, ce3v, video_slice, pipe_ab, ce1m5);
 input clk;
 output clk24;
@@ -24,11 +45,7 @@ always @(posedge clk24) begin
 		initctr <= initctr + 1'b1;
 	end // latch
 	else begin
-`ifdef DOUBLE_BUFFER	
 		qpipe_ab <= ctr[5]; 				// pipe a/b 2x slower
-`else
-		qpipe_ab <= ctr[4]; 
-`endif		
 		qce12 <= ctr[0]; 					// pixel push @12mhz
 		qce6 <= ctr[1] & ctr[0];			// pixel push @6mhz
 		qce3 <= ctr[2] & !ctr[1] & ctr[0];
