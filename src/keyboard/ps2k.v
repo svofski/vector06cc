@@ -1,6 +1,21 @@
+// ====================================================================
+//                         VECTOR-06C FPGA REPLICA
 //
-// Author: Viacheslav Slavinsky
+// 					Copyright (C) 2007, Viacheslav Slavinsky
 //
+// This core is distributed under modified BSD license. 
+// For complete licensing information see LICENSE.TXT.
+// -------------------------------------------------------------------- 
+//
+// An open implementation of Vector-06C home computer
+//
+// Author: Viacheslav Slavinsky, http://sensi.org/~svo
+// 
+// Design File: ps2k.v
+//
+// Low-level PS/2 keyboard interface core. 
+//
+// --------------------------------------------------------------------
 
 `default_nettype none
 

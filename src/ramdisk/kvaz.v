@@ -1,3 +1,22 @@
+// ====================================================================
+//                         VECTOR-06C FPGA REPLICA
+//
+// 					Copyright (C) 2007, Viacheslav Slavinsky
+//
+// This core is distributed under modified BSD license. 
+// For complete licensing information see LICENSE.TXT.
+// -------------------------------------------------------------------- 
+//
+// An open implementation of Vector-06C home computer
+//
+// Author: Viacheslav Slavinsky, http://sensi.org/~svo
+// 
+// Design File: kvaz.v
+//
+// RAM disk memory mapper. This unit maps standard Vector-06C RAM disk
+// into pages 1, 2, 3, 4 of SRAM address space. 
+//
+// --------------------------------------------------------------------
 `default_nettype none
 
 module kvaz(clk, clke, 

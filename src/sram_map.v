@@ -1,3 +1,22 @@
+// ====================================================================
+//                         VECTOR-06C FPGA REPLICA
+//
+// 					Copyright (C) 2007, Viacheslav Slavinsky
+//
+// This core is distributed under modified BSD license. 
+// For complete licensing information see LICENSE.TXT.
+// -------------------------------------------------------------------- 
+//
+// An open implementation of Vector-06C home computer
+//
+// Author: Viacheslav Slavinsky, http://sensi.org/~svo
+// 
+// Design File: sram_map.v
+//
+// Maps linear 64K x 8 address space into 32K x 16 address space 
+//
+// --------------------------------------------------------------------
+
 module sram_map(SRAM_ADDR, SRAM_DQ, SRAM_WE_N, SRAM_UB_N, SRAM_LB_N, memwr_n, abus, dout, din);
 output [14:0] 	SRAM_ADDR;
 inout  [15:0] 	SRAM_DQ;

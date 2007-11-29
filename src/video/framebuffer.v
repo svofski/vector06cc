@@ -1,3 +1,28 @@
+// ====================================================================
+//                         VECTOR-06C FPGA REPLICA
+//
+// 					Copyright (C) 2007, Viacheslav Slavinsky
+//
+// This core is distributed under modified BSD license. 
+// For complete licensing information see LICENSE.TXT.
+// -------------------------------------------------------------------- 
+//
+// An open implementation of Vector-06C home computer
+//
+// Author: Viacheslav Slavinsky, http://sensi.org/~svo
+// 
+// Design File: framebuffer.v
+//
+// Vector-06C frame buffer. This module accesses bit planes sequentially,
+// loads shift registers and shifts out bits by pixel. 
+// Originally designed to work at VGA speed, later adopted for 2x slower
+// speed of original Vector-06C for compatibility reasons.
+//
+// Due to adoption, this version will read memory 2x more than necessary.
+//
+// --------------------------------------------------------------------
+
+
 `default_nettype none
 
 ////
@@ -5,9 +30,9 @@
 // Frame Buffer
 //
 ////
-module framebuffer(clk24, ce12, video_slice, pipe_abx, fb_row, hsync, SRAM_DQ, SRAM_ADDR, coloridx, borderx, testpin);
+module framebuffer(clk24, ce_pixel, video_slice, pipe_abx, fb_row, hsync, SRAM_DQ, SRAM_ADDR, coloridx, borderx, testpin);
 input 			clk24;
-input 			ce12;
+input 			ce_pixel;
 input			video_slice;
 input 			pipe_abx;		// pipe selector, should be fed from clockster
 
@@ -47,7 +72,7 @@ reg borderxreg;
 assign borderx = borderdelay[0];
 reg [4:0] borderdelay;
 always @(posedge clk24) begin
-	if (ce12) begin
+	if (ce_pixel) begin
 		borderdelay <= {borderxreg, borderdelay[4:1]};
 	end
 end
@@ -73,10 +98,10 @@ always @(posedge clk24) begin
 	end
 end
 
-pipelinx pipdx_0(clk24, ce12, pipe_abx, wr[0], SRAM_DQ, coloridx[3]);
-pipelinx pipdx_1(clk24, ce12, pipe_abx, wr[1], SRAM_DQ, coloridx[2]);
-pipelinx pipdx_2(clk24, ce12, pipe_abx, wr[2], SRAM_DQ, coloridx[1]);
-pipelinx pipdx_3(clk24, ce12, pipe_abx, wr[3], SRAM_DQ, coloridx[0]);
+pipelinx pipdx_0(clk24, ce_pixel, pipe_abx, wr[0], SRAM_DQ, coloridx[3]);
+pipelinx pipdx_1(clk24, ce_pixel, pipe_abx, wr[1], SRAM_DQ, coloridx[2]);
+pipelinx pipdx_2(clk24, ce_pixel, pipe_abx, wr[2], SRAM_DQ, coloridx[1]);
+pipelinx pipdx_3(clk24, ce_pixel, pipe_abx, wr[3], SRAM_DQ, coloridx[0]);
 
 
 endmodule
@@ -104,57 +129,3 @@ shiftreg2 pipa(clk, ce & n_ab, din, writeplz & ab,   bouta);
 shiftreg2 pipb(clk, ce & ab,   din, writeplz & n_ab, boutb);
 
 endmodule
-
-
-module rambuffer(clk, cerd, cewr, wren, resetrd, resetwr, din, dout);
-parameter FUCK = 4;
-input clk;
-input cerd;
-input cewr;
-input wren;
-input resetrd;
-input resetwr;
-input [7:0] din;
-output reg[7:0] dout;
-
-reg [7:0] pixelram[1023:0];
-
-wire [9:0] rdaddr;
-wire [9:0] wraddr;
-
-rdwrctr c1(clk, cerd, resetrd, rdaddr);
-rdwrctr c2(clk, cewr, resetwr, wraddr);
-
-wire [9:0] addr = wren ? wraddr : rdaddr;
-
-always @(posedge clk) begin
-	if (wren) begin
-		pixelram[wraddr] <= din;
-	end
-	dout <= pixelram[rdaddr];
-end
-
-endmodule
-
-module rdwrctr(clk, ce, reset, q);
-input clk;
-input ce;
-input reset;
-output [9:0] q;
-
-/*
-always @(posedge clk) begin
-	if (ce) begin
-		if (reset) 
-			q <= 0;
-		else
-			q <= q + 1'b1;
-	end
-end
-*/
-lpm_counter ctr(.clock(clk), .clk_en(ce), .aclr(reset), .q(q));
-defparam ctr.LPM_WIDTH = 10,
-		 ctr.LPM_DIRECTION = "UP";
-
-endmodule
-
