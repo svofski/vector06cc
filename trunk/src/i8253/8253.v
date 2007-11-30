@@ -23,6 +23,8 @@
 
 `default_nettype none
 
+// untested but smaller downcounter implementation (66 LE vs. 110 LE)
+`define UNVERIFIED_66LE
 
 module pit8253(clk, ce, tce, a, wr, rd, din, dout, gate, out, testpin, tpsel);
 	input 			clk;		// i: i/o clock
@@ -323,6 +325,9 @@ module pit8253_downcounter(clk, ce, halfmode, o, d, wren, q);
 
 reg  [15:0] counter;
 
+`ifdef UNVERIFIED_66LE
+wire [15:0] next = counter - (~halfmode ? 16'd1 : counter[0] == 1'b0 ? 16'd2 : o ? 16'd1 : 16'd3);
+`else
 wire [15:0] c_1 = counter - 16'd1;
 wire [15:0] c_2 = counter - 16'd2;
 wire [15:0] c_3 = counter - 16'd3;
@@ -330,7 +335,7 @@ wire [15:0] c_3 = counter - 16'd3;
 wire [15:0] next = ~halfmode ? c_1 :
 						counter[0] == 1'b0 ? c_2 : 
 						o ? c_1 : c_3;
-					
+`endif
 
 assign q = counter;
 
