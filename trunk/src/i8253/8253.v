@@ -23,9 +23,6 @@
 
 `default_nettype none
 
-// untested but smaller downcounter implementation (66 LE vs. 110 LE)
-`define UNVERIFIED_66LE
-
 module pit8253(clk, ce, tce, a, wr, rd, din, dout, gate, out, testpin, tpsel);
 	input 			clk;		// i: i/o clock
 	input 			ce;			// i: i/o clock enable
@@ -138,11 +135,9 @@ always @(posedge clk) begin
 	end
 end
 
-//reg 		counter_ena;
 reg [15:0] 	counter_load;
 reg 		counter_wren;
 wire[15:0] 	counter_q;
-//reg			halfmode;
 
 reg [15:0]	read_latch; 		// latched value
 reg [1:0]	read_msb;			// double-byte read mode
@@ -265,6 +260,7 @@ always @(posedge clk) begin
 								read_msb <= 1;
 								dout <= counter_q[7:0];
 							end
+					default:;
 				endcase
 		endcase
 	end
@@ -325,26 +321,16 @@ module pit8253_downcounter(clk, ce, halfmode, o, d, wren, q);
 
 reg  [15:0] counter;
 
-`ifdef UNVERIFIED_66LE
 wire [15:0] next = counter - (~halfmode ? 16'd1 : counter[0] == 1'b0 ? 16'd2 : o ? 16'd1 : 16'd3);
-`else
-wire [15:0] c_1 = counter - 16'd1;
-wire [15:0] c_2 = counter - 16'd2;
-wire [15:0] c_3 = counter - 16'd3;
-
-wire [15:0] next = ~halfmode ? c_1 :
-						counter[0] == 1'b0 ? c_2 : 
-						o ? c_1 : c_3;
-`endif
 
 assign q = counter;
 
-always @(negedge clk or posedge wren) begin
-	if (wren) begin
-		counter <= d;
-	end 
-	else if (ce) begin
-		counter <= next;
+always @(negedge clk) begin
+	if (ce) begin
+		if (wren) 
+			counter <= d;
+		else
+			counter <= next;
 	end
 end
 endmodule

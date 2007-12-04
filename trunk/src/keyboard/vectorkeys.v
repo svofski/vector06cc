@@ -198,6 +198,8 @@ always @(posedge clkk) begin
 	end
 end
 
+// This is really dumb, together with the rest of code above 
+// it unrolls into humongous structure, but it works and it is readable.
 reg  [7:0] 	rowbits;
 always @(posedge clkk) begin
 	rowbits <= 
