@@ -18,7 +18,7 @@
 // Originally designed to work at VGA speed, later adopted for 2x slower
 // speed of original Vector-06C for compatibility reasons.
 //
-// Due to adoption, this version will read memory 2x more than necessary.
+// This version reads memory 2x more times than necessary.
 //
 // --------------------------------------------------------------------
 

@@ -1,3 +1,29 @@
+// ====================================================================
+//                         VECTOR-06C FPGA REPLICA
+//
+// 					Copyright (C) 2007, Viacheslav Slavinsky
+//
+// This core is distributed under modified BSD license. 
+// For complete licensing information see LICENSE.TXT.
+// -------------------------------------------------------------------- 
+//
+// An open implementation of Vector-06C home computer
+//
+// Author: Viacheslav Slavinsky, http://sensi.org/~svo
+// 
+// Design File: video.v
+//
+// Video subsystem: 
+//		- VGA refresh generator	
+//		- frame buffer
+//		- scan doubler
+// The palette ram is external. coloridx should be connected to
+// the palette RAM address bus, realcolor_in must be connected to 
+// the palette RAM output.
+//
+// --------------------------------------------------------------------
+
+
 `default_nettype none
 
 module video(
@@ -19,7 +45,7 @@ module video(
 	realcolor_in,		// input:  	real colour value
 	realcolor_out,		// output: 	real colour value --> vga
 	retrace,			// output: 	out of scan area, for interrupt request
-    video_scroll_reg,	// input: 	where display starts
+    video_scroll_reg,	// input: 	line where display starts
 	border_idx,			// input: 	border colour index
 	testpin
 );
