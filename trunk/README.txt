@@ -6,6 +6,19 @@ computer, in FPGA. The primary hardware platform for this project is
 Altera DE1 development board.
 
 
+CONTENTS
+
+* Features
+* DE1 Thingies
+* DE1 SRAM Mapping and Starter Kit Utility
+* Known Problems
+* Known ROMs That Have Issues
+* Acknowledgements
+
+
+Features
+~~~~~~~~
+
 The following features are implemented as of December 16, 2007:
 
 - CPU
@@ -77,6 +90,8 @@ Known Problems
 
 	Use KEY0 instead.
 
+4. AY-3-WTF is not implemented
+
 n-1. ROM "<whatever>.rom" doesn't work
 	
 	Unless you know for sure that it must work, screw it.
@@ -85,6 +100,15 @@ n. ROM "<whatver>.rom" works incorrectly.
 
 	If you know for sure how it must work, I'm open for suggestions.
 
+Known ROMs That Have Issues
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+81dca11bea7fb69a1226a170f1f47e85 *EXOLON.ROM
+		Jerky border and keyboard input doesn't work, no known workaround
+
+
+b27de9107eba6a1d9fb43e92e281099e *MUSICIAN.ROM
+		Vertical scrolling is screwed up, depends on keys pressed.
+		I studied the code and can't see how it can behave differently.
 
 Acknowledgements
 ~~~~~~~~~~~~~~~~
