@@ -4,7 +4,7 @@ JedecChain;
 	DefaultMfr(6E);
 
 	P ActionCode(Cfg)
-		Device PartName(EP2C20F484) Path("C:/altera/71/qdesigns/vector06cc/") File("vector06cc.sof") MfrSpec(OpMask(1));
+		Device PartName(EP2C20F484) Path("") File("vector06cc.sof") MfrSpec(OpMask(1));
 
 ChainEnd;
 
