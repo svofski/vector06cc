@@ -123,6 +123,9 @@ excellent CPU cycle-compatible with i8080 and to implement STACK signal in PSW.
 
 DE1-specific code uses, or may be based upon, samples from Altera DE1 package.
 
+Special thanks to Alexander Timoshenko for documentation and general information
+about Vector-06C, Dmitry Tselikov for hints and good reference emulator, Roman
+Panteleev and Artem Navalon for ve27a with debugger.
 
 $Id$
 
