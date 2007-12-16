@@ -97,20 +97,20 @@ vga_refresh 	refresher(
 
 
 framebuffer 	winrar(
-							.clk24(clk24), 
+							.clk24(clk24),
 							.ce_pixel(ce6),
-							.video_slice(video_slice), .pipe_abx(pipe_ab), 
-							.fb_row(fb_row[8:0]), 
-							.hsync(hsync), 
-							.SRAM_DQ(SRAM_DQ), .SRAM_ADDR(SRAM_ADDR), 
-							.coloridx(coloridx_modeless), 
+							.video_slice(video_slice), .pipe_abx(pipe_ab),
+							.fb_row(fb_row[8:0]),
+							.hsync(hsync),
+							.SRAM_DQ(SRAM_DQ), .SRAM_ADDR(SRAM_ADDR),
+							.coloridx(coloridx_modeless),
 							.borderx(borderx)
 						);
 
 reg 	[3:0] xcoloridx;
 wire 	[3:0] coloridx_modeless;
 
-always @(coloridx_modeless or clk24) begin
+always @(negedge clk24) begin
 	if (mode512) begin
 		if (ce6)
 			xcoloridx <= {2'b00, coloridx_modeless[2], coloridx_modeless[3]};
