@@ -206,7 +206,7 @@ set_instance_assignment -name IO_STANDARD LVTTL -to UART_RXD
 set_instance_assignment -name IO_STANDARD LVTTL -to UART_TXD
 
 
-set_global_assignment -name PROJECT_OUTPUT_DIRECTORY "C:\\altera\\71\\qdesigns\\vector06cc\\reports"
+set_global_assignment -name PROJECT_OUTPUT_DIRECTORY "reports"
 set_location_assignment PIN_C7 -to TCK
 set_location_assignment PIN_D7 -to TDO
 set_location_assignment PIN_D8 -to TCS
