@@ -207,9 +207,13 @@ set_instance_assignment -name IO_STANDARD LVTTL -to UART_TXD
 
 
 set_global_assignment -name PROJECT_OUTPUT_DIRECTORY "C:\\altera\\71\\qdesigns\\vector06cc\\reports"
+set_location_assignment PIN_C7 -to TCK
+set_location_assignment PIN_D7 -to TDO
+set_location_assignment PIN_D8 -to TCS
+set_location_assignment PIN_E8 -to TDI
 set_global_assignment -name VECTOR_WAVEFORM_FILE clk50mhz.vwf
-set_global_assignment -name VERILOG_FILE src/ramdisk/kvaz.v
 set_global_assignment -name VERILOG_FILE src/vector06cc.v
+set_global_assignment -name VERILOG_FILE src/ramdisk/kvaz.v
 set_global_assignment -name VERILOG_FILE src/lpm_rom0.v
 set_global_assignment -name VERILOG_FILE src/clockster.v
 set_global_assignment -name VERILOG_FILE src/sram_map.v
@@ -222,13 +226,16 @@ set_global_assignment -name VERILOG_FILE src/video/rambuffer.v
 set_global_assignment -name VERILOG_FILE src/video/vga_refresh.v
 set_global_assignment -name VHDL_FILE src/i82c55/i82c55.vhd
 set_global_assignment -name VERILOG_FILE src/i8253/8253.v
-set_global_assignment -name VERILOG_FILE src/keyboard/vectorkeys.v
 set_global_assignment -name VERILOG_FILE src/keyboard/scan2matrix.v
 set_global_assignment -name VERILOG_FILE src/keyboard/ps2k.v
 set_global_assignment -name VERILOG_FILE src/altmodules/mclk24mhz.v
 set_global_assignment -name VERILOG_FILE src/altmodules/palette_ram.v
+set_global_assignment -name VERILOG_FILE src/keyboard/vectorkeys.v
 set_global_assignment -name VERILOG_FILE src/DE1/I2C_AV_Config.v
+set_global_assignment -name VERILOG_FILE src/DE1/USB_JTAG.v
+set_global_assignment -name VERILOG_FILE src/DE1/CMD_Decode.v
 set_global_assignment -name VERILOG_FILE src/DE1/I2C_Controller.v
+set_global_assignment -name VERILOG_FILE src/DE1/CLK_LOCK.v
 set_global_assignment -name VERILOG_FILE src/DE1/SEG7_LUT.v
 set_global_assignment -name VERILOG_FILE src/DE1/audio_io.v
 set_global_assignment -name VERILOG_FILE src/DE1/soundcodec.v
@@ -238,3 +245,4 @@ set_global_assignment -name VHDL_FILE src/T80/T80_MCode.vhd
 set_global_assignment -name VHDL_FILE src/T80/T80_Pack.vhd
 set_global_assignment -name VHDL_FILE src/T80/T80_Reg.vhd
 set_global_assignment -name VHDL_FILE src/T80/T8080se.vhd
+set_global_assignment -name VERILOG_FILE src/jtag/jtag_top.v
