@@ -50,8 +50,9 @@
 `define WITH_CPU			
 `define WITH_KEYBOARD
 `define WITH_VI53
+`define WITH_DE1_JTAG
 
-module vector06cc(CLOCK_27, KEY[3:0], LEDr[9:0], LEDg[7:0], SW[9:0], HEX0, HEX1, HEX2, HEX3, 
+module vector06cc(CLOCK_27, clk50mhz, KEY[3:0], LEDr[9:0], LEDg[7:0], SW[9:0], HEX0, HEX1, HEX2, HEX3, 
 		////////////////////	SRAM Interface		////////////////
 		SRAM_DQ,						//	SRAM Data bus 16 Bits
 		SRAM_ADDR,						//	SRAM Address bus 18 Bits
@@ -81,10 +82,17 @@ module vector06cc(CLOCK_27, KEY[3:0], LEDr[9:0], LEDg[7:0], SW[9:0], HEX0, HEX1,
 		PS2_CLK,
 		PS2_DAT,
 
+		////////////////////	USB JTAG link	////////////////////
+		TDI,  							// CPLD -> FPGA (data in)
+		TCK,  							// CPLD -> FPGA (clk)
+		TCS,  							// CPLD -> FPGA (CS)
+	    TDO,  							// FPGA -> CPLD (data out)
+
 		// TEST PIN
 		GPIO_0
 );
 input [1:0]		CLOCK_27;
+input 			clk50mhz;
 input [3:0] 	KEY;
 output [9:0] 	LEDr;
 output [7:0] 	LEDg;
@@ -126,6 +134,12 @@ input			AUD_ADCDAT;				//	Audio CODEC ADC Data
 
 input			PS2_CLK;
 input			PS2_DAT;
+
+////////////////////	USB JTAG link	////////////////////////////
+input  			TDI;					// CPLD -> FPGA (data in)
+input  			TCK;					// CPLD -> FPGA (clk)
+input  			TCS;					// CPLD -> FPGA (CS)
+output 			TDO;					// FPGA -> CPLD (data out)
 
 output [10:0] 	GPIO_0;
 
@@ -247,7 +261,7 @@ wire [1:0] sw23 = {SW[3],SW[2]};
 
 wire [7:0] kbd_keystatus = {kbd_mod_rus, kbd_key_shift, kbd_key_ctrl, kbd_key_rus, kbd_key_blksbr};
 
-assign LEDg = sw23 == 0 ? status_word : sw23 == 1 ? {kbd_keystatus} : sw23 == 2 ? kvaz_debug : {WR_n, io_stack, SRAM_ADDR[17:15]};
+assign LEDg = sw23 == 0 ? status_word : sw23 == 1 ? {kbd_keystatus} : sw23 == 2 ? kvaz_debug : {mJTAG_SELECT, mJTAG_SRAM_WR_N, SRAM_ADDR[17:15]};
 SEG7_LUT_4 seg7display(HEX0, HEX1, HEX2, HEX3, SW[4] ? clock_counter : A);
 
 
@@ -305,7 +319,7 @@ lpm_rom0 bootrom(A[11:0], clk24, ROM_DO);
 
 
 assign SRAM_CE_N = 0;
-assign SRAM_OE_N = !rom_access && !ram_write_n && !video_slice;
+assign SRAM_OE_N = !rom_access && !ram_write_n && !video_slice && !mJTAG_SRAM_WR_N;
 
 reg [7:0] address_bus_r;	// registered address for i/o
 
@@ -317,8 +331,23 @@ assign DI = interrupt_ack ? 8'hFF : io_read ? peripheral_data_in : rom_access ? 
 
 wire [2:0]	ramdisk_page;
 
-sram_map sram_map(SRAM_ADDR[14:0], SRAM_DQ, SRAM_WE_N, SRAM_UB_N, SRAM_LB_N, WRN_CPUCE | ram_write_n | io_write, address_bus, DO, sram_data_in);
-assign SRAM_ADDR[17:15] = video_slice ? 3'b000 : ramdisk_page;
+sram_map sram_map(
+	.SRAM_ADDR(SRAM_ADDR), 
+	.SRAM_DQ(SRAM_DQ), 
+	.SRAM_WE_N(SRAM_WE_N), 
+	.SRAM_UB_N(SRAM_UB_N), 
+	.SRAM_LB_N(SRAM_LB_N), 
+	.memwr_n(WRN_CPUCE | ram_write_n | io_write), 
+	.abus(address_bus), 
+	.dout(DO), 
+	.din(sram_data_in),
+	.ramdisk_page(video_slice ? 3'b000 : ramdisk_page),
+	.jtag_addr(mJTAG_ADDR),
+	.jtag_din(mJTAG_DATA_FROM_HOST),
+	.jtag_do(mJTAG_DATA_TO_HOST),
+	.jtag_jtag(mJTAG_SELECT),
+	.jtag_nwe(mJTAG_SRAM_WR_N));
+	
 
 wire [7:0] 	kvaz_debug;
 wire		ramdisk_control_write = address_bus_r == 8'h10 && io_write & ~WR_n; 
@@ -584,7 +613,30 @@ oneshot blksbr(clk24, cpu_ce, rst0toggle, blksbr_reset_pulse);
 
 I2C_AV_Config 		u7(clk24,mreset_n,I2C_SCLK,I2C_SDAT);
 
-endmodule
+/////////////////
+//   DE1 JTAG  //
+/////////////////
 
+// JTAG access to SRAM
+wire [17:0]	mJTAG_ADDR;
+wire [15:0]	mJTAG_DATA_TO_HOST,mJTAG_DATA_FROM_HOST;
+wire		mJTAG_SRAM_WR_N;
+wire 		mJTAG_SELECT;
+
+jtag_top	tigertiger(
+				.clk24(clk24),
+				.reset_n(mreset_n),
+				.iTCK(TCK),
+				.oTDO(TDO),
+				.iTDI(TDI),
+				.iTCS(TCS),
+				.oJTAG_ADDR(mJTAG_ADDR),
+				.iJTAG_DATA_TO_HOST(mJTAG_DATA_TO_HOST),
+				.oJTAG_DATA_FROM_HOST(mJTAG_DATA_FROM_HOST),
+				.oJTAG_SRAM_WR_N(mJTAG_SRAM_WR_N),
+				.oJTAG_SELECT(mJTAG_SELECT)
+				);
+
+endmodule
 
 // $Id$

@@ -17,8 +17,11 @@
 //
 // --------------------------------------------------------------------
 
-module sram_map(SRAM_ADDR, SRAM_DQ, SRAM_WE_N, SRAM_UB_N, SRAM_LB_N, memwr_n, abus, dout, din);
-output [14:0] 	SRAM_ADDR;
+`default_nettype none
+
+module sram_map(SRAM_ADDR, SRAM_DQ, SRAM_WE_N, SRAM_UB_N, SRAM_LB_N, memwr_n, abus, dout, din, ramdisk_page, 
+				jtag_addr, jtag_din, jtag_do, jtag_jtag, jtag_nwe);
+output [17:0] 	SRAM_ADDR;
 inout  [15:0] 	SRAM_DQ;
 output 			SRAM_WE_N;
 output 			SRAM_UB_N;
@@ -27,19 +30,26 @@ input			memwr_n;
 input  [15:0]	abus;
 input  [7:0]	dout;
 output [7:0]	din;
+input  [2:0]	ramdisk_page;
 
-assign SRAM_ADDR = abus[15:1];
-assign SRAM_UB_N = ~abus[0];
-assign SRAM_LB_N = abus[0];
-assign SRAM_WE_N = memwr_n;
+input	[17:0]	jtag_addr;
+input	[15:0]	jtag_din;
+output	[15:0]	jtag_do = SRAM_DQ;//16'hc3e0;//
+input			jtag_jtag;
+input			jtag_nwe;
 
-wire [7:0] effective_do = memwr_n ? 8'bZZZZZZZZ : dout;
+assign SRAM_ADDR = jtag_jtag ? jtag_addr : {ramdisk_page, abus[15:1]};
+assign SRAM_UB_N = jtag_jtag ? 1'b0 : ~abus[0];
+assign SRAM_LB_N = jtag_jtag ? 1'b0 : abus[0];
+assign SRAM_WE_N = jtag_jtag ? jtag_nwe : memwr_n;
 
-assign SRAM_DQ[7:0]  = abus[0] ? 8'bZZZZZZZZ : effective_do;
-assign SRAM_DQ[15:8] = abus[0] ? effective_do : 8'bZZZZZZZZ;
+wire lsbz =  abus[0] & ~jtag_jtag;
+wire msbz = ~abus[0] & ~jtag_jtag;
+wire [15:0] effective_do = memwr_n & jtag_nwe ? 16'bZZZZZZZZZZZZZZZZ : jtag_nwe ? {dout,dout} : jtag_din;
+
+assign SRAM_DQ[7:0]  = lsbz ? 8'bZZZZZZZZ : effective_do[7:0];
+assign SRAM_DQ[15:8] = msbz ? 8'bZZZZZZZZ : effective_do[15:8];
 
 assign din = abus[0] ? SRAM_DQ[15:8] : SRAM_DQ[7:0];
 
 endmodule
-
-// $Id$
