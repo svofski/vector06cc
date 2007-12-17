@@ -1,4 +1,5 @@
 #summary MicroDOS Manual
+#labels Phase-Support
 
 = Introduction =
 This is a partially salvaged MicroDOS manual. MicroDOS is a CP/M-like system designed primarily to work within the constraints of a floppyless system with a RAM disk. It was however used with floppies as well.
