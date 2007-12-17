@@ -1,0 +1,36 @@
+#summary How to make use of this project
+#labels Phase-Deploy
+
+== Intro ==
+This is a hardware project, which means that you can't e.g. just download, compile and run it on your PC. In order to be useful, it requires a compatible development board with an appropriate FPGA. As of time when this document is written, there's only one such board and it's called Altera Cyclone II Starter Kit, aka DE1 starter kit.
+
+The original Vector-06C computer uses a KR580 CPU, which is a clone of Intel 8080. This work, however, is based on a T80 CPU core by Daniel Wallner. T80 was designed to be an accurate model of Z80, not 8080 and although it allowed 8080 mode, its not perfectly accurate. This project contains changes made in order to make T80 core in Mode2 cycle-accurate with i8080. Also, original T80 does not implement STACK signal. I needed it because Vector-06C uses STACK for its unique RAMdisk operation, so I added STACK to T80 too.
+
+== Requirements ==
+Basically you only need one thing: [http://www.altera.com/products/devkits/altera/kit-cyc2-2C20N.html Cyclone II Starter Kit, DE1]. If you don't have one and have a different board, you're *intensely* welcome to port this project to that board. It is of course a good idea to keep the portage stuff separate, so that different HW-adaptations would use a single source base.
+
+== Getting it working ==
+Provided you have DE1 board and it's connected to your host PC and Quartus II is installed, you can:
+ * Download source code and compile it
+ * Download binary release and upload it directly
+In any occasion you must be absolutely sure that you have DE1 board and nothing else. It WILL NOT work on anything else and it WILL DAMAGE your non-DE1 board. I don't take any responsibility for damaged hardware.
+
+== After it's uploaded ==
+Provided that your monitor supports 720x576@50Hz mode, which most modern LCD monitors should support, upon startup you will see a blue screen with yellow grid, the top line saying "ВЕКТОР-06Ц" and there would be a tape icon. If you see this picture, everything is perfect! If you don't, start fixing the code and submitting patches.
+
+Now that you have the hardware, you want to upload the software. You can search for Vector-06C software in .rom files, they should not be copyrighted, or you can download a ramdisk image with a couple of programs from my homepage on http://sensi.org/~svo/vector06c 
+
+=== Switches ===
+See README.txt, or comments in vector06cc.v for details, but long story short: SW8 and SW9 must be in the "1" or "Up" position. The rest are unimportant.
+
+== Uploading software ==
+There are several methods of running software. Here they are in order of ease of use. You will need *Cyclone II Starter Kit Control Panel* program supplied with your DE1 board in order to transfer data to the board's SRAM.
+
+=== RAMdisk image ===
+Use the control panel to upload ramdisk.img (or .edd or whatever, the size should be 256K) starting with address *8000* (this is hex). Make sure that you select SRAM tab, select sequential upload, check "File size" checkbox and chose a file. After you uploaded the image, press RESET (KEY0) again, the screen must fill with full yellow boxes, address "EB" should be held on the hex display and LED9 must be blinking steady. Now you can press F12 on the PS/2 keyboard to boot into MicroDOS. Change disk to C:, "D" is for "Directory". See [MicroDOS_manual] for more on MicroDOS.
+
+=== ROM files ===
+After Vector-06C is loaded, if there's nothing in RAMdisk, it expects things to be loaded from tape. However, today in late 2000's we can bypass the tape and load stuff directly into RAM. For that, open CII Control Panel, open USB port, select SRAM tab, Sequential Write, check "File Length" and the start address should be *80* (0x100 in bytes == 0x80 in words). After file is written, nothing will be changed on the display, but the data will be in RAM. Press F12 on keyboard and there you go.
+
+=== Load from Tape ===
+Audio input works and you can load from .wav file, .mp3 file (96kbps seems to be working best), iPod, tape player, whatever --- provided you have any wav's or tapes. This process will not differ from the original Vector-06C or any other computer, after image is loaded, RUS/LAT LED will blink steady (LED9) and F12 on the keyboard will start the program.
