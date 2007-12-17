@@ -1,9 +1,0 @@
-#summary Start Here
-#labels Featured
-
-= Index =
-
- * [license Licensing information]
- * [Technical_Description Technical Description of Vector-06C by Alexander Timoshenko]
- * [MicroDOS_manual MicroDOS manual]
- * [ramdisk RAM disk documentation, various sources]
