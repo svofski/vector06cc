@@ -1,4 +1,5 @@
 #summary Technical description of Vector-06C
+#labels Phase-Design
 = TO.TXT Verbatim =
 {{{
 (с)  Тимошенко Александр Валерьевич (aka TIMSoft)
