@@ -2,6 +2,6 @@
 
 = Index =
 
-* [license License]
-* [Technical_Description Technical Description of Vector-06C by Alexander Timoshenko]
-* [MicroDOS_manual MicroDOS manual]
+ * [license Licensing information]
+ * [Technical_Description Technical Description of Vector-06C by Alexander Timoshenko]
+ * [MicroDOS_manual MicroDOS manual]
