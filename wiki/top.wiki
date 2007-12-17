@@ -1,4 +1,5 @@
 #summary top
+#labels Featured
 
 = Index =
 
