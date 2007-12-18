@@ -228,9 +228,9 @@ set_global_assignment -name VHDL_FILE src/i82c55/i82c55.vhd
 set_global_assignment -name VERILOG_FILE src/i8253/8253.v
 set_global_assignment -name VERILOG_FILE src/keyboard/scan2matrix.v
 set_global_assignment -name VERILOG_FILE src/keyboard/ps2k.v
+set_global_assignment -name VERILOG_FILE src/keyboard/vectorkeys.v
 set_global_assignment -name VERILOG_FILE src/altmodules/mclk24mhz.v
 set_global_assignment -name VERILOG_FILE src/altmodules/palette_ram.v
-set_global_assignment -name VERILOG_FILE src/keyboard/vectorkeys.v
 set_global_assignment -name VERILOG_FILE src/DE1/I2C_AV_Config.v
 set_global_assignment -name VERILOG_FILE src/DE1/USB_JTAG.v
 set_global_assignment -name VERILOG_FILE src/DE1/CMD_Decode.v
