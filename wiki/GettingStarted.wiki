@@ -33,7 +33,7 @@ Use the control panel to upload ramdisk.img (or .edd or whatever, the size shoul
 After Vector-06C is loaded, if there's nothing in RAMdisk, it expects things to be loaded from tape. However, today in late 2000's we can bypass the tape and load stuff directly into RAM. For that, open CII Control Panel, open USB port, select SRAM tab, Sequential Write, check "File Length" and the start address should be *80* (0x100 in bytes == 0x80 in words). After file is written to memory display will not change, but the data will be in RAM. Press F12 on keyboard and there you go.
 
 === Load from Tape ===
-Audio input works and you can load from .wav file, .mp3 file (96kbps seems to be working best), iPod, tape player, whatever --- provided you have any wav's or tapes. This process will not differ from the original Vector-06C or any other computer, after image is loaded, RUS/LAT LED will blink steady (LED9) and F12 on the keyboard will start the program.
+Audio input works and you can load from .wav file, .mp3 file (96kbps seems to be working best), iPod, tape player, whatever --- provided you have any wav's or tapes. This process will not differ from the original Vector-06C or any other computer, after image is loaded, RUS/LAT LED will blink steady (LED9) and F12 on the keyboard will start the program. See [HOWTO_rom2wav ROM->WAV howto]
 
 = Other pages of interest =
  * [license Licensing information]
