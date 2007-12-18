@@ -15,7 +15,7 @@ Provided you have DE1 board and it's connected to your host PC and Quartus II is
  * Download binary release and upload it directly
 In any occasion you must be absolutely sure that you have DE1 board and nothing else. It WILL NOT work on anything else and it WILL DAMAGE your non-DE1 board. I don't take any responsibility for damaged hardware.
 
-== After it's uploaded ==
+== After the firmware is uploaded ==
 Provided that your monitor supports 720x576@50Hz mode, which most modern LCD monitors should support, upon startup you will see a blue screen with yellow grid, the top line saying "ВЕКТОР-06Ц" and there would be a tape icon. If you see this picture, everything is perfect! If you don't, start fixing the code and submitting patches.
 
 Now that you have the hardware, you want to upload software. You can search for Vector-06C software in .rom files, or you can download a ramdisk image with a couple of programs from my homepage on http://sensi.org/~svo/vector06c 
