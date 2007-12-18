@@ -62,10 +62,13 @@ wire		matrix_shift;
 wire		neo;			// not in matrix
 wire [7:0]	decoded_col;
 
-scan2matrix scan2xy(clkk, ps2q, qey_shift, mod_rus, matrix_row, matrix_col, matrix_shift, neo);
+scan2matrix scan2xy(clkk, ps2q, saved_ps2_shift|qey_shift, mod_rus, matrix_row, matrix_col, matrix_shift, neo);
 
 assign 	key_shift = qey_shift ^ qmatrix_shift; 
 reg		qmatrix_shift;
+reg		saved_ps2_shift;	// when a key requiring shift-play is pressed, shift
+							// flag must be remembered until its release, otherwise
+							// wrong release code is detected
 
 keycolumndecoder column_dc(matrix_col,decoded_col);
 
@@ -148,6 +151,7 @@ always @(posedge clkk) begin
 							if (!neo) begin
 								keymatrix[matrix_row] <= tmp | decoded_col;
 								qmatrix_shift <= qmatrix_shift | matrix_shift;
+								if (matrix_shift) saved_ps2_shift <= qey_shift;
 							end
 						end
 				endcase
@@ -189,6 +193,7 @@ always @(posedge clkk) begin
 					default: 
 						if (!neo) begin
 							keymatrix[matrix_row] <=  tmp & ~decoded_col;
+							if (saved_ps2_shift & matrix_shift) saved_ps2_shift <= 1'b0;
 							qmatrix_shift <= 1'b0;
 						end
 				endcase
