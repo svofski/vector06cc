@@ -23,20 +23,25 @@ module CMD_Decode(	//	USB JTAG
 					iCLK,iRST_n,
 					oHOLD,iHLDA);
 //	USB JTAG
-input [7:0] iRXD_DATA;
-input iRXD_Ready,iTXD_Done;
-output [7:0] oTXD_DATA;
-output oTXD_Start;
+input 	[7:0] 		iRXD_DATA;
+input 				iRXD_Ready;
+input				iTXD_Done;
+output [7:0] 		oTXD_DATA;
+output 				oTXD_Start;
+
 //	SRAM
-input	[15:0]	iSR_DATA;
+input	[15:0]		iSR_DATA;
 output	reg [15:0]	oSR_DATA;
 output	reg	[17:0]	oSR_ADDR;
-output	oSR_WE_N,oSR_OE_N;
-output 	oJTAG_SEL;
+output				oSR_WE_N;
+output				oSR_OE_N;
+output 				oJTAG_SEL;
+
 //	Control
-input iCLK,iRST_n;
-output reg 	oHOLD;
-input  		iHLDA;
+input 				iCLK;
+input				iRST_n;
+output reg 			oHOLD;
+input  				iHLDA;
 
 //	Internal Register
 reg [63:0] 	CMD_Tmp;
@@ -46,14 +51,15 @@ reg [2:0] 	mSR_ST;
 reg	mSR_WRn,mSR_Start;
 
 //	Active Flag
-reg f_SETUP, f_SR_SEL;
+reg f_SETUP;
 reg	f_SRAM;
 
 //	USB JTAG TXD Output
 reg oSR_TXD_Start;
 reg [7:0] oSR_TXD_DATA;
+
 //	TXD Output Select Register
-reg sel_FL,sel_SDR,sel_PS2,sel_SR;
+reg sel_SR;
 
 
 `include "RS232_Command.h"
@@ -70,44 +76,25 @@ reg  [15:0]	sram_idata_latch;
 
 assign oJTAG_SEL = f_SRAM & iHLDA;
 
-/////////////////////////////////////////////////////////
-////////////////	 SRAM Select	/////////////////////
-always@(posedge iCLK or negedge iRST_n)
-begin
-	if(!iRST_n)
-	begin
-		//oSR_Select	<=0;
-		f_SR_SEL	<=0;
-	end
-	else
-	begin
-		if(iRXD_Ready && (Pre_Target == SRSEL) ) begin
-			f_SR_SEL<=1;
-		end
-		
-		if(f_SR_SEL) begin
-			//if( (CMD_Action	== SETUP) && (CMD_MODE	== OUTSEL) && 
-			//	(CMD_ADDR == 24'h123456) ) begin
-			//oSR_Select<=CMD_DATA[1:0];
-			//end
-			f_SR_SEL<=0;
-		end
-	end
-end
-
-`ifdef JTAG_SLOWTIMER
-reg [15:0] timer;
-always @(posedge iCLK) begin
-	if (iRXD_Ready) begin
-		oHOLD <= 1'b1;
-		timer <= 16'hffff;
+`ifdef JTAG_AUTOHOLD
+reg [7:0] timer; // looks like about time to hold the bus for sure
+always @(posedge iCLK or negedge iRST_n) begin
+	if (!iRST_n) begin
+		oHOLD <= 0;
 	end else begin
-		if (timer != 0) 
-			timer <= timer - 1'b1;
-		else 
-			oHOLD <= 0;
+		if (iRXD_Ready) begin
+			oHOLD <= 1'b1;
+			timer <= 8'hff;
+		end else begin
+			if (timer != 0) 
+				timer <= timer - 1'b1;
+			else 
+				oHOLD <= 0;
+		end
 	end
 end
+`else
+always oHOLD <= 0;
 `endif
 
 /////////////////////////////////////////////////////////
@@ -141,6 +128,7 @@ begin
 		end
 	end
 end
+
 assign oTXD_Start	= 	oSR_TXD_Start;
 assign oTXD_DATA	=	oSR_TXD_DATA;
 
@@ -171,21 +159,20 @@ begin
 	end
 	else
 	begin
-		if( CMD_Action == READ )
+		if (CMD_Action == READ)
 			mSR_WRn	<=	1'b0;
-		else if( CMD_Action == WRITE )
+		else 
+		if (CMD_Action == WRITE)
 			mSR_WRn	<=	1'b1;
 		
-		if(iRXD_Ready && (Pre_Target == SRAM)) begin
+		if (iRXD_Ready && (Pre_Target == SRAM)) begin
 			f_SRAM <= 1;
 		end
 		
-		if(f_SRAM & iHLDA)
-		begin
+		if(f_SRAM & iHLDA) begin
 			case(mSR_ST)
 			0:	begin
-					if( (CMD_MODE	== NORMAL) && (CMD_Target == SRAM) )
-					begin
+					if ((CMD_MODE	== NORMAL) && (CMD_Target == SRAM)) begin
 						oSR_ADDR	<=	CMD_ADDR;
 						oSR_DATA	<=	CMD_DATA;
 						mSR_Start	<= 	1;
@@ -215,8 +202,7 @@ begin
 					mSR_ST			<=	3;
 				end
 			3:	begin
-					if(iTXD_Done)
-					begin
+					if(iTXD_Done) begin
 						oSR_TXD_Start<=0;
 						mSR_ST	<=	4;
 					end											
@@ -227,8 +213,7 @@ begin
 					mSR_ST			<=	5;
 				end
 			5:	begin
-					if(iTXD_Done)
-					begin
+					if(iTXD_Done) begin
 						mSR_Start	<=	0;
 						oSR_TXD_Start<=	0;
 						mSR_ST		<=	0;
