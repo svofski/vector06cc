@@ -51,6 +51,7 @@
 `define WITH_KEYBOARD
 `define WITH_VI53
 `define WITH_DE1_JTAG
+`define JTAG_SLOWTIMER
 
 module vector06cc(CLOCK_27, clk50mhz, KEY[3:0], LEDr[9:0], LEDg[7:0], SW[9:0], HEX0, HEX1, HEX2, HEX3, 
 		////////////////////	SRAM Interface		////////////////
@@ -235,7 +236,11 @@ assign GPIO_0[4:0] = {VAIT, cpu_ce, READY, ws_cpu_time, ~ws_req_n};
 /////////////////
 wire RESET_n = mreset_n & !blksbr_reset_pulse;
 reg READY;
-wire HOLD = 0;
+`ifdef JTAG_SLOWTIMER
+wire HOLD = jHOLD;
+`else
+wire HOLD = SW[7];
+`endif
 wire INT = int_request;
 wire INTE;
 wire DBIN;
@@ -261,7 +266,7 @@ wire [1:0] sw23 = {SW[3],SW[2]};
 
 wire [7:0] kbd_keystatus = {kbd_mod_rus, kbd_key_shift, kbd_key_ctrl, kbd_key_rus, kbd_key_blksbr};
 
-assign LEDg = sw23 == 0 ? status_word : sw23 == 1 ? {kbd_keystatus} : sw23 == 2 ? kvaz_debug : {mJTAG_SELECT, mJTAG_SRAM_WR_N, SRAM_ADDR[17:15]};
+assign LEDg = sw23 == 0 ? status_word : sw23 == 1 ? {kbd_keystatus} : sw23 == 2 ? kvaz_debug : {HLDA, mJTAG_SELECT, mJTAG_SRAM_WR_N, SRAM_ADDR[17:15]};
 SEG7_LUT_4 seg7display(HEX0, HEX1, HEX2, HEX3, SW[4] ? clock_counter : A);
 
 
@@ -623,9 +628,13 @@ wire [15:0]	mJTAG_DATA_TO_HOST,mJTAG_DATA_FROM_HOST;
 wire		mJTAG_SRAM_WR_N;
 wire 		mJTAG_SELECT;
 
+wire		jHOLD;
+
 jtag_top	tigertiger(
 				.clk24(clk24),
 				.reset_n(mreset_n),
+				.oHOLD(jHOLD),
+				.iHLDA(HLDA),
 				.iTCK(TCK),
 				.oTDO(TDO),
 				.iTDI(TDI),

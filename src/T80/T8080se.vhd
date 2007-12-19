@@ -114,7 +114,7 @@ architecture rtl of T8080se is
 begin
 
 	INT_n <= not INT;
-	BUSRQ_n <= HOLD;
+	BUSRQ_n <= not HOLD;
 	HLDA <= not BUSAK_n;
 	SYNC <= '1' when TState = "001" else '0';
 	VAIT <= '1' when TState = "010" else '0';
@@ -146,7 +146,7 @@ begin
 			INT_n => INT_n,
 			NMI_n => One,
 			RESET_n => RESET_n,
-			BUSRQ_n => One,
+			BUSRQ_n => BUSRQ_n,
 			BUSAK_n => BUSAK_n,
 			CLK_n => CLK,
 			A => A,

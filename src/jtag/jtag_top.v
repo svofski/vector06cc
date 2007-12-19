@@ -22,9 +22,13 @@
 
 `default_nettype none
 
-module jtag_top(clk24, reset_n, iTCK, oTDO, iTDI, iTCS, oJTAG_ADDR, iJTAG_DATA_TO_HOST, oJTAG_DATA_FROM_HOST, oJTAG_SRAM_WR_N, oJTAG_SELECT);
+module jtag_top(clk24, reset_n, oHOLD, iHLDA, iTCK, oTDO, iTDI, iTCS, oJTAG_ADDR, iJTAG_DATA_TO_HOST, oJTAG_DATA_FROM_HOST, oJTAG_SRAM_WR_N, oJTAG_SELECT);
 input	clk24;
 input	reset_n;
+
+output 	oHOLD;
+input	iHLDA;
+
 input	iTCK;
 output	oTDO;
 input	iTDI;
@@ -67,10 +71,12 @@ CMD_Decode				u5	(	//	USB JTAG
 							.oSR_DATA(oJTAG_DATA_FROM_HOST),
 							.oSR_ADDR(oJTAG_ADDR),
 							.oSR_WE_N(oJTAG_SRAM_WR_N),
-							.f_SRAM(oJTAG_SELECT),
+							.oJTAG_SEL(oJTAG_SELECT),
 							//	Control
 						 	.iCLK(clk24),
-							.iRST_n(reset_n));
+							.iRST_n(reset_n),
+							.oHOLD(oHOLD),
+							.iHLDA(iHLDA));
 `else
 assign 	mJTAG_ADDR		=	18'b0;
 assign	mJTAG_DATA_TO_HOST =16'bZ;
