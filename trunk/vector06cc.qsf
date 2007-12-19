@@ -212,6 +212,7 @@ set_location_assignment PIN_D7 -to TDO
 set_location_assignment PIN_D8 -to TCS
 set_location_assignment PIN_E8 -to TDI
 set_global_assignment -name VECTOR_WAVEFORM_FILE clk50mhz.vwf
+set_global_assignment -name CYCLONEII_OPTIMIZATION_TECHNIQUE BALANCED
 set_global_assignment -name VERILOG_FILE src/vector06cc.v
 set_global_assignment -name VERILOG_FILE src/ramdisk/kvaz.v
 set_global_assignment -name VERILOG_FILE src/lpm_rom0.v
@@ -219,6 +220,7 @@ set_global_assignment -name VERILOG_FILE src/clockster.v
 set_global_assignment -name VERILOG_FILE src/sram_map.v
 set_global_assignment -name VERILOG_FILE src/singleclockster.v
 set_global_assignment -name VERILOG_FILE src/oneshot.v
+set_global_assignment -name VERILOG_FILE src/specialkeys.v
 set_global_assignment -name VERILOG_FILE src/video/video.v
 set_global_assignment -name VERILOG_FILE src/video/framebuffer.v
 set_global_assignment -name VERILOG_FILE src/video/shiftreg2.v
@@ -246,5 +248,3 @@ set_global_assignment -name VHDL_FILE src/T80/T80_Pack.vhd
 set_global_assignment -name VHDL_FILE src/T80/T80_Reg.vhd
 set_global_assignment -name VHDL_FILE src/T80/T8080se.vhd
 set_global_assignment -name VERILOG_FILE src/jtag/jtag_top.v
-set_global_assignment -name VERILOG_FILE src/specialkeys.v
-set_global_assignment -name CYCLONEII_OPTIMIZATION_TECHNIQUE BALANCED

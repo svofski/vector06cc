@@ -84,7 +84,7 @@ reg		saved_shift_trigger;
 reg		[8:0] slow_ce_ctr;
 always 	@(posedge clkk) slow_ce_ctr <= slow_ce_ctr + 1;
 wire	slow_ce = slow_ce_ctr == 0;
-oneshot #(255)(clkk, slow_ce, saved_shift_trigger, saved_shift);
+oneshot #(255) shitshot(clkk, slow_ce, saved_shift_trigger, saved_shift);
 
 reg [2:0] lastrownum;
 reg [7:0] lastrowbits;
