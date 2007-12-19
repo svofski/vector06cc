@@ -1,3 +1,5 @@
+`default_nettype none
+
 //Legal Notice: (C)2006 Altera Corporation. All rights reserved. Your
 //use of Altera Corporation's design tools, logic functions and other
 //software and tools, and its AMPP partner logic functions, and any
@@ -16,9 +18,10 @@
 module CMD_Decode(	//	USB JTAG
 					iRXD_DATA,oTXD_DATA,iRXD_Ready,iTXD_Done,oTXD_Start,
 					//	SRAM
-					oSR_DATA,iSR_DATA,oSR_ADDR,oSR_WE_N,oSR_OE_N, f_SRAM,
+					oSR_DATA,iSR_DATA,oSR_ADDR,oSR_WE_N,oSR_OE_N, oJTAG_SEL,
 					//	Control
-					iCLK,iRST_n	);
+					iCLK,iRST_n,
+					oHOLD,iHLDA);
 //	USB JTAG
 input [7:0] iRXD_DATA;
 input iRXD_Ready,iTXD_Done;
@@ -29,9 +32,11 @@ input	[15:0]	iSR_DATA;
 output	reg [15:0]	oSR_DATA;
 output	reg	[17:0]	oSR_ADDR;
 output	oSR_WE_N,oSR_OE_N;
-output 	f_SRAM;
+output 	oJTAG_SEL;
 //	Control
 input iCLK,iRST_n;
+output reg 	oHOLD;
+input  		iHLDA;
 
 //	Internal Register
 reg [63:0] 	CMD_Tmp;
@@ -50,6 +55,7 @@ reg [7:0] oSR_TXD_DATA;
 //	TXD Output Select Register
 reg sel_FL,sel_SDR,sel_PS2,sel_SR;
 
+
 `include "RS232_Command.h"
 
 wire [7:0]	CMD_Action	=	CMD_Tmp[63:56];
@@ -62,6 +68,8 @@ wire [7:0] 	Pre_Target	=	CMD_Tmp[47:40];
 
 reg  [15:0]	sram_idata_latch;
 
+assign oJTAG_SEL = f_SRAM & iHLDA;
+
 /////////////////////////////////////////////////////////
 ////////////////	 SRAM Select	/////////////////////
 always@(posedge iCLK or negedge iRST_n)
@@ -73,17 +81,35 @@ begin
 	end
 	else
 	begin
-		if(iRXD_Ready && (Pre_Target == SRSEL) )
-		f_SR_SEL<=1;
-		if(f_SR_SEL)
-		begin
-			if( (CMD_Action	== SETUP) && (CMD_MODE	== OUTSEL) && 
-				(CMD_ADDR == 24'h123456) )
+		if(iRXD_Ready && (Pre_Target == SRSEL) ) begin
+			f_SR_SEL<=1;
+		end
+		
+		if(f_SR_SEL) begin
+			//if( (CMD_Action	== SETUP) && (CMD_MODE	== OUTSEL) && 
+			//	(CMD_ADDR == 24'h123456) ) begin
 			//oSR_Select<=CMD_DATA[1:0];
+			//end
 			f_SR_SEL<=0;
 		end
 	end
 end
+
+`ifdef JTAG_SLOWTIMER
+reg [15:0] timer;
+always @(posedge iCLK) begin
+	if (iRXD_Ready) begin
+		oHOLD <= 1'b1;
+		timer <= 16'hffff;
+	end else begin
+		if (timer != 0) 
+			timer <= timer - 1'b1;
+		else 
+			oHOLD <= 0;
+	end
+end
+`endif
+
 /////////////////////////////////////////////////////////
 /////////////////	TXD	Output Select		/////////////
 always@(posedge iCLK or negedge iRST_n)
@@ -95,8 +121,8 @@ begin
 	end
 	else
 	begin
-		if(iRXD_Ready && (Pre_Target == SET_REG) )
-		f_SETUP<=1;
+		if(iRXD_Ready && (Pre_Target == SET_REG) ) f_SETUP<=1;
+		
 		if(f_SETUP)
 		begin
 			if( (CMD_Action	== SETUP) && (CMD_MODE	== OUTSEL) &&
@@ -146,13 +172,15 @@ begin
 	else
 	begin
 		if( CMD_Action == READ )
-		mSR_WRn	<=	1'b0;
+			mSR_WRn	<=	1'b0;
 		else if( CMD_Action == WRITE )
-		mSR_WRn	<=	1'b1;
+			mSR_WRn	<=	1'b1;
 		
-		if(iRXD_Ready && (Pre_Target == SRAM))
-		f_SRAM<=1;
-		if(f_SRAM)
+		if(iRXD_Ready && (Pre_Target == SRAM)) begin
+			f_SRAM <= 1;
+		end
+		
+		if(f_SRAM & iHLDA)
 		begin
 			case(mSR_ST)
 			0:	begin
