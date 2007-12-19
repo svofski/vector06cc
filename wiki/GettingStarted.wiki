@@ -36,8 +36,8 @@ After Vector-06C is loaded, if there's nothing in RAMdisk, it expects things to 
 Audio input works and you can load from .wav file, .mp3 file (96kbps seems to be working best), iPod, tape player, whatever --- provided you have any wav's or tapes. This process will not differ from the original Vector-06C or any other computer, after image is loaded, RUS/LAT LED will blink steady (LED9) and F12 on the keyboard will start the program. See [HOWTO_rom2wav ROM->WAV howto]
 
 = Other pages of interest =
- * [license Licensing information]
- * [Technical_Description Technical Description of Vector-06C by Alexander Timoshenko]
- * [MicroDOS_manual MicroDOS manual]
- * [ramdisk RAM disk documentation, various sources]
- * [HOWTO_rom2wav ROM->WAV howto]
+ * [license Licensing information (en)]
+ * [Technical_Description Technical Description of Vector-06C by Alexander Timoshenko (ru)]
+ * [MicroDOS_manual MicroDOS manual (ru)]
+ * [ramdisk RAM disk documentation, various sources (ru)]
+ * [HOWTO_rom2wav ROM->WAV howto (en)]
