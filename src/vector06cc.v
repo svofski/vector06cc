@@ -55,7 +55,7 @@
 `define WITH_DE1_JTAG
 `define JTAG_AUTOHOLD
 
-module vector06cc(CLOCK_27, clk50mhz, KEY[3:0], LEDr[9:0], LEDg[7:0], SW[9:0], HEX0, HEX1, HEX2, HEX3, 
+module vector06cc(CLOCK_27, KEY[3:0], LEDr[9:0], LEDg[7:0], SW[9:0], HEX0, HEX1, HEX2, HEX3, 
 		////////////////////	SRAM Interface		////////////////
 		SRAM_DQ,						//	SRAM Data bus 16 Bits
 		SRAM_ADDR,						//	SRAM Address bus 18 Bits
@@ -95,7 +95,6 @@ module vector06cc(CLOCK_27, clk50mhz, KEY[3:0], LEDr[9:0], LEDg[7:0], SW[9:0], H
 		GPIO_0
 );
 input [1:0]		CLOCK_27;
-input 			clk50mhz;
 input [3:0] 	KEY;
 output [9:0] 	LEDr;
 output [7:0] 	LEDg;
