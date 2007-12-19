@@ -31,7 +31,9 @@
 //						 0:	CPU address bus
 //						 1: TState counter
 //
-//	SW7-5			not used
+//	SW6-5			not used
+//
+//	SW7				manual bus hold, recommended for SRAM <-> JTAG exchange operations
 //
 //					These must be 1 for normal operation:
 //	SW8				slow clock, code is executed at eyeballable speed
@@ -51,7 +53,7 @@
 `define WITH_KEYBOARD
 `define WITH_VI53
 `define WITH_DE1_JTAG
-`define JTAG_SLOWTIMER
+`define JTAG_AUTOHOLD
 
 module vector06cc(CLOCK_27, clk50mhz, KEY[3:0], LEDr[9:0], LEDg[7:0], SW[9:0], HEX0, HEX1, HEX2, HEX3, 
 		////////////////////	SRAM Interface		////////////////
@@ -236,11 +238,7 @@ assign GPIO_0[4:0] = {VAIT, cpu_ce, READY, ws_cpu_time, ~ws_req_n};
 /////////////////
 wire RESET_n = mreset_n & !blksbr_reset_pulse;
 reg READY;
-`ifdef JTAG_SLOWTIMER
-wire HOLD = jHOLD;
-`else
-wire HOLD = SW[7];
-`endif
+wire HOLD = jHOLD | SW[7];
 wire INT = int_request;
 wire INTE;
 wire DBIN;
