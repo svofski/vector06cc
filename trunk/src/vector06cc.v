@@ -148,7 +148,7 @@ output [10:0] 	GPIO_0;
 
 
 // CLOCK SETUP
-wire mreset_n = KEY[0];
+wire mreset_n = KEY[0] & ~kbd_key_blkvvod;
 wire mreset = !mreset_n;
 wire clk24, clk18;
 wire ce12, ce6, ce3, ce3v, vi53_timer_ce, video_slice, pipe_ab;
@@ -238,7 +238,7 @@ assign GPIO_0[4:0] = {VAIT, cpu_ce, READY, ws_cpu_time, ~ws_req_n};
 /////////////////
 wire RESET_n = mreset_n & !blksbr_reset_pulse;
 reg READY;
-wire HOLD = jHOLD | SW[7];
+wire HOLD = jHOLD | SW[7] | scrollock_hold;
 wire INT = int_request;
 wire INTE;
 wire DBIN;
@@ -435,19 +435,33 @@ wire 		kbd_key_shift;
 wire		kbd_key_ctrl;
 wire		kbd_key_rus;
 wire		kbd_key_blksbr;
+wire		kbd_key_blkvvod;
+wire		kbd_key_bushold;
 
 `ifdef WITH_KEYBOARD
-	vectorkeys kbdmatrix(clk24, mreset, PS2_CLK, PS2_DAT, 
-		kbd_mod_rus, 
-		kbd_rowselect, 
-		kbd_rowbits, 
-		kbd_key_shift, kbd_key_ctrl, kbd_key_rus, kbd_key_blksbr);
+	vectorkeys kbdmatrix(
+		.clkk(clk24), 
+		.reset(~KEY[0]), 
+		.ps2_clk(PS2_CLK), 
+		.ps2_dat(PS2_DAT), 
+		.mod_rus(kbd_mod_rus), 
+		.rowselect(kbd_rowselect), 
+		.rowbits(kbd_rowbits), 
+		.key_shift(kbd_key_shift), 
+		.key_ctrl(kbd_key_ctrl), 
+		.key_rus(kbd_key_rus), 
+		.key_blksbr(kbd_key_blksbr), 
+		.key_blkvvod(kbd_key_blkvvod),
+		.key_bushold(kbd_key_bushold)
+		);
 `else
 	assign kbd_rowbits = 8'hff;
 	assign kbd_key_shift = 0;
 	assign kbd_key_ctrl = 0;
 	assign kbd_key_rus = 0;
 	assign kbd_key_blksbr = 0;
+	assign kbd_key_blkvvod = 0;
+	assign kbd_key_bushold = 0;
 `endif
 
 ///////////////
@@ -591,28 +605,27 @@ always @(posedge clk24) begin
 		video_palette_wren <= 1'b0;
 end
 
-///////////////////
-// BLK+SBR: KEY3 //
-///////////////////
-reg 	disable_rom = 0;
-reg		rst0toggle = 0;
+
+//////////////////
+// Special keys //
+//////////////////
+
+wire	scrollock_hold;
 wire	blksbr_reset_pulse;
-always @(posedge clk24) begin
-	if (mreset) begin
-		disable_rom <= 0;
-		rst0toggle <= 0;
-		gledreg[8] <= 0;
-	end
-	else if (cpu_ce) begin
-		if (KEY[3] == 1'b0 || kbd_key_blksbr == 1'b1) begin
-			disable_rom <= 1;
-			rst0toggle <= 1;
-			gledreg[8] <= 1;
-		end
-		else rst0toggle <= 0;
-	end 
-end
-oneshot blksbr(clk24, cpu_ce, rst0toggle, blksbr_reset_pulse);
+wire	disable_rom;
+
+specialkeys skeys(
+				.clk(clk24), 
+				.cpu_ce(cpu_ce),
+				.reset_n(mreset_n), 
+				.key_blksbr(KEY[3] == 1'b0 || kbd_key_blksbr == 1'b1), 
+				.key_bushold(kbd_key_bushold),
+				.o_disable_rom(disable_rom),
+				.o_blksbr_reset(blksbr_reset_pulse),
+				.o_bushold(scrollock_hold)
+				);
+				
+always gledreg[8] <= disable_rom;				
 
 I2C_AV_Config 		u7(clk24,mreset_n,I2C_SCLK,I2C_SDAT);
 

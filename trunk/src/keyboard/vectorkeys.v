@@ -28,7 +28,7 @@
 
 
 `default_nettype none
-module vectorkeys(clkk, reset, ps2_clk, ps2_dat, mod_rus, rowselect, rowbits, key_shift, key_ctrl, key_rus, key_blksbr);
+module vectorkeys(clkk, reset, ps2_clk, ps2_dat, mod_rus, rowselect, rowbits, key_shift, key_ctrl, key_rus, key_blksbr, key_blkvvod, key_bushold);
 input 		clkk;
 input 		reset;
 input 		ps2_clk;
@@ -42,6 +42,8 @@ output		key_shift;
 output 		key_ctrl;
 output		key_rus;
 output		key_blksbr;
+output		key_blkvvod;
+output		key_bushold;
 
 // for testing
 //output[3:0] lastrownum;
@@ -56,6 +58,9 @@ reg 		qey_shift = 0;
 reg			key_ctrl = 0;
 reg 		key_rus = 0;
 reg			key_blksbr = 0;
+reg			key_blkvvod = 0;
+reg			key_bushold = 0;
+
 wire [2:0]	matrix_row;
 wire [2:0]	matrix_col;
 wire		matrix_shift;
@@ -86,6 +91,7 @@ reg [7:0] lastrowbits;
 reg [3:0] state = 0;
 reg [7:0] keymatrix[0:7];
 reg [7:0] tmp;
+
 always @(posedge clkk) begin
 	if (reset) begin
 		keymatrix[0] <= 0;
@@ -100,6 +106,8 @@ always @(posedge clkk) begin
 		key_ctrl  <= 0;
 		key_rus	  <= 0;
 		key_blksbr <= 0;
+		key_blkvvod <= 0;
+		key_bushold <= 0;
 		saved_shift_trigger <= 0;
 		state <= 0;
 	end 
@@ -141,7 +149,9 @@ always @(posedge clkk) begin
 					8'h59:	qey_shift <= 1;
 					8'h14:	key_ctrl  <= 1;
 					8'h58:	key_rus	  <= 1;
-					8'h07:	key_blksbr<= 1;
+					8'h78:	key_blkvvod <= 1;
+					8'h07:	key_blksbr<= 1;	// F12
+					8'h7E:	key_bushold <= 1;
 					// special treatment of grey arrow keys
 					8'hE0:	;// do nada plz
 					default: begin
@@ -188,7 +198,9 @@ always @(posedge clkk) begin
 						end
 					8'h14:	key_ctrl  <= 0;
 					8'h58:	key_rus	  <= 0;
+					8'h78:	key_blkvvod <= 0;
 					8'h07:	key_blksbr<= 0;
+					8'h7E:	key_bushold <= 0;
 					8'hE0:	;// do nada plz
 					default: 
 						if (!neo) begin

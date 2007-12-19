@@ -246,3 +246,5 @@ set_global_assignment -name VHDL_FILE src/T80/T80_Pack.vhd
 set_global_assignment -name VHDL_FILE src/T80/T80_Reg.vhd
 set_global_assignment -name VHDL_FILE src/T80/T8080se.vhd
 set_global_assignment -name VERILOG_FILE src/jtag/jtag_top.v
+set_global_assignment -name VERILOG_FILE src/specialkeys.v
+set_global_assignment -name CYCLONEII_OPTIMIZATION_TECHNIQUE BALANCED
