@@ -83,6 +83,8 @@ set_location_assignment PIN_B16 -to GPIO_0[7]
 set_location_assignment PIN_A17 -to GPIO_0[8]
 set_location_assignment PIN_B17 -to GPIO_0[9]
 set_location_assignment PIN_A18 -to GPIO_0[10]
+set_location_assignment PIN_B18 -to GPIO_0[11]
+set_location_assignment PIN_A19 -to GPIO_0[12]
 set_location_assignment PIN_J2 -to HEX0[0]
 set_location_assignment PIN_J1 -to HEX0[1]
 set_location_assignment PIN_H2 -to HEX0[2]
@@ -206,7 +208,7 @@ set_instance_assignment -name IO_STANDARD LVTTL -to UART_RXD
 set_instance_assignment -name IO_STANDARD LVTTL -to UART_TXD
 
 
-set_global_assignment -name PROJECT_OUTPUT_DIRECTORY "reports"
+set_global_assignment -name PROJECT_OUTPUT_DIRECTORY reports
 set_location_assignment PIN_C7 -to TCK
 set_location_assignment PIN_D7 -to TDO
 set_location_assignment PIN_D8 -to TCS

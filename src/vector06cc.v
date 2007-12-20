@@ -49,11 +49,11 @@
 //							not compatible with Vector-06C
 
 // Undefine following for smaller/faster builds
-`define WITH_CPU			
-`define WITH_KEYBOARD
-`define WITH_VI53
-`define WITH_DE1_JTAG
-`define JTAG_AUTOHOLD
+`define xWITH_CPU			
+`define xWITH_KEYBOARD
+`define xWITH_VI53
+`define xWITH_DE1_JTAG
+`define xJTAG_AUTOHOLD
 
 module vector06cc(CLOCK_27, KEY[3:0], LEDr[9:0], LEDg[7:0], SW[9:0], HEX0, HEX1, HEX2, HEX3, 
 		////////////////////	SRAM Interface		////////////////
@@ -143,7 +143,7 @@ input  			TCK;					// CPLD -> FPGA (clk)
 input  			TCS;					// CPLD -> FPGA (CS)
 output 			TDO;					// FPGA -> CPLD (data out)
 
-output [10:0] 	GPIO_0;
+output [12:0] 	GPIO_0;
 
 
 // CLOCK SETUP
@@ -228,7 +228,8 @@ end
 /////////////////
 // DEBUG PINS  //
 /////////////////
-assign GPIO_0[4:0] = {VAIT, cpu_ce, READY, ws_cpu_time, ~ws_req_n};
+//assign GPIO_0[4:0] = {VAIT, cpu_ce, READY, ws_cpu_time, ~ws_req_n};
+assign GPIO_0[8:0] = {clk24, ce12, ce6, ce3, ce3v, video_slice, pipe_ab, vi53_timer_ce, pipe_ab};
 //assign GPIO_0[7:4] = {vi53_wren, vi53_out};
 //assign GPIO_0[8] = clk24;
 
@@ -390,7 +391,7 @@ video vidi(.clk24(clk24), .ce12(ce12), .ce6(ce6), .video_slice(video_slice), .pi
 		   .retrace(retrace),
 		   .video_scroll_reg(video_scroll_reg),
 		   .border_idx(video_border_index),
-		   .testpin(GPIO_0[10:7]));
+		   .testpin(GPIO_0[12:9]));
 		
 wire [7:0] realcolor;		
 wire [7:0] realcolor_buf;		

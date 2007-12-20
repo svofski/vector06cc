@@ -78,11 +78,10 @@ CMD_Decode				u5	(	//	USB JTAG
 							.oHOLD(oHOLD),
 							.iHLDA(iHLDA));
 `else
-assign 	mJTAG_ADDR		=	18'b0;
-assign	mJTAG_DATA_TO_HOST =16'bZ;
-assign 	mJTAG_DATA_FROM_HOST=16'b0;
-assign 	mJTAG_SELECT 	= 	1'b0;
-assign 	mJTAG_SRAM_WR_N = 	1'b1;
+assign 	oJTAG_ADDR		=	18'b0;
+assign 	oJTAG_DATA_FROM_HOST=16'b0;
+assign 	oJTAG_SELECT 	= 	1'b0;
+assign 	oJTAG_SRAM_WR_N = 	1'b1;
 `endif						
 						
 endmodule
