@@ -49,11 +49,11 @@
 //							not compatible with Vector-06C
 
 // Undefine following for smaller/faster builds
-`define xWITH_CPU			
-`define xWITH_KEYBOARD
-`define xWITH_VI53
-`define xWITH_DE1_JTAG
-`define xJTAG_AUTOHOLD
+`define WITH_CPU			
+`define WITH_KEYBOARD
+`define WITH_VI53
+`define WITH_DE1_JTAG
+`define JTAG_AUTOHOLD
 
 module vector06cc(CLOCK_27, KEY[3:0], LEDr[9:0], LEDg[7:0], SW[9:0], HEX0, HEX1, HEX2, HEX3, 
 		////////////////////	SRAM Interface		////////////////
