@@ -1,6 +1,4 @@
-#summary Implementation notes
 #labels Phase-Design,Featured
-
 = Clock distribution =
 
 [http://vector06cc.googlecode.com/svn/trunk/doc/clocks.png]
