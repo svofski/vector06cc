@@ -1,5 +1,5 @@
 #summary Implementation notes
-#labels Phase-Design
+#labels Phase-Design,Featured
 
 = Clock distribution =
 
