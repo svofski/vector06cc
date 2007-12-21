@@ -41,3 +41,4 @@ Audio input works and you can load from .wav file, .mp3 file (96kbps seems to be
  * [MicroDOS_manual MicroDOS manual (ru) | Руководство пользователя МикроДОС]
  * [ramdisk RAM disk documentation, various sources (ru) | Описание квазидиска]
  * [HOWTO_rom2wav ROM->WAV howto (ru) | Как из .ROM сделать .WAV]
+ * [ImplementationNotes FPGA Implementation Notes]
