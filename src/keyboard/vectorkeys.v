@@ -82,12 +82,10 @@ wire	saved_shift;			// grey arrow keys send break-shift code and then make shift
 reg		saved_shift_trigger;
 
 reg		[8:0] slow_ce_ctr;
-always 	@(posedge clkk) slow_ce_ctr <= slow_ce_ctr + 1;
+always 	@(posedge clkk) slow_ce_ctr <= slow_ce_ctr + 1'b1;
 wire	slow_ce = slow_ce_ctr == 0;
 oneshot #(255) shitshot(clkk, slow_ce, saved_shift_trigger, saved_shift);
 
-reg [2:0] lastrownum;
-reg [7:0] lastrowbits;
 reg [3:0] state = 0;
 reg [7:0] keymatrix[0:7];
 reg [7:0] tmp;
@@ -114,8 +112,6 @@ always @(posedge clkk) begin
 	else begin
 		case (state)
 		0: begin
-				lastrownum <=  matrix_row;
-				lastrowbits <= keymatrix[matrix_row];
 				//matrix_row <= rowaddr;
 				state <= 10;
 			end
