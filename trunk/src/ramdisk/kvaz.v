@@ -55,8 +55,8 @@ always @(posedge clk) begin
 end
 
 // control register breakdown
-wire [2:0] 		cr_ram_page 	= control_reg[1:0] + 1;
-wire [2:0]		cr_stack_page 	= control_reg[3:2] + 1;
+wire [2:0] 		cr_ram_page 	= control_reg[1:0] + 1'b1;
+wire [2:0]		cr_stack_page 	= control_reg[3:2] + 1'b1;
 wire			cr_stack_on		= control_reg[4];
 wire			cr_ram_on		= control_reg[5];
 
@@ -69,7 +69,7 @@ wire ram_sel = cr_ram_on & addr_sel & (memwr|memrd);
 
 wire stack_sel = cr_stack_on & stack & (memwr|memrd);
 
-always @(stack,memrd,memwr) begin
+always @(stack,memrd,memwr,stack_sel,cr_stack_page,ram_sel,cr_ram_page) begin
 	bigram_addr <= stack_sel ? cr_stack_page : ram_sel ? cr_ram_page : 3'b000;
 end	
 

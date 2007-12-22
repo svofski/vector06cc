@@ -191,7 +191,7 @@ end
 // a very special waitstate generator
 reg [4:0] 	ws_counter;
 reg 		ws_latch;
-always @(posedge clk24) ws_counter <= ws_counter + 1;
+always @(posedge clk24) ws_counter <= ws_counter + 1'b1;
 wire [3:0] ws_rom = ws_counter[4:1];
 wire ws_cpu_time = ws_rom[2] & ws_rom[1] & ws_rom[3];
 
@@ -594,7 +594,7 @@ wire		iports_sel 		= portmap_device == 3'b011;
 wire		iports_write 	= /*~ram_write_n &*/ io_write & iports_sel; // this repeats as a series of 3 _|||_ wtf
 
 // port $0C-$0F: palette value out
-wire iports_palette_sel = address_bus[1:0] == 2'b00;
+wire iports_palette_sel = address_bus[1:0] == 2'b00;		// not used <- must be fixed some day
 
 always @(posedge clk24) begin
 	if (iports_write & ~WR_n & cpu_ce) begin

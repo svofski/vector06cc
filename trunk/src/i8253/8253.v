@@ -49,7 +49,7 @@ reg [3:0] wren;
 reg [3:0] rden;
 reg [2:0] cwsel;
 
-always @(wr) begin
+always @(wr,a) begin
 	if (wr) 
 		case (a)
 		2'b00:	wren <= 4'b0001;
@@ -61,7 +61,7 @@ always @(wr) begin
 		wren <= 4'b0000;
 end
 
-always @(rd) begin
+always @(rd,a) begin
 	if (rd) 
 		case (a)
 		2'b00:	rden <= 4'b0001;

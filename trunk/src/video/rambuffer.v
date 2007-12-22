@@ -37,8 +37,6 @@ wire [9:0] wraddr;
 rdwrctr c1(clk, cerd, resetrd, rdaddr);
 rdwrctr c2(clk, cewr, resetwr, wraddr);
 
-wire [9:0] addr = wren ? wraddr : rdaddr;
-
 always @(posedge clk) begin
 	if (wren) begin
 		pixelram[wraddr] <= din;
