@@ -34,3 +34,5 @@ The best idea so far is to keep the lower 16K in preloaded M4K blocks and map hi
 Vector used a Russki clone of WD1793 floppy drive controller. 
  * [http://www.hansotten.com/msxwd1793.html MSX Info Pages of WD1793]
  * [http://svn.akop.org/psp/trunk/fms/EMULib/ EMULib has C-source of the WD1793 emulator]
+
+Also see Technical_Description for Vector-06C port map.
