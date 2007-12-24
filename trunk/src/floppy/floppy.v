@@ -190,6 +190,8 @@ TXD txda(
 
 wire timer1wr = ce & cpu_a == (IOBASE+PORT_TMR1) & memwr;
 wire timer2wr = ce & cpu_a == (IOBASE+PORT_TMR2) & memwr;
+wire timer1q;
+wire timer2q;
 
 timer100hz timer1(clk, timer1wr, cpu_do, timer1q);
 timer100hz timer2(clk, timer2wr, cpu_do, timer2q);
