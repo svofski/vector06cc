@@ -52,10 +52,10 @@ output			SRAM_CE_N;				//	SRAM Chip Enable
 output			SRAM_OE_N;				//	SRAM Output Enable
 
 ////////////////////	SD Card Interface	////////////////////////
-inout			SD_DAT;					//	SD Card Data
-inout			SD_DAT3;				//	SD Card Data 3
-inout			SD_CMD;					//	SD Card Command Signal
-output			SD_CLK;					//	SD Card Clock
+input			SD_DAT;					//	SD Card Data 			(MISO)
+output			SD_DAT3;				//	SD Card Data 3 			(CSn)
+output			SD_CMD;					//	SD Card Command Signal	(MOSI)
+output			SD_CLK;					//	SD Card Clock			(SCK)
 
 output			UART_TXD;
 input			UART_RXD;

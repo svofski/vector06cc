@@ -2,7 +2,7 @@
 #define _SPECIALIO_J
 
 #define 	IOPORT_BASE			0xE000
-#define		IOPORT_MMC_A		0x00
+#define		IOPORT_MMC_A		0x00			/* BIT0: SD_DAT3/CS */
 #define		IOPORT_SPDR			0x01
 #define		IOPORT_SPSR			0x02
 #define 	IOPORT_SOCKPORT		0x03			/* Socket contact port */
@@ -35,8 +35,11 @@
 #define SOCKINS		0x10			/* Card detect switch (PB4) */
 
 
-#define SELECT()	MMC_A &= ~1
-#define DESELECT()	MMC_A |= 1
+// MMC_A bits
+#define 	MMC_DAT3		1
+
+#define SELECT()	MMC_A &= ~MMC_DAT3
+#define DESELECT()	MMC_A |= MMC_DAT3
 
 #define SPIF	0x01
 

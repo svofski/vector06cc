@@ -21,6 +21,9 @@
 
 module floppy(clk, ce, reset_n, addr, idata, odata, memwr, sd_dat, sd_dat3, sd_cmd, sd_clk, uart_txd, green_leds, red_leds, debug, debugidata, opcode);
 parameter IOBASE = 16'hE000;
+parameter PORT_MMCA= 0;
+parameter PORT_SPDR= 1;
+parameter PORT_SPSR= 2;
 parameter PORT_TXD = 4;
 parameter PORT_RXD = 5;
 parameter PORT_CTL = 6;
@@ -37,9 +40,9 @@ output	[15:0]	addr = cpu_a;
 input	[7:0]	idata;
 output	[7:0]	odata = cpu_do;
 output			memwr;
-inout			sd_dat;
-inout			sd_dat3;
-inout			sd_cmd;
+input			sd_dat;
+output			sd_dat3;
+output			sd_cmd;
 output			sd_clk;
 output			uart_txd;
 output reg[7:0]	green_leds;
@@ -116,6 +119,8 @@ always @(negedge clk) begin
 	IOBASE+PORT_CTL:	ioports_do <= {7'b0,uart_busy};	// uart status
 	IOBASE+PORT_TMR1:	ioports_do <= timer1q;
 	IOBASE+PORT_TMR2:	ioports_do <= timer2q;
+	IOBASE+PORT_SPDR:	ioports_do <= spdr_do;
+	IOBASE+PORT_MMCA:	ioports_do <= {7'b0,spdr_dsr};
 	default:			ioports_do <= 8'hFF;
 	endcase
 end
@@ -160,7 +165,7 @@ always @(posedge clk or negedge reset_n) begin
 				end
 			3:	begin
 				end
-			endcase
+			endcase		
 		end
 	end
 end
@@ -191,6 +196,25 @@ wire [7:0] timer2q;
 
 timer100hz timer1(.clk(clk), .di(cpu_do), .wren(ce && cpu_a==(IOBASE+PORT_TMR1) && memwr), .q(timer1q));
 timer100hz timer2(.clk(clk), .di(cpu_do), .wren(ce && cpu_a==(IOBASE+PORT_TMR2) && memwr), .q(timer2q));
+
+//////////////////////
+// SPI/SD INTERFACE //
+//////////////////////
+
+wire [7:0] 	spdr_do;
+wire		spdr_dsr;
+
+spi sd0(.clk(clk),
+		.ce(1'b1),
+		.reset_n(reset_n),
+		.mosi(sd_cmd),
+		.miso(sd_dat),
+		.sck(sd_clk),
+		.di(cpu_do), 
+		.wr(ce && cpu_a == (IOBASE+PORT_SPDR) && memwr), 
+		.do(spdr_do), 
+		.dsr(spdr_dsr)
+		);
 
 endmodule
 

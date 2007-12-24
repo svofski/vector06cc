@@ -6,6 +6,8 @@
 /*-----------------------------------------------------------------------*/
 
 
+#define _READONLY 1
+
 //#include "vector/io.h"
 #include "specialio.h"
 #include "diskio.h"
@@ -50,8 +52,8 @@
 static volatile
 DSTATUS Stat = STA_NOINIT;	/* Disk status */
 
-static volatile
-BYTE Timer1, Timer2;	/* 100Hz decrement timer */
+#define Timer1	TIMER_1
+#define Timer2	TIMER_2
 
 static
 BYTE CardType;			/* b0:MMC, b1:SDv1, b2:SDv2, b3:Block addressing */
@@ -149,8 +151,9 @@ void power_off (void)
 }
 
 static
-int chk_power(void)		/* Socket power state: 0=off, 1=on */
+BYTE chk_power(void)		/* Socket power state: 0=off, 1=on */
 {
+	return (BYTE)1;
 //	return (PORTE & 0x80) ? 0 : 1;
 }
 
@@ -556,42 +559,3 @@ DRESULT disk_ioctl (
 	return res;
 }
 #endif /* _USE_IOCTL != 0 */
-
-
-/*-----------------------------------------------------------------------*/
-/* Device Timer Interrupt Procedure  (Platform dependent)                */
-/*-----------------------------------------------------------------------*/
-/* This function must be called in period of 10ms                        */
-
-void disk_timerproc (void)
-{
-	static BYTE pv;
-	BYTE n, s;
-
-
-	n = Timer1;						/* 100Hz decrement timer */
-	if (n) Timer1 = --n;
-	n = Timer2;
-	if (n) Timer2 = --n;
-
-	n = pv;
-	pv = SOCKPORT & (SOCKWP | SOCKINS);	/* Sample socket switch */
-
-	if (n == pv) {					/* Have contacts stabled? */
-		s = Stat;
-
-		if (pv & SOCKWP)			/* WP is H (write protected) */
-			s |= STA_PROTECT;
-		else						/* WP is L (write enabled) */
-			s &= ~STA_PROTECT;
-
-		if (pv & SOCKINS)			/* INS = H (Socket empty) */
-			s |= (STA_NODISK | STA_NOINIT);
-		else						/* INS = L (Card inserted) */
-			s &= ~STA_NODISK;
-
-		Stat = s;
-	}
-}
-
-
