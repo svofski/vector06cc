@@ -4,6 +4,8 @@
 
 #include "tff.h"
 
+#include "timer.h"
+
 /*---------------------------------------------------------*/
 /* User Provided Timer Function for FatFs module           */
 /*---------------------------------------------------------*/
@@ -13,17 +15,6 @@
 DWORD get_fattime (void)
 {
 	return 0;
-}
-
-void delay(uint8_t approx) {
-	uint8_t i,q;
-	for(i = approx; --i > 0;) {
-		for(q = 255; --q > 0;);
-	}
-}
-
-void delayt(uint8_t ms10) {
-	for(TIMER_1 = ms10; TIMER_1 !=0;);
 }
 
 FATFS fatfs;
@@ -37,23 +28,13 @@ void main(void) {
 
 	
 	ser_puts("@");
-	delay(10);
+	delay2(100);
 	ser_puts("\n\r}O{\n\rhello.jpg\n\r");
-	delay(50);
+	delay2(50);
 
-	/*
-	for(;;) {
-	GREEN_LEDS = 0xff;
-	delay(100);
-	GREEN_LEDS = 0;
-	delay(100);
-	}
-	*/
-
-	
 	for(;;) {
 		GREEN_LEDS = leds;
-		delayt(50);
+		delay1(10);
 		leds <<= 1;
 		if (leds == 0) leds = 0x01;
 	}
