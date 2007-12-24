@@ -8,10 +8,10 @@ L65=ld65
 
 #OBJS=mmc.o tff.o serial.o main.o
 #ASSS=mmc.s tff.s serial.s main.s
-OBJS=timer.o serial.o main.o
-ASSS=timer.s serial.s main.s
+OBJS=mmc.o timer.o serial.o main.o
+ASSS=mmc.s timer.s serial.s main.s
 
-CFLAGS=--signed-chars -v
+CFLAGS=--signed-chars -v 
 
 
 
