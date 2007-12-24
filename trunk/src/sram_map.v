@@ -53,3 +53,5 @@ assign SRAM_DQ[15:8] = msbz ? 8'bZZZZZZZZ : effective_do[15:8];
 assign din = abus[0] ? SRAM_DQ[15:8] : SRAM_DQ[7:0];
 
 endmodule
+
+// $Id$
