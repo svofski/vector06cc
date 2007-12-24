@@ -25,6 +25,11 @@ parameter PORT_TXD = 4;
 parameter PORT_RXD = 5;
 parameter PORT_CTL = 6;
 
+parameter PORT_TMR1 = 7;
+parameter PORT_TMR2 = 8;
+
+parameter PORT_LED = 16;
+
 input			clk;
 input			ce;
 input			reset_n;
@@ -109,6 +114,8 @@ zeropage zeropa(
 always @(negedge clk) begin
 	case (cpu_a)		 
 	IOBASE+PORT_CTL:	ioports_do <= {7'b0,uart_busy};	// uart status
+	IOBASE+PORT_TMR1:	ioports_do <= timer1q;
+	IOBASE+PORT_TMR2:	ioports_do <= timer2q;
 	default:			ioports_do <= 8'hFF;
 	endcase
 end
@@ -129,6 +136,8 @@ always @(posedge clk or negedge reset_n) begin
 				uart_data <= cpu_do;
 				uart_state <= 0;
 			end
+			
+			
 			
 			// uart state machine
 			case (uart_state) 
@@ -174,6 +183,16 @@ TXD txda(
 	.TxD(uart_txd),
 	.txbusy(uart_busy)
    );
+
+////////////
+// TIMERS //
+////////////
+
+wire timer1wr = ce & cpu_a == (IOBASE+PORT_TMR1) & memwr;
+wire timer2wr = ce & cpu_a == (IOBASE+PORT_TMR2) & memwr;
+
+timer100hz timer1(clk, timer1wr, cpu_do, timer1q);
+timer100hz timer2(clk, timer2wr, cpu_do, timer2q);
 
 endmodule
 
