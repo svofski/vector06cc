@@ -14,3 +14,21 @@ Clock distribution:
  * video_slice is high when video adapter wants RAM
  * pipe_ab is an internal signal in the video controller, invisible in this short simulation
  * timer_vi53_ce is the slow 1.5MHz clock enable for 8253 soundnik
+
+= Floppy Drive =
+_This section describes work in progress_
+
+=== Overview ===
+The floppy drive system is being implemented as a separate entity based on a 6502 CPU. M4K blocks are used for memory, namely 24576 bytes of main ram + 256 bytes of zero page and stack ram. According to Quartus report, 201984 memory bits are used, which is 84% of the device on DE1 and which is most likely unacceptable. 
+
+The code that lives in the 6502 unit is written in C and compiled by [http://cc65.org cc65] compiler. C language library, crt0.s and linker configuration file, vector.lc, are provided. Architecture is mostly defined by vector.lc file which contains memory map. It seems that for succesful operation, memory size 1 byte smaller than real should be specified -- could be investigated. 
+
+=== Code size concerns ===
+FAT support is based on Elm-Chan's awesome [http://elm-chan.org/fsw/ff/00index_e.html Generic FAT Filesystem module]. This module is the best one can ever wish for, providing most everything out of the box. However, being exceptionally robust, it's also not tiny.
+
+cc65 produces terribly unoptimal code, but there's no other (free) choice of compiler. On a positive note, it's a fully functional _real_ C and not some fake paw mockup. Probably code size can be reduced by throwing away some of the features, like extensive diagnostics or maybe some functions that are not necessary. Probably memory buffer size could be reduced as well. It would be great if all code + data would fit within 16K.
+
+=== WD1793 ===
+Vector used a Russki clone of WD1793 floppy drive controller. 
+ * [http://www.hansotten.com/msxwd1793.html MSX Info Pages of WD1793]
+ * [http://svn.akop.org/psp/trunk/fms/EMULib/ EMULib has C-source of the WD1793 emulator]
