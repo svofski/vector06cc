@@ -215,6 +215,8 @@ set_instance_assignment -name IO_STANDARD LVTTL -to UART_TXD
 
 
 set_global_assignment -name INCREMENTAL_VECTOR_INPUT_SOURCE src/floppywb.vwf
+set_global_assignment -name PROJECT_OUTPUT_DIRECTORY "reports"
+set_global_assignment -name VERILOG_FILE ../../src/floppy/timer100hz.v
 set_global_assignment -name VECTOR_WAVEFORM_FILE src/floppywb.vwf
 set_global_assignment -name VERILOG_FILE src/rom.v
 set_global_assignment -name VHDL_FILE src/65c02/cpu65xx_en.vhd
@@ -226,6 +228,3 @@ set_global_assignment -name VERILOG_FILE ../../src/floppy/floppy.v
 set_global_assignment -name VERILOG_FILE ../../src/DE1/SEG7_LUT.v
 set_global_assignment -name VERILOG_FILE src/floppyram.v
 set_global_assignment -name VHDL_FILE src/uart/txd.vhd
-set_global_assignment -name MIN_CORE_JUNCTION_TEMP 0
-set_global_assignment -name MAX_CORE_JUNCTION_TEMP 85
-set_global_assignment -name PROJECT_OUTPUT_DIRECTORY "reports"
