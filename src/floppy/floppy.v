@@ -51,7 +51,7 @@ output	[7:0]	debug;
 output	[7:0]	debugidata = {timer1q};
 output  [7:0]	opcode;
 
-assign	sd_dat3 = 1'b1;
+//assign	sd_dat3 = 1'b1;
 
 wire ready = 1'b1;
 
@@ -120,7 +120,7 @@ always @(negedge clk) begin
 	IOBASE+PORT_TMR1:	ioports_do <= timer1q;
 	IOBASE+PORT_TMR2:	ioports_do <= timer2q;
 	IOBASE+PORT_SPDR:	ioports_do <= spdr_do;
-	IOBASE+PORT_MMCA:	ioports_do <= {7'b0,spdr_dsr};
+	IOBASE+PORT_SPSR:	ioports_do <= {7'b0,spdr_dsr};
 	default:			ioports_do <= 8'hFF;
 	endcase
 end
@@ -140,6 +140,11 @@ always @(posedge clk or negedge reset_n) begin
 			if (memwr && cpu_a == IOBASE+PORT_TXD) begin
 				uart_data <= cpu_do;
 				uart_state <= 0;
+			end
+			
+			// MMCA: SD/MMC card chip select
+			if (memwr && cpu_a == IOBASE+PORT_MMCA) begin
+				sd_dat3 <= cpu_do[0];
 			end
 			
 			// uart state machine
