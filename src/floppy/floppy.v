@@ -41,7 +41,7 @@ input	[7:0]	idata;
 output	[7:0]	odata = cpu_do;
 output			memwr;
 input			sd_dat;
-output			sd_dat3;
+output	reg		sd_dat3;
 output			sd_cmd;
 output			sd_clk;
 output			uart_txd;
@@ -120,7 +120,7 @@ always @(negedge clk) begin
 	IOBASE+PORT_TMR1:	ioports_do <= timer1q;
 	IOBASE+PORT_TMR2:	ioports_do <= timer2q;
 	IOBASE+PORT_SPDR:	ioports_do <= spdr_do;
-	IOBASE+PORT_SPSR:	ioports_do <= {7'b0,spdr_dsr};
+	IOBASE+PORT_SPSR:	ioports_do <= {7'b0,~spdr_dsr};
 	default:			ioports_do <= 8'hFF;
 	endcase
 end
@@ -130,6 +130,7 @@ always @(posedge clk or negedge reset_n) begin
 		green_leds <= 0;
 		uart_state <= 3;
 		uart_send <= 0;
+		sd_dat3 <= 1;
 	end else begin
 		if (ce) begin
 			if (memwr && cpu_a == 16'hE010) begin
