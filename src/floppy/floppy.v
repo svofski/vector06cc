@@ -45,7 +45,7 @@ output			uart_txd;
 output reg[7:0]	green_leds;
 output  [7:0] red_leds = cpu_di;
 output	[7:0]	debug;
-output	[7:0]	debugidata = prom_do;
+output	[7:0]	debugidata = {timer1q};
 output  [7:0]	opcode;
 
 assign	sd_dat3 = 1'b1;
@@ -62,8 +62,8 @@ cpu65xx_en cpu(
 		.clk(clk),
 		.reset(~reset_n),
 		.enable(ce),
-		.nmi_n(1),
-		.irq_n(1),
+		.nmi_n(1'b1),
+		.irq_n(1'b1),
 
 		.di(cpu_di),
 		.do(cpu_do),
@@ -76,8 +76,8 @@ cpu65xx_en cpu(
 
 wire prom_sel = cpu_a[15:10] == 6'b111111;
 
-wire [9:0] 	prom_addr = cpu_a[9:0];
-wire [7:0]  prom_do;
+
+
 wire [7:0]  ram_do;
 wire [7:0] 	lowmem_do;
 reg  [7:0]	ioports_do;
@@ -137,8 +137,6 @@ always @(posedge clk or negedge reset_n) begin
 				uart_state <= 0;
 			end
 			
-			
-			
 			// uart state machine
 			case (uart_state) 
 			0:	begin
@@ -188,13 +186,11 @@ TXD txda(
 // TIMERS //
 ////////////
 
-wire timer1wr = ce & cpu_a == (IOBASE+PORT_TMR1) & memwr;
-wire timer2wr = ce & cpu_a == (IOBASE+PORT_TMR2) & memwr;
-wire timer1q;
-wire timer2q;
+wire [7:0] timer1q;
+wire [7:0] timer2q;
 
-timer100hz timer1(clk, timer1wr, cpu_do, timer1q);
-timer100hz timer2(clk, timer2wr, cpu_do, timer2q);
+timer100hz timer1(.clk(clk), .di(cpu_do), .wren(ce && cpu_a==(IOBASE+PORT_TMR1) && memwr), .q(timer1q));
+timer100hz timer2(.clk(clk), .di(cpu_do), .wren(ce && cpu_a==(IOBASE+PORT_TMR2) && memwr), .q(timer2q));
 
 endmodule
 

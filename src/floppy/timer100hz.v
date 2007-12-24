@@ -9,16 +9,17 @@ input			wren;
 output reg[7:0]	q;
 
 reg [17:0] timerctr;
+
 wire hz100 = timerctr == 0;
 
 always @(posedge clk) begin
 	if (timerctr == 0) 
 		timerctr <= MCLKFREQ/100;
 	else
-		timerctr <= timerctr - 1;
+		timerctr <= timerctr - 1'b1;
 end
 
-always @(posedge clk or posedge wren) begin
+always @(posedge clk) begin
 	if (wren) begin
 		q <= di;
 	end 
