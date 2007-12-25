@@ -11,7 +11,7 @@ L65=ld65
 OBJS=tff.o mmc.o timer.o serial.o main.o
 ASSS=tff.s mmc.s timer.s serial.s main.s
 
-CFLAGS=--signed-chars -v 
+CFLAGS=-Oirs -t none -T --cpu 6502
 
 
 
@@ -26,7 +26,7 @@ clean:
 	rm $(OBJS) $(ASSS) disk.bin disk.map
 
 %.s:	%.c
-	$(C65) -t none -T --cpu 6502 -I $(AINC) -I $(CINC) $<
+	$(C65) $(CFLAGS) -I $(AINC) -I $(CINC) $<
 
 %.o:	%.s
 	$(A65) -t none $< -o $@

@@ -231,6 +231,50 @@ spi sd0(.clk(clk),
 		.dsr(spdr_dsr)
 		);
 
+
+////////////
+// WD1793 //
+////////////
+//input	[2:0]	hostio_addr;
+//input	[7:0]	hostio_idata;
+//output reg[7:0]	hostio_odata;
+//input			hostio_rd;
+//input			hostio_wr;
+
+// i've no idea what native '93 register addresses are
+// here's how they're mapped in vector-06c
+// 00011xxx
+//      000		$18 	Data
+//	    001		$19 	Sector
+//		010		$1A		Track
+//		011		$1B		Command/Status
+//		100		$1C		Control				Write only
+
+reg [7:0]	wd_data;
+reg [7:0]	wd_sector;
+reg [7:0]	wd_track;
+reg [7:0] 	wd_cmdstatus;
+reg [7:0]	wd_control;
+always @(posedge clk) begin
+	if (hostio_wr) begin
+		case (hostio_addr) 
+			3'b000: begin
+					end
+			3'b001: begin
+					end
+			3'b010: begin
+					end
+			3'b011: begin
+					end
+			3'b100: begin
+					end
+			default:begin
+					end
+		endcase
+	end
+end
+
+
 endmodule
 
 module zeropage(clk, ce, addr, wren, di, q);

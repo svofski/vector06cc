@@ -69,6 +69,41 @@ BYTE CardType;			/* b0:MMC, b1:SDv1, b2:SDv2, b3:Block addressing */
 /* Receive a byte from MMC via SPI  (Platform dependent)                 */
 /*-----------------------------------------------------------------------*/
 
+#if 0
+static
+BYTE rcvr_spi (void)
+{
+	asm("lda #$ff");
+	asm("sta $E001");
+	asm("@loop:");
+	asm("lda $E002");
+	asm("and #$01");
+	asm("bne @loop");
+	
+	return SPDR;
+}
+
+static BYTE rcvr_spi_m(BYTE* dst) {
+	SPDR=0xFF;
+	asm("@loop: 	lda	$E002");
+	asm("		and	#$01");
+	asm("		bne	@loop");
+	*dst = SPDR;
+}
+
+static void xmit_spi(BYTE dat) {
+	SPDR = dat;
+	asm("@loop: 	lda	$E002");
+	asm("		and	#$01");
+	asm("		bne	@loop");
+}
+#else
+#define loop_until_bit_is_set(x,b)	{for(;(x)&(b)!=0;);}
+
+#define rcvr_spi_m(dst)	{SPDR=0xFF; loop_until_bit_is_set(SPSR,SPIF); *(dst)=SPDR;}
+
+#define xmit_spi(dat) 	SPDR=(dat); loop_until_bit_is_set(SPSR,SPIF)
+
 static
 BYTE rcvr_spi (void)
 {
@@ -77,10 +112,8 @@ BYTE rcvr_spi (void)
 	return SPDR;
 }
 
-/* Alternative macro to receive data fast */
-// specialio.h #define rcvr_spi_m(dst)	SPDR=0xFF; loop_until_bit_is_set(SPSR,SPIF); *(dst)=SPDR
 
-
+#endif
 
 /*-----------------------------------------------------------------------*/
 /* Wait for card ready                                                   */
