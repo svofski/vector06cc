@@ -92,7 +92,6 @@ void main(void) {
 	
 	GREEN_LEDS = 0xC3;
 
-	
 	ser_puts("@");
 	delay2(100);
 	ser_puts("\n\r}O{\n\rhello.jpg\n\r");

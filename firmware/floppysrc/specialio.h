@@ -43,10 +43,4 @@
 
 #define SPIF	0x01
 
-#define loop_until_bit_is_set(x,b)	{for(;(x)&(b)!=0;);}
-
-#define rcvr_spi_m(dst)	{SPDR=0xFF; loop_until_bit_is_set(SPSR,SPIF); *(dst)=SPDR;}
-
-#define xmit_spi(dat) 	SPDR=(dat); loop_until_bit_is_set(SPSR,SPIF)
-
 #endif
