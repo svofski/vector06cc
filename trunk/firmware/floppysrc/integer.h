@@ -22,7 +22,9 @@ typedef unsigned long	DWORD;
 /* Boolean type */
 typedef enum { FALSE = 0, TRUE } BOOL;
 
-typedef unsigned char uint8_t;
+typedef BYTE 	uint8_t;
+typedef WORD	uint16_t;
+typedef DWORD	uint32_t;
 
 #define _INTEGER
 #endif
