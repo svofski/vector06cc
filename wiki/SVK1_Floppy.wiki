@@ -535,4 +535,4 @@ LOOP:   IN STATUS
 }}}
 
 = See also =
-* [http://svn.akop.org/psp/trunk/fms/EMULib/ EMULib has C-source of the WD1793 emulator]
+ * [http://svn.akop.org/psp/trunk/fms/EMULib/ EMULib: C-source a WD1793 emulator]
