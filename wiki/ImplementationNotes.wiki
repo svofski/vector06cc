@@ -31,7 +31,7 @@ cc65 produces terribly unoptimal code, but there's no other (free) choice of com
 The best idea so far is to keep the lower 16K in preloaded M4K blocks and map higher 48K onto SRAM space through the main RAM multiplexor. There's little hope that code size can be dramatically reduced, but the code alone can well be kept within 16K size limit.
 
 === WD1793 ===
-Vector used a Russki clone of WD1793 floppy drive controller. 
+Vector used a Russki clone of WD1793 floppy drive controller. It is called so because the design originates from Marie Antoinette, for which she was guillotined in 1793.
  * [http://www.hansotten.com/msxwd1793.html MSX Info Pages of WD1793]
  * [http://svn.akop.org/psp/trunk/fms/EMULib/ EMULib has C-source of the WD1793 emulator]
 
