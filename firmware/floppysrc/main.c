@@ -1,3 +1,6 @@
+//#include <ctype.h>
+#include <string.h>
+
 #include "serial.h"
 #include "specialio.h"
 #include "integer.h"
@@ -23,17 +26,6 @@ FATFS fatfs;
 FILINFO finfo;
 BYTE Buff[2048];			/* Working buffer */
 
-void print_result(DRESULT result) {
-	switch (result) {
-		case 0:
-			ser_puts("pass");
-			break;
-		default:
-			ser_puts("bad");
-			break;
-	}
-	ser_puts("\n\r");
-}
 
 BYTE nybble_alpha(BYTE nybble) {
 	return nybble + (nybble < 0x0a ? '0' : 'a'-0x0a);
@@ -57,6 +49,33 @@ void print_buff() {
   }
 }
 
+void print_result(DRESULT result) {
+	switch (result) {
+		case 0:
+			ser_puts("pass");
+			break;
+		default:
+			ser_puts("bad: ");
+			print_hex((BYTE)result);
+			break;
+	}
+	ser_puts("\n\r");
+}
+
+BYTE endsWith(char *s1, const char *suffix) {
+	int s1len = strlen(s1);
+	int sulen = strlen(suffix);
+	
+	if (sulen > s1len) return 0;
+	
+	return stricmp(&s1[s1len - sulen], suffix) == 0;
+}
+
+void fill_filename(char *buf, char *fname) {
+	memset(buf, 0, 12);
+	strncpy(buf, fname, 12);
+}
+
 void main(void) {
 	FATFS *fs = &fatfs;
 	DWORD p1, p2;
@@ -64,7 +83,7 @@ void main(void) {
 	DIR dir;
 	FIL	file1;
 	char *ptrdir = "vector06c";
-	char *ptrfile = "floppy.fdd";
+	char *ptrfile = "/VECTOR06/xxxxxxxx.xxx";
 	UINT bytesread;
 
 	uint8_t leds = 0x01;
@@ -109,12 +128,26 @@ void main(void) {
 	ser_puts("mounting filesystem: ");
 	fresult = f_mount(0, &fatfs);
 	print_result(fresult);
+
 	
-	ser_puts("f_opendir "); ser_puts(ptrdir);
-	fresult = f_opendir(&dir, ptrdir);
-	
-	ser_puts("f_readdir:");
-	fresult = f_readdir(&dir, &finfo);					print_result(fresult);
+	ser_puts("Opening /vector06c directory...");
+	fresult = f_opendir(&dir, "/VECTOR06");					
+	print_result(fresult);
+	if (fresult == FR_OK) {
+		while ((f_readdir(&dir, &finfo) == FR_OK) && finfo.fname[0]) {
+			if (finfo.fattrib & AM_DIR) {
+				ser_putc('['); ser_puts(finfo.fname); ser_putc(']');
+			} else {
+				if (endsWith(finfo.fname, ".fdd")) {
+					ser_puts(" * ");
+					ser_puts(finfo.fname);
+					
+					fill_filename(ptrfile+10, finfo.fname);
+				}
+            }
+            ser_puts("\n\r");
+		}
+	}
 	
 	ser_puts("f_open "); ser_puts(ptrfile);
 	fresult = f_open(&file1, ptrfile, FA_READ);			print_result(fresult);

@@ -29,7 +29,7 @@
 /  writing functions, f_write, f_sync, f_unlink, f_mkdir, f_chmod, f_rename
 /  and useless f_getfree. */
 
-#define _FS_MINIMIZE	0
+#define _FS_MINIMIZE	1
 /* The _FS_MINIMIZE option defines minimization level to remove some functions.
 /  0: Full function.
 /  1: f_stat, f_getfree, f_unlink, f_mkdir, f_chmod and f_rename are removed.
@@ -39,7 +39,7 @@
 #define _FAT32	0
 /* To enable FAT32 support in addition of FAT12/16, set _FAT32 to 1. */
 
-#define _USE_FSINFO	1
+#define _USE_FSINFO	0
 /* To enable FSInfo support on FAT32 volume, set _USE_FSINFO to 1. */
 
 #define	_USE_SJIS	0
