@@ -5,9 +5,6 @@
 /* are platform dependent.                                               */
 /*-----------------------------------------------------------------------*/
 
-
-#define _READONLY 1
-
 //#include "vector/io.h"
 #include "specialio.h"
 #include "diskio.h"

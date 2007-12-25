@@ -19,7 +19,22 @@
 //
 // --------------------------------------------------------------------
 
-module floppy(clk, ce, reset_n, addr, idata, odata, memwr, sd_dat, sd_dat3, sd_cmd, sd_clk, uart_txd, green_leds, red_leds, debug, debugidata, opcode);
+module floppy(
+	clk, ce, reset_n, 
+	addr, idata, odata, memwr, 
+	// sd card signals
+	sd_dat, sd_dat3, sd_cmd, sd_clk, 
+	// uart comms
+	uart_txd, 
+	// io ports
+	hostio_addr,
+	hostio_idata,
+	hostio_odata,
+	hostio_rd,
+	hostio_wr,
+	// debug 
+	green_leds, red_leds, debug, debugidata);
+	
 parameter IOBASE = 16'hE000;
 parameter PORT_MMCA= 0;
 parameter PORT_SPDR= 1;
@@ -45,21 +60,22 @@ output	reg		sd_dat3;
 output			sd_cmd;
 output			sd_clk;
 output			uart_txd;
+
+// WD1793 emulation I/O
+input	[2:0]	hostio_addr;
+input	[7:0]	hostio_idata;
+output reg[7:0]	hostio_odata;
+input			hostio_rd;
+input			hostio_wr;
+
 output reg[7:0]	green_leds;
-output  [7:0] red_leds = cpu_di;
+output  [7:0]	red_leds = cpu_di;
 output	[7:0]	debug;
 output	[7:0]	debugidata = {timer1q};
-output  [7:0]	opcode;
-
-//assign	sd_dat3 = 1'b1;
-
-wire ready = 1'b1;
 
 wire [15:0] cpu_a;
 wire [7:0]	cpu_di;
 wire [7:0]	cpu_do;
-
-wire cpu_brk;
 
 cpu65xx_en cpu(
 		.clk(clk),
@@ -67,18 +83,11 @@ cpu65xx_en cpu(
 		.enable(ce),
 		.nmi_n(1'b1),
 		.irq_n(1'b1),
-
 		.di(cpu_di),
 		.do(cpu_do),
 		.addr(cpu_a),
-		.we(memwr),
-		
-		.brkActive(cpu_brk),
-		.opcodeDebugOut(opcode),
+		.we(memwr)
 	);
-
-wire prom_sel = cpu_a[15:10] == 6'b111111;
-
 
 
 wire [7:0]  ram_do;
