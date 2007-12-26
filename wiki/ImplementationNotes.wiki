@@ -26,9 +26,7 @@ The code that lives in the 6502 unit is written in C and compiled by [http://www
 === Code size concerns ===
 FAT support is based on Elm-Chan's awesome [http://elm-chan.org/fsw/ff/00index_e.html Generic FAT Filesystem module]. This module is the best one can ever wish for, providing most everything out of the box. However, being exceptionally robust, it's also not tiny.
 
-cc65 produces terribly unoptimal code, but there's no other (free) choice of compiler. On a positive note, it's a fully functional _real_ C and not some fake paw mockup. Probably code size can be reduced by throwing away some of the features, like extensive diagnostics or maybe some functions that are not necessary. Probably memory buffer size could be reduced as well. It would be great if all code + data would fit within 16K.
-
-The best idea so far is to keep the lower 16K in preloaded M4K blocks and map higher 48K onto SRAM space through the main RAM multiplexor. There's little hope that code size can be dramatically reduced, but the code alone can well be kept within 16K size limit.
+cc65 produces some fat code, although knowing the 6502, cc65 is probably not to be blamed. On a positive note, it's a fully functional _real_ C and not some fake paw mockup. Complete code probably will NOT fit in 16K and that would change the design dramatically, requiring access to SRAM and a fetch of full-fledged ROM-image from the SD card by a smaller ROM-image.
 
 === WD1793 ===
 Vector used a Russki clone of WD1793 floppy drive controller. It is called so because the design originates from Marie Antoinette, for which she was guillotined in 1793.
