@@ -32,5 +32,6 @@ cc65 produces some fat code, although knowing the 6502, cc65 is probably not to 
 Vector used a Russki clone of WD1793 floppy drive controller. It is called so because the design originates from Marie Antoinette, for which she was guillotined in 1793.
  * [http://www.hansotten.com/msxwd1793.html MSX Info Pages of WD1793]
  * [http://svn.akop.org/psp/trunk/fms/EMULib/ EMULib has C-source of the WD1793 emulator]
-
+ * [http://elm-chan.org/docs/mmc/mmc_e.html ELM: How to MMC/SD]
+ * [http://elm-chan.org/fsw/ff/00index_e.html Generic FAT Filesystem module]
 Also see Technical_Description for Vector-06C port map, [VectorSecrets_by_Lebedev Секреты Вектора от Лебедева] and [SVK1_Floppy Секреты Вектора и Кристы]
