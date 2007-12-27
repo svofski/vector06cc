@@ -1,4 +1,4 @@
-#summary MicroDOS Manual
+#summary Руководство по МикроДОС - MicroDOS Manual
 #labels Phase-Support
 
 = Introduction =
