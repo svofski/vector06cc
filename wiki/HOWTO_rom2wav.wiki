@@ -1,4 +1,4 @@
-#summary How to convert .rom files into .wav files loadable by Vector bootloader
+#summary Как сделать WAV из ROM - How to convert .rom files into .wav files loadable by Vector bootloader
 #labels Phase-Deploy
 
 Требуется [http://emulator3000.org/ Emulator 3000], плагин для общения с .fdd образами дискет, какой-нибудь один загрузочный образ дискеты.
