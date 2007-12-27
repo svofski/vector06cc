@@ -1,4 +1,4 @@
-#summary How to make use of this project
+#summary How to start - Как начать
 #labels Phase-Deploy,Featured
 
 == Intro ==
