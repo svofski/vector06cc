@@ -1,4 +1,4 @@
-#summary Technical description of Vector-06C
+#summary Техническое описание ПК Вектор-06Ц - Technical description of Vector-06C
 #labels Phase-Design
 = TO.TXT Verbatim =
 {{{
