@@ -1,4 +1,4 @@
-#summary RAM disk docs
+#summary Про квазидиск - RAM disk docs
 #labels Phase-Design
 
 == Описание функционирования квазидиска "Омск", модель 2. ==
