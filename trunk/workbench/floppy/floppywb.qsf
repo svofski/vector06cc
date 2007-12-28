@@ -228,3 +228,4 @@ set_global_assignment -name VERILOG_FILE ../../src/floppy/floppy.v
 set_global_assignment -name VERILOG_FILE ../../src/DE1/SEG7_LUT.v
 set_global_assignment -name VERILOG_FILE src/floppyram.v
 set_global_assignment -name VHDL_FILE src/uart/txd.vhd
+set_global_assignment -name VERILOG_FILE ../../src/floppy/wd1793.v

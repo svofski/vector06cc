@@ -250,31 +250,28 @@ spi sd0(.clk(clk),
 //		011		$1B		Command/Status
 //		100		$1C		Control				Write only
 
-reg [7:0]	wd_data;
-reg [7:0]	wd_sector;
-reg [7:0]	wd_track;
-reg [7:0] 	wd_cmdstatus;
-reg [7:0]	wd_control;
-always @(posedge clk) begin
-	if (hostio_wr) begin
-		case (hostio_addr) 
-			3'b000: begin
-					end
-			3'b001: begin
-					end
-			3'b010: begin
-					end
-			3'b011: begin
-					end
-			3'b100: begin
-					end
-			default:begin
-					end
-		endcase
-	end
-end
+wd1793 vg93(.clk(clk), .clken(ce), .reset_n(reset_n));
+/*
+				// host interface
+				rd, wr, addr, idata, odata, 
 
-
+				// memory buffer interface
+				buff_addr, 
+				buff_rd, 
+				buff_wr, 
+				buff_idata, 
+				buff_odata,
+				
+				// workhorse interface
+				track,
+				sector,
+				cpu_command,
+				cpu_status,
+				
+				irq,
+				drq,
+		);
+*/
 endmodule
 
 module zeropage(clk, ce, addr, wren, di, q);
