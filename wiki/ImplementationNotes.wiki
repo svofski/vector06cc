@@ -35,3 +35,26 @@ Vector used a Russki clone of WD1793 floppy drive controller. It is called so be
  * [http://elm-chan.org/docs/mmc/mmc_e.html ELM: How to MMC/SD]
  * [http://elm-chan.org/fsw/ff/00index_e.html Generic FAT Filesystem module]
 Also see Technical_Description for Vector-06C port map, [VectorSecrets_by_Lebedev Секреты Вектора от Лебедева] and [SVK1_Floppy Секреты Вектора и Кристы]
+
+=== Preliminary HW layer tests ===
+[http://vector06cc.googlecode.com/svn/trunk/doc/wd-clocks-preliminarytest.png]
+Test simulation run of the HW layer. The "program" being executed here would be:
+{{{
+ RESET (as in hw pin)
+ 
+ RESTORE:     (0)=0F
+ TRACK:       (1)=12
+ SEEK:        (0)=1F
+ STEPF:       (0)=4F (no update)
+ STEP:        (0)=3F (previous direction, update)
+ READ STATUS ==> 22
+ SECTOR:      (2)=03
+ READ SECTORS:(0)=80 (one sector)
+ <wait>
+ READ STATUS ==> 03
+ READ DATA
+ READ DATA
+ ...
+}}}
+ 
+ 
