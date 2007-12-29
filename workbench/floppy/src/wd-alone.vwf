@@ -378,7 +378,7 @@ SIGNAL("buff_idata")
 	SIGNAL_TYPE = BUS;
 	WIDTH = 8;
 	LSB_INDEX = 0;
-	DIRECTION = INPUT;
+	DIRECTION = OUTPUT;
 	PARENT = "";
 }
 
@@ -388,7 +388,7 @@ SIGNAL("buff_idata[7]")
 	SIGNAL_TYPE = SINGLE_BIT;
 	WIDTH = 1;
 	LSB_INDEX = -1;
-	DIRECTION = INPUT;
+	DIRECTION = OUTPUT;
 	PARENT = "buff_idata";
 }
 
@@ -398,7 +398,7 @@ SIGNAL("buff_idata[6]")
 	SIGNAL_TYPE = SINGLE_BIT;
 	WIDTH = 1;
 	LSB_INDEX = -1;
-	DIRECTION = INPUT;
+	DIRECTION = OUTPUT;
 	PARENT = "buff_idata";
 }
 
@@ -408,7 +408,7 @@ SIGNAL("buff_idata[5]")
 	SIGNAL_TYPE = SINGLE_BIT;
 	WIDTH = 1;
 	LSB_INDEX = -1;
-	DIRECTION = INPUT;
+	DIRECTION = OUTPUT;
 	PARENT = "buff_idata";
 }
 
@@ -418,7 +418,7 @@ SIGNAL("buff_idata[4]")
 	SIGNAL_TYPE = SINGLE_BIT;
 	WIDTH = 1;
 	LSB_INDEX = -1;
-	DIRECTION = INPUT;
+	DIRECTION = OUTPUT;
 	PARENT = "buff_idata";
 }
 
@@ -428,7 +428,7 @@ SIGNAL("buff_idata[3]")
 	SIGNAL_TYPE = SINGLE_BIT;
 	WIDTH = 1;
 	LSB_INDEX = -1;
-	DIRECTION = INPUT;
+	DIRECTION = OUTPUT;
 	PARENT = "buff_idata";
 }
 
@@ -438,7 +438,7 @@ SIGNAL("buff_idata[2]")
 	SIGNAL_TYPE = SINGLE_BIT;
 	WIDTH = 1;
 	LSB_INDEX = -1;
-	DIRECTION = INPUT;
+	DIRECTION = OUTPUT;
 	PARENT = "buff_idata";
 }
 
@@ -448,7 +448,7 @@ SIGNAL("buff_idata[1]")
 	SIGNAL_TYPE = SINGLE_BIT;
 	WIDTH = 1;
 	LSB_INDEX = -1;
-	DIRECTION = INPUT;
+	DIRECTION = OUTPUT;
 	PARENT = "buff_idata";
 }
 
@@ -458,7 +458,7 @@ SIGNAL("buff_idata[0]")
 	SIGNAL_TYPE = SINGLE_BIT;
 	WIDTH = 1;
 	LSB_INDEX = -1;
-	DIRECTION = INPUT;
+	DIRECTION = OUTPUT;
 	PARENT = "buff_idata";
 }
 
