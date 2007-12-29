@@ -1,3 +1,4 @@
+`default_nettype none
 // In Vector, addresses are inverted, as usual
 //                  WD		VECTOR
 //COMMAND/STATUS	000		011	
@@ -20,11 +21,13 @@ module wd1793(clk, clken, reset_n,
 				// workhorse interface
 				track,
 				sector,
+				status,
 				cpu_command,
 				cpu_status,
 				
 				irq,
 				drq,
+				wtf
 		);
 				
 parameter CPU_COMMAND_READ 		= 8'h10;
@@ -61,6 +64,9 @@ parameter BV_BADID    	= 8'h18;    /* 3 = bad ID field CRC              */
 parameter BV_DELETED  	= 8'h20;    /* Deleted data mark (when reading)  */
 parameter BV_WRFAULT  	= 8'h20;    /* Write fault (when writing)        */
 
+parameter SBIT_DRQ		= 1;
+parameter SBIT_NOTFOUND = 4;
+
 parameter STATE_READY 		= 0;
 parameter STATE_WAIT_WHREAD	= 1;
 parameter STATE_WAIT_RDDATA = 2;
@@ -87,11 +93,14 @@ output	reg [7:0]	buff_odata;
 
 output 	[7:0]		track = disk_track;
 output  [7:0]		sector = wdstat_sector;
+output  [7:0]		status = wdstat_status;
 output	reg [7:0]	cpu_command;
 input		[7:0]	cpu_status;
 
 output				irq = wdstat_irq;
 output				drq = wdstat_drq;
+
+output	reg			wtf;
 
 
 reg [7:0] 	wdstat_track;
@@ -119,9 +128,10 @@ always @(posedge clk or negedge reset_n) begin
 	if (!reset_n) begin
 		wdstat_multisector <= 0;
 		wdstat_stepdirection <= 0;
-		disk_track <= 0;
+		disk_track <= 8'hff;
 		wdstat_track <= 0;
 		wdstat_sector <= 0;
+		wdstat_status <= 0;
 		data_rdlength <= 0;
 		buff_rd <= 0;
 		buff_wr <= 0;
@@ -146,11 +156,15 @@ always @(posedge clk or negedge reset_n) begin
 						wdstat_sector <= wdstat_sector + 1;
 						cpu_command <= CPU_COMMAND_READ | wdstat_side;
 						state <= STATE_WAIT_WHREAD;
+						wdstat_drq <= 0;
+						wdstat_irq <= 0;
+						wdstat_status[SBIT_DRQ] <= 0;
 					end else begin
 						wdstat_drq <= 0;
 						wdstat_irq <= 1;
 						wdstat_multisector <= 0;
-						wdstat_status <= wdstat_status & ~(BV_DRQ | BV_BUSY);
+						wdstat_status[SBIT_BUSY] <= 0;
+						wdstat_status[SBIT_DRQ]  <= 0;
 					end
 				end
 				
@@ -185,14 +199,14 @@ always @(posedge clk or negedge reset_n) begin
 			if (wr) begin
 				case (addr)
 				A_TRACK:	begin
-							if (!wdstat_status[SBIT_BUSY]) begin
-								wdstat_track <= idata;
-							end
+								if (!wdstat_status[SBIT_BUSY]) begin
+									wdstat_track <= idata;
+								end
 							end
 				A_SECTOR:	begin
-							if (!wdstat_status[SBIT_BUSY]) begin
-								wdstat_sector <= idata;
-							end
+								if (!wdstat_status[SBIT_BUSY]) begin
+									wdstat_sector <= idata;
+								end
 							end
 				A_COMMAND:	begin
 							case (idata[7:4]) 
@@ -203,6 +217,7 @@ always @(posedge clk or negedge reset_n) begin
 									wdstat_status <=  { 2'b00, idata[3], 5'b00110};
 									wdstat_track <= 0;
 									wdstat_irq <= 1;
+									wtf <= idata[3];
 								end
 							4'h1:	// SEEK
 								begin
@@ -246,6 +261,8 @@ always @(posedge clk or negedge reset_n) begin
 								// 0: 0
 								begin
 									cpu_command <= CPU_COMMAND_READ | idata[3]; // side
+									//wdstat_status[SBIT_BUSY] = 1'b1;
+									wdstat_status <= BV_BUSY;
 									wdstat_side <= idata[3];
 									wdstat_multisector <= idata[4];
 									state <= STATE_WAIT_WHREAD;
@@ -268,19 +285,20 @@ always @(posedge clk or negedge reset_n) begin
 			
 		STATE_WAIT_WHREAD:
 			begin
-				if (cpu_status[0] == 1) begin
-					cpu_command = CPU_COMMAND_ACK;
+				if (cpu_status[0] == 1'b1) begin
+					cpu_command <= CPU_COMMAND_ACK;
 					state <= STATE_READY;
 					if (cpu_status[1]) begin
 						// read successful
-						wdstat_status <= wdstat_status | BV_BUSY | BV_DRQ;
+						wdstat_status[SBIT_DRQ] <= 1'b1;
 						wdstat_drq <= 1;
 						wdstat_irq <= 0;
 						data_rdlength <= SECTOR_SIZE;
 						buff_addr <= 0;
 					end else begin
 						// read error
-						wdstat_status <= (wdstat_status & ~BV_ERRCODE) | BV_NOTFOUND;
+						//wdstat_status <= (wdstat_status & ~BV_ERRCODE) | BV_NOTFOUND;
+						wdstat_status[SBIT_NOTFOUND] <= 1'b1;
 						wdstat_irq <= 1;
 						wdstat_drq <= 0;
 					end
