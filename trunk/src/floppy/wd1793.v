@@ -69,8 +69,9 @@ parameter SBIT_NOTFOUND = 4;
 
 parameter STATE_READY 		= 0;
 parameter STATE_WAIT_WHREAD	= 1;
-parameter STATE_WAIT_RDDATA = 2;
+parameter STATE_LOAD_RDDATA = 2;
 parameter STATE_WAIT_WRDATA = 3;
+parameter STATE_DATARDY		= 4;
 
 parameter SECTOR_SIZE 		= 512;
 parameter SECTORS_PER_TRACK	= 10;
@@ -141,36 +142,12 @@ always @(posedge clk or negedge reset_n) begin
 		wdstat_multisector <= 0;
 		state <= STATE_READY;
 	end else if (clken) begin
-		case (state) 
-		STATE_WAIT_RDDATA:
-			begin
-				odata <= buff_idata;
-				
-				buff_rd <= 0;
-				buff_addr <= buff_addr + 1'b1;
+		//if (buff_rd) begin
+		//	odata <= buff_idata;
+		//	buff_rd <= 0;
+		//end
 
-				data_rdlength <= wRdLengthMinus1;
-				if (wRdLengthMinus1 == 0) begin
-					// either read the next sector, or stop if this is track end
-					if (wdstat_multisector && wdstat_sector < SECTORS_PER_TRACK) begin
-						wdstat_sector <= wdstat_sector + 1;
-						cpu_command <= CPU_COMMAND_READ | wdstat_side;
-						state <= STATE_WAIT_WHREAD;
-						wdstat_drq <= 0;
-						wdstat_irq <= 0;
-						wdstat_status[SBIT_DRQ] <= 0;
-					end else begin
-						wdstat_drq <= 0;
-						wdstat_irq <= 1;
-						wdstat_multisector <= 0;
-						wdstat_status[SBIT_BUSY] <= 0;
-						wdstat_status[SBIT_DRQ]  <= 0;
-					end
-				end
-				
-				state <= STATE_READY;
-			end
-			
+		case (state) 
 		// Initial state
 		STATE_READY:
 			if (rd) begin
@@ -185,12 +162,33 @@ always @(posedge clk or negedge reset_n) begin
 							odata <= wdstat_status;
 							end
 				A_DATA:		begin
-							if (data_rdlength == 0) begin
-								// no more data!
-							end else begin
-								state <= STATE_WAIT_RDDATA;
-								buff_rd <= 1;
-							end
+								if (data_rdlength == 0) begin
+									// no data, we should be in STATE_DATARDY
+								end 
+								else if (rd && addr == A_DATA) begin
+									odata <= buff_idata;
+									buff_addr <= buff_addr + 1'b1;
+
+									data_rdlength <= wRdLengthMinus1;
+									if (wRdLengthMinus1 == 0) begin
+										// either read the next sector, or stop if this is track end
+										if (wdstat_multisector && wdstat_sector < SECTORS_PER_TRACK) begin
+											wdstat_sector <= wdstat_sector + 1;
+											cpu_command <= CPU_COMMAND_READ | wdstat_side;
+											wdstat_drq <= 0;
+											wdstat_irq <= 0;
+											wdstat_status[SBIT_DRQ] <= 0;
+
+											state <= STATE_WAIT_WHREAD;
+										end else begin
+											wdstat_drq <= 0;
+											wdstat_irq <= 1;
+											wdstat_multisector <= 0;
+											wdstat_status[SBIT_BUSY] <= 0;
+											wdstat_status[SBIT_DRQ]  <= 0;
+										end
+									end 
+								end
 							end
 				default:;
 				endcase
@@ -287,7 +285,6 @@ always @(posedge clk or negedge reset_n) begin
 			begin
 				if (cpu_status[0] == 1'b1) begin
 					cpu_command <= CPU_COMMAND_ACK;
-					state <= STATE_READY;
 					if (cpu_status[1]) begin
 						// read successful
 						wdstat_status[SBIT_DRQ] <= 1'b1;
@@ -295,12 +292,16 @@ always @(posedge clk or negedge reset_n) begin
 						wdstat_irq <= 0;
 						data_rdlength <= SECTOR_SIZE;
 						buff_addr <= 0;
+						buff_rd <= 1;
+						state <= STATE_READY;
+						//state <= STATE_LOAD_RDDATA;
 					end else begin
 						// read error
 						//wdstat_status <= (wdstat_status & ~BV_ERRCODE) | BV_NOTFOUND;
 						wdstat_status[SBIT_NOTFOUND] <= 1'b1;
 						wdstat_irq <= 1;
 						wdstat_drq <= 0;
+						state <= STATE_READY;
 					end
 				end
 			end
