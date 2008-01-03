@@ -39,7 +39,7 @@ In the top level module, follwing signals are JTAG-related:
  * mJTAG_DATA_TO_HOST
  * mJTAG_SELECT
  * mJTAG_SRAM_WR_N
-				-- these go into the main SRAM multiplexor
+				-- these go into the main SRAM multiplexer
 				
  * jHOLD 
  * HLDA
@@ -58,7 +58,7 @@ The following describes principle of operation if compiled with JTAG_AUTOHOLD op
 3. When HLDA is asserted and SRAM operation enabled, enable the the state machine
 
 
-A note about the timer. Control Panel doesn't have any means of notification of a read/write operation before it actually happens. There are SRAM multiplexor selection modes and there are different device selectors, but they are only called when switching modes. As if this was not enough uncertainity, feedback to host doesn't exist and once a command starts, it has to finish. This means that usually there's no time for HLDA signal to be asserted. The timer device just tries to request the bus as early as possible and tries to hold the signal for a while. This is a hack that's not guarranteed to work but unless Control Panel software is modified to have pace, there's no better solution. Control Panel implements a small delay when reading single word, but skips it during group read/write operations.
+A note about the timer. Control Panel doesn't have any means of notification of a read/write operation before it actually happens. There are SRAM multiplexer selection modes and there are different device selectors, but they are only called when switching modes. As if this was not enough uncertainity, feedback to host doesn't exist and once a command starts, it has to finish. This means that usually there's no time for HLDA signal to be asserted. The timer device just tries to request the bus as early as possible and tries to hold the signal for a while. This is a hack that's not guarranteed to work but unless Control Panel software is modified to have pace, there's no better solution. Control Panel implements a small delay when reading single word, but skips it during group read/write operations.
 
 Just in case auto bus hold device fails, the bus can be held manually.
 
@@ -76,7 +76,7 @@ Just in case auto bus hold device fails, the bus can be held manually.
 		
 	State1:
 		If SRAM-Read
-			Latch data bus value into sram_idata_latch; it is the job of SRAM multiplexor to 
+			Latch data bus value into sram_idata_latch; it is the job of SRAM multiplexer to 
 			ensure that full 16-bit word is on the bus.
 			State = State2
 			
@@ -105,7 +105,7 @@ Just in case auto bus hold device fails, the bus can be held manually.
 	
 
 
-== SRAM Multiplexor ==
+== SRAM Multiplexer ==
 
-Normally SRAM multiplexor maps (N)x8 logical memory onto (N/2)x16 physical memory space.
+Normally SRAM multiplexer maps (N)x8 logical memory onto (N/2)x16 physical memory space.
 However in JTAG mode, access is done by words and thus jtag_jtag (oJTAG_SELECT) signal overrides this logic.
