@@ -1,0 +1,111 @@
+#summary Notes about SRAM access via Control Panel software
+#labels Featured,Phase-Design
+
+= DE1 JTAG Support =
+
+== Intro ==
+
+DE1 is supplied with a useful sw/hw combo called USB JTAG API/DE1 Control Panel. It implements
+control of various DE1 peripherals. This is very convenient for debugging. For example, memory 
+can be preloaded or read at any time. But for the Control Panel software to be useful, matching 
+hardware has to be implemented.
+
+Vector-06cc JTAG implementation is based on that supplied with the DE1 board, obviously. Since
+it is desired that Control Panel software is kept without modifications, hardware side has to
+adopt to all specifics and oddities of the original implementation, however unsuitable they
+may seem.
+
+JTAG implementation consists of 3 modules:
+ * DE1/USB_JTAG.v
+ * DE1/CMD_Decode.v
+ * jtag/jtag_top.v
+	
+USB_JTAG.v is used without modifications, it's a low level serial interface that shifts JTAG commands in and out on request. It is driven by common 24MHz system clock.
+
+CMD_Decode.v does the rest.
+
+jtag_top.v is top-level interface. It has clock, reset, raw JTAG 
+connections, SRAM address, data in, data out, SRAM write enable, bus hold/hold acknowledge..
+
+== vector06cc.v receptacle ==
+
+In the top level module, follwing signals are JTAG-related:
+
+ * SRAM_OE_N	
+				-- common SRAM output enable output
+				
+ * mJTAG_ADDR
+ * mJTAG_DATA_FROM_HOST
+ * mJTAG_DATA_TO_HOST
+ * mJTAG_SELECT
+ * mJTAG_SRAM_WR_N
+				-- these go into the main SRAM multiplexor
+				
+ * jHOLD 
+ * HLDA
+				-- bus hold request/acknowledge: used by CMD_Decode to gain exclusive bus access
+				
+=Principle of operation=
+
+The following describes principle of operation if compiled with JTAG_AUTOHOLD option. 
+
+
+1. If any JTAG command is received, HOLD signal is set and timer is loaded with maximum counter value.
+    When JTAG command is coming through, timer value is decreased
+    When timer counter has reached 0, HOLD signal is released
+
+2. When JTAG command is a SRAM read or write command, enable SRAM operation (f_SRAM)
+3. When HLDA is asserted and SRAM operation enabled, enable the the state machine
+
+
+A note about the timer. Control Panel doesn't have any means of notification of a read/write operation before it actually happens. There are SRAM multiplexor selection modes and there are different device selectors, but they are only called when switching modes. As if this was not enough uncertainity, feedback to host doesn't exist and once a command starts, it has to finish. This means that usually there's no time for HLDA signal to be asserted. The timer device just tries to request the bus as early as possible and tries to hold the signal for a while. This is a hack that's not guarranteed to work but unless Control Panel software is modified to have pace, there's no better solution. Control Panel implements a small delay when reading single word, but skips it during group read/write operations.
+
+Just in case auto bus hold device fails, the bus can be held manually.
+
+===State Machine===
+
+
+	Initial state:
+		oSR_ADDR set to JTAG selected address
+		oSR_DATA set to JTAG selected data (received data)
+		mSR_Start = 1;
+		State = State1
+
+		Meanwhile, 
+		oSR_WE_N	=	~( mSR_WRn & mSR_Start );
+		
+	State1:
+		If SRAM-Read
+			Latch data bus value into sram_idata_latch; it is the job of SRAM multiplexor to 
+			ensure that full 16-bit word is on the bus.
+			State = State2
+			
+		If SRAM-Write:
+			State = Initial State (work done, data received and written)
+			
+	State2:
+		Set xmit data to latched LSB
+		Initiate transmission
+		State = State3
+		
+	State3:
+		When transmission over:
+			Stop transmission
+			State = 4
+
+	State4:
+		Set xmit data to latched MSB
+		Initiate transmission
+		State = State5
+		
+	State5:
+		Cleanup, all done
+		State = Initial State
+	
+	
+
+
+== SRAM Multiplexor ==
+
+Normally SRAM multiplexor maps (N)x8 logical memory onto (N/2)x16 physical memory space.
+However in JTAG mode, access is done by words and thus jtag_jtag (oJTAG_SELECT) signal overrides this logic.
