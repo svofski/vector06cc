@@ -64,45 +64,7 @@ Just in case auto bus hold device fails, the bus can be held manually.
 
 ===State Machine===
 
-
-	Initial state:
-		oSR_ADDR set to JTAG selected address
-		oSR_DATA set to JTAG selected data (received data)
-		mSR_Start = 1;
-		State = State1
-
-		Meanwhile, 
-		oSR_WE_N	=	~( mSR_WRn & mSR_Start );
-		
-	State1:
-		If SRAM-Read
-			Latch data bus value into sram_idata_latch; it is the job of SRAM multiplexer to 
-			ensure that full 16-bit word is on the bus.
-			State = State2
-			
-		If SRAM-Write:
-			State = Initial State (work done, data received and written)
-			
-	State2:
-		Set xmit data to latched LSB
-		Initiate transmission
-		State = State3
-		
-	State3:
-		When transmission over:
-			Stop transmission
-			State = 4
-
-	State4:
-		Set xmit data to latched MSB
-		Initiate transmission
-		State = State5
-		
-	State5:
-		Cleanup, all done
-		State = Initial State
-	
-	
+[http://vector06cc.googlecode.com/svn/trunk/doc/jtag_statemachine.png http://vector06cc.googlecode.com/svn/trunk/doc/statecharts.zargo]	
 
 
 == SRAM Multiplexer ==
