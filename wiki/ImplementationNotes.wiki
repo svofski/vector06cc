@@ -64,5 +64,11 @@ Test simulation run of the HW layer. The "program" being executed here would be 
 }}}
  
 Remarks:
- * Buffer read takes 2 clocks as opposed to single-clock operation for everything else.
+ * ~~Buffer read takes 2 clocks as opposed to single-clock operation for everything else~~ not anymore
  * 9ns is about minimal required settle time for `idata`
+
+=== CPU Requests ===
+||CPU_REQUEST_READ || 8'h10 || Request to read one sector at oTRACK, oSECTOR, bit 0 is side ||
+||CPU_REQUEST_WRITE||8'h20 ||  Request to write one sector at oTRACK, oSECTOR; bit 0 is side ||
+||CPU_REQUEST_READADDR || 8'h30|| Request to read sector address (return 6 byte header) ||
+||CPU_REQUEST_ACK|| 8'h80|| Acknowledge last operation ||
