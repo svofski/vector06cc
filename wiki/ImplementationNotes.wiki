@@ -68,7 +68,11 @@ Remarks:
  * 9ns is about minimal required settle time for `idata`
 
 === CPU Requests ===
-||CPU_REQUEST_READ || 8'h10 || Request to read one sector at oTRACK, oSECTOR, bit 0 is side ||
-||CPU_REQUEST_WRITE||8'h20 ||  Request to write one sector at oTRACK, oSECTOR; bit 0 is side ||
-||CPU_REQUEST_READADDR || 8'h30|| Request to read sector address (return 6 byte header) ||
-||CPU_REQUEST_ACK|| 8'h80|| Acknowledge last operation ||
+||`CPU_REQUEST_READ` || 8'h10 || Request to read one sector at `oTRACK`, `oSECTOR`, bit 0 is side (head #) ||
+||`CPU_REQUEST_WRITE`||8'h20 ||  Request to write one sector at `oTRACK`, `oSECTOR`; bit 0 is side (head #) ||
+||`CPU_REQUEST_READADDR` || 8'h30|| Request to read sector address (return 6 byte header) ||
+||`CPU_REQUEST_ACK`|| 8'h80|| Acknowledge: clear CPU status bits ||
+
+After CPU has done with processing any request other than `CPU_REQUEST_ACK`, it sets two bits in `iCPU_STATUS`:
+ * bit 0 == 1: operation complete
+ * bit 1 == 1: operation was successful
