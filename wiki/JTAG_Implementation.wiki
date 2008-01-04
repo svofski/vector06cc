@@ -50,13 +50,11 @@ In the top level module, follwing signals are JTAG-related:
 The following describes principle of operation if compiled with JTAG_AUTOHOLD option. 
 
 
-1. If any JTAG command is received, HOLD signal is set and timer is loaded with maximum counter value.
-    When JTAG command is coming through, timer value is decreased
-    When timer counter has reached 0, HOLD signal is released
-
-2. When JTAG command is a SRAM read or write command, enable SRAM operation (f_SRAM)
-3. When HLDA is asserted and SRAM operation enabled, enable the the state machine
-
+ * If any JTAG command is received, HOLD signal is set and timer is loaded with maximum counter value.
+  * When JTAG command is coming through, timer value is decreased
+  * When timer counter has reached 0, HOLD signal is released
+ * When JTAG command is a SRAM read or write command, enable SRAM operation (f_SRAM)
+ * When HLDA is asserted and SRAM operation selected, the state machine is enabled
 
 A note about the timer. Control Panel doesn't have any means of notification of a read/write operation before it actually happens. There are SRAM multiplexer selection modes and there are different device selectors, but they are only called when switching modes. As if this was not enough uncertainity, feedback to host doesn't exist and once a command starts, it has to finish. This means that usually there's no time for HLDA signal to be asserted. The timer device just tries to request the bus as early as possible and tries to hold the signal for a while. This is a hack that's not guarranteed to work but unless Control Panel software is modified to have pace, there's no better solution. Control Panel implements a small delay when reading single word, but skips it during group read/write operations.
 
