@@ -41,7 +41,7 @@ Also see Technical_Description for Vector-06C port map, [VectorSecrets_by_Lebede
 
 === Preliminary HW layer tests ===
 [http://vector06cc.googlecode.com/svn/trunk/doc/wd-clocks-preliminarytest.png]
-Test simulation run of the HW layer. The "program" being executed here would be:
+Test simulation run of the HW layer. The "program" being executed here would be roughly:
 {{{
  RESET (as in hw pin)
  
@@ -52,7 +52,7 @@ Test simulation run of the HW layer. The "program" being executed here would be:
  STEP:        (0)=3F (previous direction, update)
  READ STATUS ==> 22
  SECTOR:      (2)=03
- READ SECTORS:(0)=80 (one sector)
+ READADDR:    (0)=C0 
    -> CPU command issued
    <- CPU completion status set
    -> CPU "ACK" command issued
