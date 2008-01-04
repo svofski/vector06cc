@@ -63,11 +63,8 @@ A note about the timer. Control Panel doesn't have any means of notification of 
 Just in case auto bus hold device fails, the bus can be held manually.
 
 ===State Machine===
-
-[http://vector06cc.googlecode.com/svn/trunk/doc/jtag_statemachine.png http://vector06cc.googlecode.com/svn/trunk/doc/statecharts.zargo]	
-
+[http://vector06cc.googlecode.com/svn/trunk/doc/jtag_statemachine.png]	
 
 == SRAM Multiplexer ==
-
 Normally SRAM multiplexer maps (N)x8 logical memory onto (N/2)x16 physical memory space.
 However in JTAG mode, access is done by words and thus jtag_jtag (oJTAG_SELECT) signal overrides this logic.
