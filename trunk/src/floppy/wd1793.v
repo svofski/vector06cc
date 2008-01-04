@@ -19,21 +19,21 @@ module wd1793(clk, clken, reset_n,
 				buff_odata,
 				
 				// workhorse interface
-				track,
-				sector,
-				status,
-				cpu_command,
-				cpu_status,
+				oTRACK,
+				oSECTOR,
+				oSTATUS,
+				oCPU_REQUEST,
+				iCPU_STATUS,
 				
 				irq,
 				drq,
 				wtf
 		);
 				
-parameter CPU_COMMAND_READ 		= 8'h10;
-parameter CPU_COMMAND_WRITE  	= 8'h20;
-parameter CPU_COMMAND_READADDR  = 8'h30;
-parameter CPU_COMMAND_ACK		= 8'h80;
+parameter CPU_REQUEST_READ 		= 8'h10;
+parameter CPU_REQUEST_WRITE  	= 8'h20;
+parameter CPU_REQUEST_READADDR  = 8'h30;
+parameter CPU_REQUEST_ACK		= 8'h80;
 				
 parameter A_COMMAND	= 3'b000;
 parameter A_STATUS	= 3'b000;
@@ -93,11 +93,11 @@ output	reg			buff_wr;
 input 		[7:0]	buff_idata;
 output	reg [7:0]	buff_odata;
 
-output 	[7:0]		track = disk_track;
-output  [7:0]		sector = wdstat_sector;
-output  [7:0]		status = wdstat_status;
-output	reg [7:0]	cpu_command;
-input		[7:0]	cpu_status;
+output 	[7:0]		oTRACK = disk_track;
+output  [7:0]		oSECTOR = wdstat_sector;
+output  [7:0]		oSTATUS = wdstat_status;
+output	reg [7:0]	oCPU_REQUEST;
+input		[7:0]	iCPU_STATUS;
 
 output				irq = wdstat_irq;
 output				drq = s_drq;
@@ -126,7 +126,7 @@ wire [7:0]  wNextTrack = wStepDir ? disk_track - 1 : disk_track + 1;
 wire [9:0]	wRdLengthMinus1 = data_rdlength - 1'b1;
 
 
-wire 	wReadSuccess = (state == STATE_WAIT_WHREAD) & cpu_status[0] & cpu_status[1];
+wire 	wReadSuccess = (state == STATE_WAIT_WHREAD) & iCPU_STATUS[0] & iCPU_STATUS[1];
 wire	wReadAByte = (state == STATE_READY) & rd & (addr == A_DATA) & (data_rdlength != 0);
 
 wire	watchdog_set = wReadSuccess | wReadAByte;
@@ -158,7 +158,7 @@ always @(posedge clk or negedge reset_n) begin
 		buff_rd <= 0;
 		buff_wr <= 0;
 		buff_addr <= 0;
-		cpu_command <= CPU_COMMAND_ACK;
+		oCPU_REQUEST <= CPU_REQUEST_ACK;
 		odata <= 0;
 		wdstat_multisector <= 0;
 		state <= STATE_READY;
@@ -203,7 +203,7 @@ always @(posedge clk or negedge reset_n) begin
 											// either read the next sector, or stop if this is track end
 											if (wdstat_multisector && wdstat_sector < SECTORS_PER_TRACK) begin
 												wdstat_sector <= wdstat_sector + 1;
-												cpu_command <= CPU_COMMAND_READ | wdstat_side;
+												oCPU_REQUEST <= CPU_REQUEST_READ | wdstat_side;
 												wdstat_irq <= 0;
 												s_drq <= 0;
 
@@ -294,7 +294,7 @@ always @(posedge clk or negedge reset_n) begin
 									// 1: C:	check side matching?
 									// 0: 0
 									begin
-										cpu_command <= CPU_COMMAND_READ | idata[3]; // side
+										oCPU_REQUEST <= CPU_REQUEST_READ | idata[3]; // side
 
 										s_busy <= 1;
 										{s_wrfault,s_seekerr,s_crcerr,s_lostdata,s_drq} <= 0;
@@ -309,7 +309,7 @@ always @(posedge clk or negedge reset_n) begin
 								4'hC:	// READ ADDRESS
 									begin
 										// track, side, sector, sector size code, 2-byte checksum (crc?)
-										cpu_command <= CPU_COMMAND_READADDR | wdstat_side;
+										oCPU_REQUEST <= CPU_REQUEST_READADDR | wdstat_side;
 										
 										s_busy <= 1'b1;
 										{s_wrfault,s_seekerr,s_crcerr,s_lostdata,s_drq} <= 0;
@@ -332,10 +332,10 @@ always @(posedge clk or negedge reset_n) begin
 			end
 		STATE_WAIT_WHREAD:
 			begin
-				if (cpu_status[0] == 1'b1) begin
-					cpu_command <= CPU_COMMAND_ACK;
+				if (iCPU_STATUS[0] == 1'b1) begin
+					oCPU_REQUEST <= CPU_REQUEST_ACK;
 					state <= STATE_READY;
-					if (cpu_status[1]) begin
+					if (iCPU_STATUS[1]) begin
 						// read successful
 						s_drq <= 1'b1;
 						wdstat_irq <= 0;

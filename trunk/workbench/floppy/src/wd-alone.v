@@ -30,9 +30,11 @@ wd1793 vg93(.clk(clk), .clken(1'b1), .reset_n(reset_n),
 			.rd(rd), .wr(wr), .addr(addr), .idata(idata), .odata(odata),
 			.buff_addr(buff_addr), .buff_rd(buff_rd), .buff_wr(buff_wr), 
 			.buff_idata(buff_idata), .buff_odata(buff_odata),
-			.track(track), .sector(sector), 
-			.cpu_command(cpu_command), .cpu_status(cpu_status), 
-			.status(wd_status), 
+			.oTRACK(track), 
+			.oSECTOR(sector), 
+			.oCPU_REQUEST(cpu_command), 
+			.iCPU_STATUS(cpu_status), 
+			.oSTATUS(wd_status), 
 			.wtf(wtf));
 
 fake_ram fauxpaw(
