@@ -46,6 +46,11 @@ parameter PORT_CTL = 6;
 parameter PORT_TMR1 = 7;
 parameter PORT_TMR2 = 8;
 
+parameter PORT_CPU_REQUEST	= 9;
+parameter PORT_CPU_STATUS	= 10;
+parameter PORT_TRACK		= 11;
+parameter PORT_SECTOR		= 12;
+
 parameter PORT_LED = 16;
 
 input			clk;
@@ -61,10 +66,10 @@ output			sd_cmd;
 output			sd_clk;
 output			uart_txd;
 
-// WD1793 emulation I/O
+// I/O interface to host system (Vector)
 input	[2:0]	hostio_addr;
 input	[7:0]	hostio_idata;
-output reg[7:0]	hostio_odata;
+output  [7:0]	hostio_odata;
 input			hostio_rd;
 input			hostio_wr;
 
@@ -92,14 +97,18 @@ cpu65xx_en cpu(
 
 wire [7:0]  ram_do;
 wire [7:0] 	lowmem_do;
+wire [7:0]	bufmem_do;
 reg  [7:0]	ioports_do;
 
 assign cpu_di = &cpu_a[15:4] ? (cpu_a[0] ? 8'h08:8'h00) // boot addr
-							: lowmem_en ? lowmem_do 
-							: rammem_en ? ram_do : ioports_do;
+							: lowmem_en ? lowmem_do :
+							  bufmem_en ? bufmem_do :
+							  rammem_en ? ram_do : ioports_do;
 
 wire lowmem_en = |cpu_a[15:9] == 0;
-wire rammem_en = cpu_a >= 16'h0800 && cpu_a < 16'h0800 + 32768;
+wire bufmem_en = cpu_a >= 16'h200 && cpu_a < 16'h400;
+//wire rammem_en = cpu_a >= 16'h0800 && cpu_a < 16'h0800 + 32768;
+wire rammem_en = cpu_a >= 16'h0800 && cpu_a < 16'h8000;
 wire ioports_en= cpu_a >= IOBASE && cpu_a < IOBASE + 256;
 
 floppyram flopramnik(
@@ -111,7 +120,7 @@ floppyram flopramnik(
 	.q(ram_do)
 	);
 
-zeropage zeropa(
+ram512x8 zeropa(
 	.clk(~clk),
 	.ce(ce & lowmem_en),
 	.addr(cpu_a),
@@ -119,10 +128,21 @@ zeropage zeropa(
 	.di(cpu_do),
 	.q(lowmem_do));
 
+wire [8:0]	bufmem_addr = (wd_ram_rd|wd_ram_wr) ? wd_ram_addr : cpu_a - 16'h200;
+wire 		bufmem_wren = wd_ram_wr | memwr;
+wire [7:0]	bufmem_di = wd_ram_wr ? wd_ram_odata : cpu_do;
 
-/////////////////
-// INPUT PORTS //
-/////////////////
+ram512x8 bufpa(
+	.clk(~clk),
+	.ce(ce & bufmem_en),
+	.addr(bufmem_addr),
+	.wren(bufmem_wren),
+	.di(bufmem_di),
+	.q(bufmem_do));
+
+/////////////////////
+// CPU INPUT PORTS //
+/////////////////////
 always @(negedge clk) begin
 	case (cpu_a)		 
 	IOBASE+PORT_CTL:	ioports_do <= {7'b0,uart_busy};	// uart status
@@ -130,10 +150,17 @@ always @(negedge clk) begin
 	IOBASE+PORT_TMR2:	ioports_do <= timer2q;
 	IOBASE+PORT_SPDR:	ioports_do <= spdr_do;
 	IOBASE+PORT_SPSR:	ioports_do <= {7'b0,~spdr_dsr};
+	IOBASE+PORT_CPU_REQUEST:
+						ioports_do <= wdport_cpu_request;
+	IOBASE+PORT_TRACK:	ioports_do <= wdport_track;
+	IOBASE+PORT_SECTOR:	ioports_do <= wdport_sector;
 	default:			ioports_do <= 8'hFF;
 	endcase
 end
 
+/////////////////////
+// CPU OUTPUT PORTS //
+/////////////////////
 always @(posedge clk or negedge reset_n) begin
 	if (!reset_n) begin
 		green_leds <= 0;
@@ -155,6 +182,11 @@ always @(posedge clk or negedge reset_n) begin
 			// MMCA: SD/MMC card chip select
 			if (memwr && cpu_a == IOBASE+PORT_MMCA) begin
 				sd_dat3 <= cpu_do[0];
+			end
+			
+			// CPU status return
+			if (memwr && cpu_a == IOBASE+PORT_CPU_STATUS) begin
+				wdport_cpu_status <= cpu_do[0];
 			end
 			
 			// uart state machine
@@ -235,14 +267,8 @@ spi sd0(.clk(clk),
 ////////////
 // WD1793 //
 ////////////
-//input	[2:0]	hostio_addr;
-//input	[7:0]	hostio_idata;
-//output reg[7:0]	hostio_odata;
-//input			hostio_rd;
-//input			hostio_wr;
 
-// i've no idea what native '93 register addresses are
-// here's how they're mapped in vector-06c
+// here's how 1793's registers are mapped in Vector-06c
 // 00011xxx
 //      000		$18 	Data
 //	    001		$19 	Sector
@@ -250,31 +276,51 @@ spi sd0(.clk(clk),
 //		011		$1B		Command/Status
 //		100		$1C		Control				Write only
 
-wd1793 vg93(.clk(clk), .clken(ce), .reset_n(reset_n));
-/*
-				// host interface
-				rd, wr, addr, idata, odata, 
+wire [7:0]	wdport_track;
+wire [7:0]  wdport_sector;
+wire [7:0]	wdport_status;
+wire [7:0]	wdport_cpu_request;
+reg	 [7:0]	wdport_cpu_status;
+
+wire [8:0]	wd_ram_addr;
+wire 		wd_ram_rd;
+wire		wd_ram_wr;	
+wire [7:0]	wd_ram_odata;	// this is to write to ram
+
+
+wd1793 vg93(.clk(clk), .clken(ce), .reset_n(reset_n),
+				// host i/o ports 
+				.rd(hostio_rd), 
+				.wr(hostio_wr), 
+				.addr(hostio_addr), 
+				.idata(hostio_idata), 
+				.odata(hostio_odata), 
 
 				// memory buffer interface
-				buff_addr, 
-				buff_rd, 
-				buff_wr, 
-				buff_idata, 
-				buff_odata,
+				.buff_addr(wd_ram_addr), 
+				.buff_rd(wd_ram_rd), 
+				.buff_wr(wd_ram_wr), 
+				.buff_idata(bufmem_do), 	// data read from ram
+				.buff_odata(wd_ram_odata), 	// data to write to ram
 				
 				// workhorse interface
-				track,
-				sector,
-				cpu_command,
-				cpu_status,
+				.oTRACK(wdport_track),
+				.oSECTOR(wdport_sector),
+				.oSTATUS(wdport_status),
+				.oCPU_REQUEST(wdport_cpu_request),
+				.iCPU_STATUS(wdport_cpu_status),
 				
-				irq,
-				drq,
-		);
-*/
+				.irq(),
+				.drq(),
+				.wtf());
 endmodule
 
-module zeropage(clk, ce, addr, wren, di, q);
+// 512 bytes of lower memory:
+// 	0000 zeropage  
+// 	0100 stack				___ lowmem1
+// 	0200 buffer
+// 	0400 <end of lowmem> 	___ lowmem2
+module ram512x8(clk, ce, addr, wren, di, q);
 input clk, ce;
 input [8:0] addr;
 input 		wren;
