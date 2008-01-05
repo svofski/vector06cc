@@ -76,3 +76,20 @@ Remarks:
 After CPU has done with processing any request other than `CPU_REQUEST_ACK`, it sets two bits in `iCPU_STATUS`:
  * bit 0 == 1: operation complete
  * bit 1 == 1: operation was successful
+
+=== CPU I/O Ports ===
+Ports start at memory location $E000:
+||E000||MMC_A: bit0 = SD_DAT3/CS||
+||E001||SPDR: SPI data register, same as in AVR||
+||E002||SPSR: SPI status register, only SPIF (bit 0) is implemented||
+||E003||reserved||
+||E004||TxD||
+||E005||RxD (not implemented)||
+||E006||SERIAL_CTL (status, bit 0 == busy)||
+||E007||10mS timer/counter 1||
+||E008||10mS timer/counter 2||
+||E009||CPU_REQUEST (bit 0 == side) request port, polled||
+||E00A||CPU_STATUS (write-only) return status here||
+||E00B||TRACK (read-only) track index from the hardware||
+||EOOC||SECTOR (read-only) sector index from the hardware||
+||E010||GLEDS green leds||
