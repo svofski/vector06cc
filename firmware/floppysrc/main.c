@@ -150,9 +150,12 @@ void main(void) {
 		}
 	}
 
-#if 0	
+#if 1
 	ser_puts("f_open "); ser_puts(ptrfile);
 	fresult = f_open(&file1, ptrfile, FA_READ);			print_result(fresult);
+
+	ser_puts("f_lseek 0xA000");
+	fresult = f_lseek(&file1, 0xA000);			print_result(fresult);
 		
 	ser_puts("f_read 2048:");
 	fresult = f_read(&file1, Buffer, 2048, &bytesread);	print_result(fresult);
@@ -160,8 +163,11 @@ void main(void) {
 	ser_puts("f_close:");
 	fresult = f_close(&file1);							print_result(fresult);
 
-	print_buff();
 #endif
 
 	slave(ptrfile, Buffer);
+	ser_puts("\n\rWhoopsie-diddy, failure\n\r");
+
+	print_buff();
+	
 }
