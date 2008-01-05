@@ -14,6 +14,11 @@
 #define		IOPORT_TIMER_1		0x07			/* counts down by 1 every 10ms */
 #define		IOPORT_TIMER_2		0x08			/* counts down by 1 every 10ms */
 
+#define		IOPORT_CPUREQ		0x09			/* our command */
+#define		IOPORT_CPUSTAT		0x0A			/* where we set our status */
+#define 	IOPORT_CPUTRACK		0x0B
+#define		IOPORT_CPUSECTOR	0x0C
+
 #define		IOPORT_GLEDS		0x10
 
 #define		MMC_A		(*((unsigned char *)(IOPORT_BASE+IOPORT_MMC_A)))
@@ -27,6 +32,11 @@
 
 #define		TIMER_1		(*((unsigned char *)(IOPORT_BASE+IOPORT_TIMER_1)))
 #define		TIMER_2		(*((unsigned char *)(IOPORT_BASE+IOPORT_TIMER_2)))
+
+#define		MASTER_COMMAND	(*((unsigned char *)(IOPORT_BASE+IOPORT_CPUREQ)))
+#define		SLAVE_STATUS	(*((unsigned char *)(IOPORT_BASE+IOPORT_CPUSTAT)))
+#define  	MASTER_TRACK	(*((unsigned char *)(IOPORT_BASE+IOPORT_CPUTRACK)))	
+#define		MASTER_SECTOR	(*((unsigned char *)(IOPORT_BASE+IOPORT_CPUSECTOR)))
 
 #define		GREEN_LEDS	(*((unsigned char *)(IOPORT_BASE+IOPORT_GLEDS)))
 

@@ -9,6 +9,8 @@
 #include "tff.h"
 
 #include "timer.h"
+#include "config.h"
+#include "slave.h"
 
 /*---------------------------------------------------------*/
 /* User Provided Timer Function for FatFs module           */
@@ -24,7 +26,7 @@ DWORD get_fattime (void)
 
 FATFS fatfs;
 FILINFO finfo;
-BYTE Buff[2048];			/* Working buffer */
+BYTE Buffer[SECTOR_SIZE];			/* Working buffer */
 
 
 BYTE nybble_alpha(BYTE nybble) {
@@ -39,13 +41,13 @@ void print_hex(BYTE b) {
 void print_buff() {
   WORD ofs;
   
-  for (ofs = 0; ofs < 1024; ofs++) {
+  for (ofs = 0; ofs < SECTOR_SIZE; ofs++) {
     if (ofs % 16 == 0) {
       ser_puts("\n\r");
     } else if (ofs % 8 == 0) {
       ser_putc('-');
     } else ser_putc(' ');
-    print_hex(Buff[ofs]); 
+    print_hex(Buffer[ofs]); 
   }
 }
 
@@ -118,7 +120,7 @@ void main(void) {
 
 #if 0
 	ser_puts("disk_read(): ");
-	result = disk_read (0, Buff, 0, 1);
+	result = disk_read (0, Buffer, 0, 1);
 	print_result(result);
 
 	print_buff();
@@ -147,26 +149,19 @@ void main(void) {
             ser_puts("\n\r");
 		}
 	}
-	
+
+#if 0	
 	ser_puts("f_open "); ser_puts(ptrfile);
 	fresult = f_open(&file1, ptrfile, FA_READ);			print_result(fresult);
-	
-	//ser_puts("f_lseek");
-	//fresult = f_lseek(&file1, p2);						print_result(fresult);
-	
+		
 	ser_puts("f_read 2048:");
-	fresult = f_read(&file1, Buff, 2048, &bytesread);	print_result(fresult);
+	fresult = f_read(&file1, Buffer, 2048, &bytesread);	print_result(fresult);
 	
 	ser_puts("f_close:");
 	fresult = f_close(&file1);							print_result(fresult);
 
 	print_buff();
+#endif
 
-	for(;;) {
-		GREEN_LEDS = leds;
-		delay1(10);
-		leds <<= 1;
-		if (leds == 0) leds = 0x01;
-	}
-	
+	slave(ptrfile, Buffer);
 }

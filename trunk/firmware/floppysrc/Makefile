@@ -8,8 +8,8 @@ L65=ld65
 
 #OBJS=mmc.o tff.o serial.o main.o
 #ASSS=mmc.s tff.s serial.s main.s
-OBJS=fddimage.o tff.o mmc.o timer.o serial.o main.o
-ASSS=fddimage.s tff.s mmc.s timer.s serial.s main.s
+OBJS=slave.o fddimage.o tff.o mmc.o timer.o serial.o main.o
+ASSS=slave.s fddimage.s tff.s mmc.s timer.s serial.s main.s
 
 CFLAGS=-Oirs -t none -T --cpu 6502
 

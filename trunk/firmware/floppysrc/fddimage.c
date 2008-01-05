@@ -1,6 +1,7 @@
 #include "integer.h"
 #include "fddimage.h"
 #include "tff.h"
+#include "config.h"
 
 enum FDDErrors{
 	FDD_OK,
@@ -12,12 +13,6 @@ static uint8_t fdderror;
 
 static FDDImage fdd;
 
-uint8_t fdd_clearerror();
-uint8_t fdd_load(FIL* file, FDDImage *fdd);
-uint8_t fdd_seek(FDDImage *fdd, uint8_t side, uint8_t track, uint8_t sector);
-uint8_t fdd_nextbyte(FDDImage* fdd);
-FRESULT fdd_readsector(FDDImage* fdd);
-
 static void seterror(uint8_t e) {
 	fdderror = e;
 }
@@ -28,13 +23,15 @@ uint8_t fdd_clearerror() {
 	return result;
 }
 
-uint8_t fdd_load(FIL* file, FDDImage *fdd) {
+uint8_t fdd_load(FIL* file, FDDImage *fdd, uint8_t *bufptr) {
 	fdd_clearerror();
 	
-	fdd->ntracks = file->fsize / (2*10*512);	// these seem to be fixed more or less
+	fdd->ntracks = file->fsize / (2*10*SECTOR_SIZE);	// these seem to be fixed more or less
 	fdd->nsides = 2;
 	fdd->nsectors = 10;
-	fdd->sectorsize = 512;
+	fdd->sectorsize = SECTOR_SIZE;
+	fdd->file = file;
+	fdd->buffer = bufptr;
 	
 	return (uint8_t) 0;
 }
@@ -53,6 +50,7 @@ uint8_t fdd_seek(FDDImage *fdd, uint8_t side, uint8_t track, uint8_t sector) {
 	fdd->ready = 0;
 }
 
+/*
 uint8_t fdd_nextbyte(FDDImage *fdd) {
 	uint8_t result;
 	
@@ -72,10 +70,30 @@ uint8_t fdd_nextbyte(FDDImage *fdd) {
 	
 	return result;
 }
+*/
 
 FRESULT fdd_readsector(FDDImage* fdd) {
+	FRESULT r;
+	UINT bytesread;
+	
 	uint32_t offset = (fdd->cur_track*(fdd->nsides+fdd->cur_side) + fdd->cur_sector) * fdd->sectorsize;
-	FRESULT r = f_lseek(fdd->file, offset);
+	if ((r = f_lseek(fdd->file, offset)) != FR_OK) return r;
+	
+	r = f_read(fdd->file, fdd->buffer, fdd->sectorsize, &bytesread);
 	
 	return r;
+}
+
+FRESULT fdd_readadr(FDDImage *fdd) {
+	uint8_t sizecode = SECTOR_SIZE_CODE;
+	
+	// 6 bytes: track, side, sector, sectorsize code, crc1, crc2
+	fdd->buffer[0] = fdd->cur_track;
+	fdd->buffer[1] = fdd->cur_side;
+	fdd->buffer[2] = fdd->cur_sector;
+	fdd->buffer[3] = sizecode;
+	fdd->buffer[4] = 0;
+	fdd->buffer[5] = 0;
+	
+	return FR_OK;
 }
