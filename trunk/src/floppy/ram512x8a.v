@@ -4,7 +4,7 @@
 // MODULE: altsyncram 
 
 // ============================================================
-// File Name: floppyram.v
+// File Name: ram512x8a.v
 // Megafunction Name(s):
 // 			altsyncram
 //
@@ -36,14 +36,16 @@
 // synopsys translate_off
 `timescale 1 ps / 1 ps
 // synopsys translate_on
-module floppyram (
+module ram512x8a (
 	address,
+	clken,
 	clock,
 	data,
 	wren,
 	q);
 
-	input	[14:0]  address;
+	input	[8:0]  address;
+	input	  clken;
 	input	  clock;
 	input	[7:0]  data;
 	input	  wren;
@@ -53,6 +55,7 @@ module floppyram (
 	wire [7:0] q = sub_wire0[7:0];
 
 	altsyncram	altsyncram_component (
+				.clocken0 (clken),
 				.wren_a (wren),
 				.clock0 (clock),
 				.address_a (address),
@@ -66,7 +69,6 @@ module floppyram (
 				.byteena_a (1'b1),
 				.byteena_b (1'b1),
 				.clock1 (1'b1),
-				.clocken0 (1'b1),
 				.clocken1 (1'b1),
 				.clocken2 (1'b1),
 				.clocken3 (1'b1),
@@ -77,18 +79,17 @@ module floppyram (
 				.rden_b (1'b1),
 				.wren_b (1'b0));
 	defparam
-		altsyncram_component.clock_enable_input_a = "BYPASS",
+		altsyncram_component.clock_enable_input_a = "NORMAL",
 		altsyncram_component.clock_enable_output_a = "BYPASS",
-		altsyncram_component.init_file = "./src/DISK.HEX",
 		altsyncram_component.intended_device_family = "Cyclone II",
 		altsyncram_component.lpm_hint = "ENABLE_RUNTIME_MOD=NO",
 		altsyncram_component.lpm_type = "altsyncram",
-		altsyncram_component.numwords_a = 18432,
+		altsyncram_component.numwords_a = 512,
 		altsyncram_component.operation_mode = "SINGLE_PORT",
 		altsyncram_component.outdata_aclr_a = "NONE",
 		altsyncram_component.outdata_reg_a = "UNREGISTERED",
 		altsyncram_component.power_up_uninitialized = "FALSE",
-		altsyncram_component.widthad_a = 15,
+		altsyncram_component.widthad_a = 9,
 		altsyncram_component.width_a = 8,
 		altsyncram_component.width_byteena_a = 1;
 
@@ -105,10 +106,10 @@ endmodule
 // Retrieval info: PRIVATE: AclrOutput NUMERIC "0"
 // Retrieval info: PRIVATE: BYTE_ENABLE NUMERIC "0"
 // Retrieval info: PRIVATE: BYTE_SIZE NUMERIC "8"
-// Retrieval info: PRIVATE: BlankMemory NUMERIC "0"
-// Retrieval info: PRIVATE: CLOCK_ENABLE_INPUT_A NUMERIC "0"
+// Retrieval info: PRIVATE: BlankMemory NUMERIC "1"
+// Retrieval info: PRIVATE: CLOCK_ENABLE_INPUT_A NUMERIC "1"
 // Retrieval info: PRIVATE: CLOCK_ENABLE_OUTPUT_A NUMERIC "0"
-// Retrieval info: PRIVATE: Clken NUMERIC "0"
+// Retrieval info: PRIVATE: Clken NUMERIC "1"
 // Retrieval info: PRIVATE: DataBusSeparated NUMERIC "1"
 // Retrieval info: PRIVATE: IMPLEMENT_IN_LES NUMERIC "0"
 // Retrieval info: PRIVATE: INIT_FILE_LAYOUT STRING "PORT_A"
@@ -117,8 +118,8 @@ endmodule
 // Retrieval info: PRIVATE: JTAG_ENABLED NUMERIC "0"
 // Retrieval info: PRIVATE: JTAG_ID STRING "NONE"
 // Retrieval info: PRIVATE: MAXIMUM_DEPTH NUMERIC "0"
-// Retrieval info: PRIVATE: MIFfilename STRING "./src/DISK.HEX"
-// Retrieval info: PRIVATE: NUMWORDS_A NUMERIC "18432"
+// Retrieval info: PRIVATE: MIFfilename STRING ""
+// Retrieval info: PRIVATE: NUMWORDS_A NUMERIC "512"
 // Retrieval info: PRIVATE: RAM_BLOCK_TYPE NUMERIC "0"
 // Retrieval info: PRIVATE: READ_DURING_WRITE_MODE_PORT_A NUMERIC "3"
 // Retrieval info: PRIVATE: RegAddr NUMERIC "1"
@@ -128,40 +129,41 @@ endmodule
 // Retrieval info: PRIVATE: SingleClock NUMERIC "1"
 // Retrieval info: PRIVATE: UseDQRAM NUMERIC "1"
 // Retrieval info: PRIVATE: WRCONTROL_ACLR_A NUMERIC "0"
-// Retrieval info: PRIVATE: WidthAddr NUMERIC "15"
+// Retrieval info: PRIVATE: WidthAddr NUMERIC "9"
 // Retrieval info: PRIVATE: WidthData NUMERIC "8"
 // Retrieval info: PRIVATE: rden NUMERIC "0"
-// Retrieval info: CONSTANT: CLOCK_ENABLE_INPUT_A STRING "BYPASS"
+// Retrieval info: CONSTANT: CLOCK_ENABLE_INPUT_A STRING "NORMAL"
 // Retrieval info: CONSTANT: CLOCK_ENABLE_OUTPUT_A STRING "BYPASS"
-// Retrieval info: CONSTANT: INIT_FILE STRING "./src/DISK.HEX"
 // Retrieval info: CONSTANT: INTENDED_DEVICE_FAMILY STRING "Cyclone II"
 // Retrieval info: CONSTANT: LPM_HINT STRING "ENABLE_RUNTIME_MOD=NO"
 // Retrieval info: CONSTANT: LPM_TYPE STRING "altsyncram"
-// Retrieval info: CONSTANT: NUMWORDS_A NUMERIC "18432"
+// Retrieval info: CONSTANT: NUMWORDS_A NUMERIC "512"
 // Retrieval info: CONSTANT: OPERATION_MODE STRING "SINGLE_PORT"
 // Retrieval info: CONSTANT: OUTDATA_ACLR_A STRING "NONE"
 // Retrieval info: CONSTANT: OUTDATA_REG_A STRING "UNREGISTERED"
 // Retrieval info: CONSTANT: POWER_UP_UNINITIALIZED STRING "FALSE"
-// Retrieval info: CONSTANT: WIDTHAD_A NUMERIC "15"
+// Retrieval info: CONSTANT: WIDTHAD_A NUMERIC "9"
 // Retrieval info: CONSTANT: WIDTH_A NUMERIC "8"
 // Retrieval info: CONSTANT: WIDTH_BYTEENA_A NUMERIC "1"
-// Retrieval info: USED_PORT: address 0 0 15 0 INPUT NODEFVAL address[14..0]
+// Retrieval info: USED_PORT: address 0 0 9 0 INPUT NODEFVAL address[8..0]
+// Retrieval info: USED_PORT: clken 0 0 0 0 INPUT NODEFVAL clken
 // Retrieval info: USED_PORT: clock 0 0 0 0 INPUT NODEFVAL clock
 // Retrieval info: USED_PORT: data 0 0 8 0 INPUT NODEFVAL data[7..0]
 // Retrieval info: USED_PORT: q 0 0 8 0 OUTPUT NODEFVAL q[7..0]
 // Retrieval info: USED_PORT: wren 0 0 0 0 INPUT NODEFVAL wren
-// Retrieval info: CONNECT: @address_a 0 0 15 0 address 0 0 15 0
+// Retrieval info: CONNECT: @address_a 0 0 9 0 address 0 0 9 0
 // Retrieval info: CONNECT: q 0 0 8 0 @q_a 0 0 8 0
 // Retrieval info: CONNECT: @clock0 0 0 0 0 clock 0 0 0 0
+// Retrieval info: CONNECT: @clocken0 0 0 0 0 clken 0 0 0 0
 // Retrieval info: CONNECT: @data_a 0 0 8 0 data 0 0 8 0
 // Retrieval info: CONNECT: @wren_a 0 0 0 0 wren 0 0 0 0
 // Retrieval info: LIBRARY: altera_mf altera_mf.altera_mf_components.all
-// Retrieval info: GEN_FILE: TYPE_NORMAL floppyram.v TRUE
-// Retrieval info: GEN_FILE: TYPE_NORMAL floppyram.inc FALSE
-// Retrieval info: GEN_FILE: TYPE_NORMAL floppyram.cmp FALSE
-// Retrieval info: GEN_FILE: TYPE_NORMAL floppyram.bsf TRUE FALSE
-// Retrieval info: GEN_FILE: TYPE_NORMAL floppyram_inst.v FALSE
-// Retrieval info: GEN_FILE: TYPE_NORMAL floppyram_bb.v FALSE
-// Retrieval info: GEN_FILE: TYPE_NORMAL floppyram_waveforms.html FALSE
-// Retrieval info: GEN_FILE: TYPE_NORMAL floppyram_wave*.jpg FALSE
+// Retrieval info: GEN_FILE: TYPE_NORMAL ram512x8a.v TRUE
+// Retrieval info: GEN_FILE: TYPE_NORMAL ram512x8a.inc FALSE
+// Retrieval info: GEN_FILE: TYPE_NORMAL ram512x8a.cmp FALSE
+// Retrieval info: GEN_FILE: TYPE_NORMAL ram512x8a.bsf FALSE
+// Retrieval info: GEN_FILE: TYPE_NORMAL ram512x8a_inst.v FALSE
+// Retrieval info: GEN_FILE: TYPE_NORMAL ram512x8a_bb.v FALSE
+// Retrieval info: GEN_FILE: TYPE_NORMAL ram512x8a_waveforms.html FALSE
+// Retrieval info: GEN_FILE: TYPE_NORMAL ram512x8a_wave*.jpg FALSE
 // Retrieval info: LIB_FILE: altera_mf

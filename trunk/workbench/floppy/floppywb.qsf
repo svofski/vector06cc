@@ -216,6 +216,7 @@ set_instance_assignment -name IO_STANDARD LVTTL -to UART_TXD
 
 set_global_assignment -name INCREMENTAL_VECTOR_INPUT_SOURCE src/floppywb.vwf
 set_global_assignment -name PROJECT_OUTPUT_DIRECTORY reports
+set_global_assignment -name VERILOG_FILE ../../src/floppy/ram512x8a.v
 set_global_assignment -name VERILOG_FILE ../../src/floppy/spi.v
 set_global_assignment -name VERILOG_FILE ../../src/floppy/timer100hz.v
 set_global_assignment -name VECTOR_WAVEFORM_FILE src/floppywb.vwf
