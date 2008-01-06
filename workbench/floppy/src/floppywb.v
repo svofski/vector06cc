@@ -22,6 +22,14 @@ module floppywb(CLOCK_27, KEY[3:0], LEDr[9:0], LEDg[7:0], SW[9:0], HEX0, HEX1, H
 		UART_TXD,
 		UART_RXD,
 		
+		// host interface (to vector)
+		hostio_addr,
+		hostio_idata,
+		hostio_odata,
+		hostio_rd,
+		hostio_wr,
+		
+		
 		GPIO_0
 `ifdef SIM		
 		,
@@ -59,6 +67,13 @@ output			SD_CLK;					//	SD Card Clock			(SCK)
 
 output			UART_TXD;
 input			UART_RXD;
+
+// I/O interface to host system (Vector)
+input	[2:0]	hostio_addr;
+input	[7:0]	hostio_idata;
+output  [7:0]	hostio_odata;
+input			hostio_rd;
+input			hostio_wr;
 
 output [12:0] 	GPIO_0;
 
@@ -126,13 +141,21 @@ floppy disk(
 	.idata(floppy_idata), 
 	.odata(floppy_odata), 
 	.memwr(floppy_memwr), 
+	
+	// host interface (to vector)
+	.hostio_addr(hostio_addr),
+	.hostio_idata(hostio_idata),
+	.hostio_odata(hostio_odata),
+	.hostio_rd(hostio_rd),
+	.hostio_wr(hostio_wr),
+	
 	.sd_dat(SD_DAT), 
 	.sd_dat3(SD_DAT3), 
 	.sd_cmd(SD_CMD), 
 	.sd_clk(SD_CLK),
 	.green_leds(LEDg),
 	.red_leds(LEDr[7:0]),
-	.uart_txd(UART_TXD),
+	.uart_txd(UART_TXD)
 `ifdef SIM	
 	,
 	.debug(floppy_debug),
@@ -143,45 +166,4 @@ floppy disk(
 
 SEG7_LUT_4 seg7display(HEX0, HEX1, HEX2, HEX3, floppy_abus);
 
-/*
-reg uart_send;
-reg [7:0] uart_data = 65;
-wire uart_busy;
-reg [1:0] uart_state = 0;
-
-
-TXD txda( 
-	.clk(clk24),
-	.ld(uart_send),
-	.data(uart_data),
-	.TxD(UART_TXD),
-	.txbusy(uart_busy)
-   );
-
-always @(posedge clk24) begin
-	case (uart_state) 
-	0:	begin
-			if (~uart_busy) begin
-				uart_send <= 1;
-				uart_state <= 1;
-			end
-		end
-	1:	begin
-			if (uart_busy) begin
-				uart_send <= 0;
-				uart_state <= 2;
-			end
-		end
-	2:	begin
-			if (~uart_busy) begin
-				uart_data <= uart_data + 1;
-				if (uart_data == 65+27) uart_data <= 65;
-				uart_state <= 0;
-			end
-		end
-	3:	begin
-		end
-	endcase
-end
-*/
 endmodule

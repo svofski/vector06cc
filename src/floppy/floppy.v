@@ -26,6 +26,7 @@ module floppy(
 	sd_dat, sd_dat3, sd_cmd, sd_clk, 
 	// uart comms
 	uart_txd, 
+	
 	// io ports
 	hostio_addr,
 	hostio_idata,
@@ -120,6 +121,7 @@ floppyram flopramnik(
 	.q(ram_do)
 	);
 
+/*
 ram512x8 zeropa(
 	.clk(~clk),
 	.ce(ce & lowmem_en),
@@ -127,17 +129,35 @@ ram512x8 zeropa(
 	.wren(memwr),
 	.di(cpu_do),
 	.q(lowmem_do));
+*/	
+ram512x8a zeropa(
+	.clock(~clk),
+	.clken(ce & lowmem_en),
+	.address(cpu_a),
+	.wren(memwr),
+	.data(cpu_do),
+	.q(lowmem_do));
+
 
 wire [8:0]	bufmem_addr = (wd_ram_rd|wd_ram_wr) ? wd_ram_addr : cpu_a - 16'h200;
 wire 		bufmem_wren = wd_ram_wr | memwr;
 wire [7:0]	bufmem_di = wd_ram_wr ? wd_ram_odata : cpu_do;
 
+/*
 ram512x8 bufpa(
 	.clk(~clk),
 	.ce(ce & bufmem_en),
 	.addr(bufmem_addr),
 	.wren(bufmem_wren),
 	.di(bufmem_di),
+	.q(bufmem_do));*/
+
+ram512x8a bufpa(
+	.clock(~clk),
+	.clken(ce & bufmem_en),
+	.address(bufmem_addr),
+	.wren(bufmem_wren),
+	.data(bufmem_di),
 	.q(bufmem_do));
 
 /////////////////////
@@ -186,7 +206,7 @@ always @(posedge clk or negedge reset_n) begin
 			
 			// CPU status return
 			if (memwr && cpu_a == IOBASE+PORT_CPU_STATUS) begin
-				wdport_cpu_status <= cpu_do[0];
+				wdport_cpu_status <= cpu_do;
 			end
 			
 			// uart state machine
@@ -288,7 +308,11 @@ wire		wd_ram_wr;
 wire [7:0]	wd_ram_odata;	// this is to write to ram
 
 
-wd1793 vg93(.clk(clk), .clken(ce), .reset_n(reset_n),
+wd1793 vg93(
+				.clk(clk), 
+				.clken(ce), 
+				.reset_n(reset_n),
+				
 				// host i/o ports 
 				.rd(hostio_rd), 
 				.wr(hostio_wr), 
@@ -308,11 +332,58 @@ wd1793 vg93(.clk(clk), .clken(ce), .reset_n(reset_n),
 				.oSECTOR(wdport_sector),
 				.oSTATUS(wdport_status),
 				.oCPU_REQUEST(wdport_cpu_request),
-				.iCPU_STATUS(wdport_cpu_status),
-				
-				.irq(),
-				.drq(),
-				.wtf());
+				.iCPU_STATUS(wdport_cpu_status)
+				);
+endmodule
+
+
+module ram512x8_a(clk, ce, addr, wren, di, q);
+input clk, ce;
+input [8:0] addr;
+input 		wren;
+input [7:0]	di;
+output[7:0]	q;
+
+	altsyncram	altsyncram_component (
+				.wren_a (wren),
+				.clock0 (clk),
+				.address_a(addr),
+				.data_a (di),
+				.q_a (q),
+				.aclr0 (1'b0),
+				.aclr1 (1'b0),
+				.address_b (1'b1),
+				.addressstall_a (1'b0),
+				.addressstall_b (1'b0),
+				.byteena_a (1'b1),
+				.byteena_b (1'b1),
+				.clock1 (1'b1),
+				.clocken0 (1'b1),
+				.clocken1 (1'b1),
+				.clocken2 (1'b1),
+				.clocken3 (1'b1),
+				.data_b (1'b1),
+				.eccstatus (),
+				.q_b (),
+				.rden_a (1'b1),
+				.rden_b (1'b1),
+				.wren_b (1'b0));
+	defparam
+		altsyncram_component.clock_enable_input_a = "BYPASS",
+		altsyncram_component.clock_enable_output_a = "BYPASS",
+		altsyncram_component.intended_device_family = "Cyclone II",
+		altsyncram_component.lpm_hint = "ENABLE_RUNTIME_MOD=NO",
+		altsyncram_component.lpm_type = "altsyncram",
+		altsyncram_component.numwords_a = 512,
+		altsyncram_component.operation_mode = "SINGLE_PORT",
+		altsyncram_component.outdata_aclr_a = "NONE",
+		altsyncram_component.outdata_reg_a = "UNREGISTERED",
+		altsyncram_component.power_up_uninitialized = "TRUE",
+		altsyncram_component.widthad_a = 9,
+		altsyncram_component.width_a = 8,
+		altsyncram_component.width_byteena_a = 1;
+
+
 endmodule
 
 // 512 bytes of lower memory:

@@ -26,7 +26,10 @@ DWORD get_fattime (void)
 
 FATFS fatfs;
 FILINFO finfo;
-BYTE Buffer[SECTOR_SIZE];			/* Working buffer */
+
+//BYTE Buffer[SECTOR_SIZE];			/* Working buffer */
+
+BYTE* Buffer = (BYTE *)0x0200;
 
 
 BYTE nybble_alpha(BYTE nybble) {
@@ -97,7 +100,7 @@ void main(void) {
 
 	ser_puts("@");
 	delay2(100);
-	ser_puts("\r\n-VECTOR06CC-\r\n");
+	ser_puts("\r\nVECTOR06CC \r\n");
 	delay2(50);
 
 	do {
@@ -162,5 +165,5 @@ void main(void) {
 #endif		
 	} while (0);
 	print_result(result);
-	ser_puts("\r\nX_x\r\n");
+	ser_puts("\r\nWTF?");
 }
