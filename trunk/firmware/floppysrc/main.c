@@ -38,30 +38,31 @@ void print_hex(BYTE b) {
 	ser_putc(nybble_alpha(b & 0x0f));
 }
 
+#if 0
 void print_buff() {
   WORD ofs;
   
   for (ofs = 0; ofs < SECTOR_SIZE; ofs++) {
     if (ofs % 16 == 0) {
-      ser_puts("\n\r");
+      ser_nl();
     } else if (ofs % 8 == 0) {
       ser_putc('-');
     } else ser_putc(' ');
     print_hex(Buffer[ofs]); 
   }
 }
+#endif
 
 void print_result(DRESULT result) {
 	switch (result) {
 		case 0:
-			ser_puts("pass");
 			break;
 		default:
-			ser_puts("bad: ");
+			ser_puts(" :( ");
 			print_hex((BYTE)result);
+			ser_nl();
 			break;
 	}
-	ser_puts("\n\r");
 }
 
 BYTE endsWith(char *s1, const char *suffix) {
@@ -78,15 +79,15 @@ void fill_filename(char *buf, char *fname) {
 	strncpy(buf, fname, 12);
 }
 
+#define CHECKRESULT {if (result) break;}
+
 void main(void) {
 	FATFS *fs = &fatfs;
-	DWORD p1, p2;
 	BYTE res;
 	DIR dir;
-	FIL	file1;
-	char *ptrdir = "vector06c";
 	char *ptrfile = "/VECTOR06/xxxxxxxx.xxx";
 	UINT bytesread;
+	FIL	file1;
 
 	uint8_t leds = 0x01;
 	DRESULT result;
@@ -96,78 +97,70 @@ void main(void) {
 
 	ser_puts("@");
 	delay2(100);
-	ser_puts("\n\r}O{\n\rhello.jpg\n\r");
+	ser_puts("\r\n-VECTOR06CC-\r\n");
 	delay2(50);
 
-	MMC_A = 0;
-	delay2(2);
-	MMC_A = 1;
-	delay2(2);
-	MMC_A = 0;
-	delay2(2);
-	MMC_A = 1;
-
-	print_hex(0x00);
-	print_hex(0xff);
-	print_hex(0x0a);
-	print_hex(0x50);
-	print_hex(0xc3);
-	ser_puts("\n\r");
-
-	ser_puts("disk_initialize(): ");
-	result = disk_initialize(0);	
-	print_result(result);
+	do {
+		ser_putc('F');
+		result = disk_initialize(0); CHECKRESULT;
 
 #if 0
-	ser_puts("disk_read(): ");
-	result = disk_read (0, Buffer, 0, 1);
-	print_result(result);
-
-	print_buff();
+		ser_puts("disk_read(): ");
+		result = disk_read (0, Buffer, 0, 1); 
+		print_buff();
+		CHECKRESULT;
 #endif
 
-	ser_puts("mounting filesystem: ");
-	fresult = f_mount(0, &fatfs);
-	print_result(fresult);
-
-	
-	ser_puts("Opening /vector06c directory...");
-	fresult = f_opendir(&dir, "/VECTOR06");					
-	print_result(fresult);
-	if (fresult == FR_OK) {
-		while ((f_readdir(&dir, &finfo) == FR_OK) && finfo.fname[0]) {
-			if (finfo.fattrib & AM_DIR) {
-				ser_putc('['); ser_puts(finfo.fname); ser_putc(']');
-			} else {
-				if (endsWith(finfo.fname, ".fdd")) {
-					ser_puts(" * ");
-					ser_puts(finfo.fname);
-					
-					fill_filename(ptrfile+10, finfo.fname);
-				}
-            }
-            ser_puts("\n\r");
-		}
-	}
-
-#if 1
-	ser_puts("f_open "); ser_puts(ptrfile);
-	fresult = f_open(&file1, ptrfile, FA_READ);			print_result(fresult);
-
-	ser_puts("f_lseek 0xA000");
-	fresult = f_lseek(&file1, 0xA000);			print_result(fresult);
+		ser_putc('T');
+		fresult = f_mount(0, &fatfs); CHECKRESULT;
 		
-	ser_puts("f_read 2048:");
-	fresult = f_read(&file1, Buffer, 2048, &bytesread);	print_result(fresult);
-	
-	ser_puts("f_close:");
-	fresult = f_close(&file1);							print_result(fresult);
+		ser_putc('W');
+		ptrfile[9] = 000; 
+		fresult = f_opendir(&dir, ptrfile);					
+		ptrfile[9] = '/'; 
+		CHECKRESULT;
+		
+		ser_nl();
+		
+		if (fresult == FR_OK) {
+			while ((f_readdir(&dir, &finfo) == FR_OK) && finfo.fname[0]) {
+				if (finfo.fattrib & AM_DIR) {
+					ser_putc('['); ser_puts(finfo.fname); ser_putc(']');
+				} else {
+					if (endsWith(finfo.fname, ".fdd")) {
+						ser_puts(" * ");
+						ser_puts(finfo.fname);
+						
+						fill_filename(ptrfile+10, finfo.fname);
+					}
+				}
+				ser_nl();
+			}
+		}
+		ser_puts("=> "); ser_puts(ptrfile); ser_nl();
+
+#if 0
+		ser_puts("f_open "); ser_puts(ptrfile);
+		fresult = f_open(&file1, ptrfile, FA_READ);					CHECKRESULT;
+
+
+		ser_puts("f_lseek 0xA000");
+		fresult = f_lseek(&file1, 0xA000);							CHECKRESULT;
+			
+		ser_puts("f_read 2048:");
+		fresult = f_read(&file1, Buffer, 2048, &bytesread);			CHECKRESULT;
+		
+		ser_puts("f_close:");
+		fresult = f_close(&file1);									CHECKRESULT;
 
 #endif
 
-	slave(ptrfile, Buffer);
-	ser_puts("\n\rWhoopsie-diddy, failure\n\r");
+		slave(ptrfile, Buffer);
 
-	print_buff();
-	
+#if 0
+		print_buff();
+#endif		
+	} while (0);
+	print_result(result);
+	ser_puts("\r\nX_x\r\n");
 }

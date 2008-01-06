@@ -11,7 +11,9 @@ L65=ld65
 OBJS=slave.o fddimage.o tff.o mmc.o timer.o serial.o main.o
 ASSS=slave.s fddimage.s tff.s mmc.s timer.s serial.s main.s
 
-CFLAGS=-Oirs -t none -T --cpu 6502
+# snapshot version of cc65 has a patch regarding -Os
+# release version will only work with -Oirs
+CFLAGS=-Os -t none -T --cpu 6502
 
 
 
@@ -23,7 +25,7 @@ disk:	$(OBJS)
 	copy disk.hex ..\..\workbench\floppy\src
 
 clean:
-	rm $(OBJS) $(ASSS) disk.bin disk.map
+	rm $(OBJS) $(ASSS) disk.bin disk.map disk.hex
 
 %.s:	%.c
 	$(C65) $(CFLAGS) -I $(AINC) -I $(CINC) $<

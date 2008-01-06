@@ -20,23 +20,13 @@ uint8_t slave(const char *imagefile, uint8_t *buffer) {
 
 	if (f_open(&file1, imagefile, FA_READ) != FR_OK) return SR_OPENERR;
 
-	ser_puts("opened file\n\r");
-
-	//if (f_lseek(&file1, 0xA000U) != FR_OK) return SR_READERR;
-	//if (f_read(&file1, buffer, SECTOR_SIZE, &bytesread) != FR_OK) return SR_READERR;
-	//if (buffer[0] != '\000') return SR_FORMAT;
-	
 	fdd_load(&file1, &fddimage, buffer);
 	fdd_seek(&fddimage, 0, 4, 0);
 	if (fdd_readsector(&fddimage) != FR_OK) return SR_READERR;
 
-	ser_puts("read sector\n\r");
-
 	if (buffer[0] != '\000') return SR_FORMAT;	// directory starts with a 0
 	
-	ser_puts("format match\n\r");
-
-	// initial tests passed, it seems we're clear to slave forever now
+	// tests passed, clear to slave forever
 	
 	for (;;) {
 		if (MASTER_COMMAND != last_request) {
@@ -80,12 +70,4 @@ uint8_t slave(const char *imagefile, uint8_t *buffer) {
 			}
 		}
 	}
-/*	
-	for(;;) {
-		GREEN_LEDS = leds;
-		delay1(10);
-		leds <<= 1;
-		if (leds == 0) leds = 0x01;
-	}
-*/	
 }
