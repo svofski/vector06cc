@@ -1,0 +1,26 @@
+#summary Sound codec on DE1
+#labels Phase-Implementation,Featured
+
+= Modules =
+
+* soundcodec.v sound interface toplevel
+* audio_io.v codec interface
+* I2C_AV_Config.v audio codec configurator (C) Altera
+* I2C_Controller.v I2C interface (C) Altera
+
+= Connections and principle of operation =
+
+`soundcodec.v` has very simple interface. 
+||`clk18`||in||1||18MHz master clock for the codec||
+||`pulses`||in||4||1-bit sound streams, they're sampled into clk18 clock domain||
+||`tapein`||out||1||1-bit tape input, passed through adaptive threshold||
+||`reset_n`||in||1||reset||
+||`oAUD_BCK`||out||1||audio bit clock||
+||`oAUD_DATA`||out||1||audio data||
+||`oAUD_LRCK`||out||1||audio L/R clock||
+||`iAUD_ADCDAT`||in||1||ADCdata in||
+||`oAUD_ADCLRCK`||out||1||ADC L/R clock||
+
+Pulses is a 4-bit wide bus. Bits 0..2 are ought to be the connected to outputs of 8253 PIT sound generator. Bit 3 is ought to be tape output. Music bits are passed through a simple moving average filter; tape out bit is unfiltered.
+
+Other module that has to be explicitly instantiated is `I2C_AV_Config`. It comes from the DE1 samples, although the configuration bits are changed: line input is enabled and signal passthrough is disabled. The connections are self-explanatory.
