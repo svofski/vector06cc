@@ -26,3 +26,6 @@ Pulses is a 4-bit wide bus. Bits 0..2 are ought to be the connected to outputs o
 Other module that has to be explicitly instantiated is `I2C_AV_Config`. It comes from the DE1 samples, although the configuration bits are changed: line input is enabled and signal passthrough is disabled. The connections are self-explanatory.
 
 After reset is reasserted high, I2C_AV_Config sends configuration to the codec chip and soundcodec.v starts data exchange through audio_io.v. Line input is passed through an adaptive threshold to make loading from "tape" easier. "Music" outputs are filtered through a very simple moving averager. Parameters of adaptive thresholder and averager are found experimentally.
+
+= 8253 Programmable Interrupt Timer =
+Original Vector-06C used a 8253 chip to generate 3-channel audio. 8253.v is a pretty ineffective behavioral description of 8253 PIT based on Intel datasheet. I didn't bother myself with redesigning the whole thing, this module just mimics what's enough for fair sound reproduction. Modes that can be useful for sound are faithful to the original though. Modes 1 and 5 are not implemented at all, GATE inputs are not used.
