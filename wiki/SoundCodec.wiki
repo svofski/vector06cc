@@ -1,4 +1,4 @@
-#summary Sound codec on DE1
+#summary Sound codec on DE1 (WM8731)
 #labels Phase-Implementation,Featured
 
 = Modules =
