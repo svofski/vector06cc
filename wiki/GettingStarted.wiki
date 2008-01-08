@@ -63,5 +63,6 @@ Audio input works and you can load from .wav file, .mp3 file (96kbps seems to be
  * [HOWTO_rom2wav ROM->WAV howto (ru) | Как из .ROM сделать .WAV]
  * [ImplementationNotes FPGA Implementation Notes]
  * [JTAG_Implementation DE1 USB API compatible JTAG implementation]
+ * [SoundCodec Audio Codec interface]
  * [SVK1_Floppy Секреты Вектора и Кристы] - глава с описанием контроллера дисковода
  * [VectorSecrets_by_Lebedev Секреты Вектора] от А.З. Лебедева
