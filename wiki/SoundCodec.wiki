@@ -21,6 +21,9 @@
 ||`iAUD_ADCDAT`||in||1||ADCdata in||
 ||`oAUD_ADCLRCK`||out||1||ADC L/R clock||
 
+*Note*: it is important that `AUD_XCK = clk18;`  !!!
+
+
 Pulses is a 4-bit wide bus. Bits 0..2 are ought to be the connected to outputs of 8253 PIT sound generator. Bit 3 is ought to be tape output. Music bits are passed through a simple moving average filter; tape out bit is unfiltered.
 
 The other module that has to be explicitly instantiated is `I2C_AV_Config`. It comes from the DE1 samples, although the configuration bits are changed: line input is enabled and signal passthrough is disabled. The connections are self-explanatory.
