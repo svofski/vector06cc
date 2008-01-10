@@ -21,8 +21,9 @@
 ||`iAUD_ADCDAT`||in||1||ADCdata in||
 ||`oAUD_ADCLRCK`||out||1||ADC L/R clock||
 
-*Note*: it is important that `AUD_XCK = clk18;`  !!!
+*NB1*: `AUD_XCK` must be assigned same clock as `clk18`, probably in the top level: see [http://code.google.com/p/vector06cc/issues/detail?id=9 associated issue];
 
+*NB2*: 12MHz (256fs) clock can be used instead of 18MHz clock (384fs)
 
 Pulses is a 4-bit wide bus. Bits 0..2 are ought to be the connected to outputs of 8253 PIT sound generator. Bit 3 is ought to be tape output. Music bits are passed through a simple moving average filter; tape out bit is unfiltered.
 
