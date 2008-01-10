@@ -30,7 +30,18 @@ PS/2 driver, `ps2k.v` is very basic and provides no possibility to send commands
 
 The matrix itself is simulated rather physically, see `rowbits` assignment in `vectorkeys.v`. This ensures proper emulation but, of course, is far from being compact or elegant. Ideally, keymatrix should be made a RAM block and rowbits would then be updated sequentially. Unfortunately, to make this possible, the main state machine with all logic would have to be slightly rewritten.
 
+Special keys on the keyboard:
+ * F11: БЛК+ВВОД, спрос ПК с подключением ПЗУ загрузчика. Программа в загрузчике отслеживает состояние клавиш при старте и удерживая F1, F2, F1+F2 можно принудительно выбирать загрузку с кассеты, квазидиска или дискеты.
+ * F12: БЛК+СБР, запуск загруженной программы. При нажатии на эту клавишу, отключается ПЗУ загрузчика и осуществляется сброс процессора, который начинает исполнять программу в ОЗУ с адреса $0000.
+ * ScrollLock: Forced Bus Hold: нажатие на эту клавишу переключает уровень сигнала HOLD. Первое нажатие останавливает процессор и отдает шину целиком в распоряжение JTAG интерфейса, повторное нажатие возобновляет работу процессора. Обычно эта клавиша не нужна, потому что JTAG и так своего не упустит.
+ * CapsLock: RUS/LAT
+ * Control: УC
+ * Shift: CC
+ * Alt: ПС
+ * ??: СТР
+
 See also: [http://www.quadibloc.com/comp/scan.htm Scan Codes Demystified]
+See also: [Technical_Description Техническое описание] 
 
 = Mock Disk (kvaz, квазидиск) =
 
