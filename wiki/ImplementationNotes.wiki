@@ -17,7 +17,7 @@ Clock distribution:
 
 = Mock Disk (kvaz, квазидиск) =
 
-Same SRAM chip is used for main memory and for the RAM disk. The complete memory map can be laid out approximately like this:
+Same SRAM chip is used for main memory and for the RAM disk. The complete memory map can be laid out approximately like this (addresses given in byte mode, divide by 2 for physical figures):
 ||00000||Main RAM||
 ||10000||Ramdisk page 0||
 ||20000||Ramdisk page 1||
@@ -31,7 +31,7 @@ Important signals in the toplevel:
 
 `kvaz` is basically just another level of SRAM multiplexer. Its mode of operation is controlled by the ramdisk control register. Depending on configuration, it would select SRAM page, bits [16:15] of external SRAM address bus, during regular memory access (in window mode) or stack access (in stack mode). Output `ramdisk_page` is then fed through to `sram_map` module where it's joined into the complete SRAM address.
 
-See also: [ramdisk Описание функционирования квазидиска].
+See also: [ramdisk Описание функционирования квазидиска], [JTAG_Implementation].
 
 = Floppy Drive =
 _This section describes work in progress_
