@@ -41,6 +41,7 @@ Special keys on the keyboard:
  * ??: СТР
 
 See also: [http://www.quadibloc.com/comp/scan.htm Scan Codes Demystified]
+
 See also: [Technical_Description Техническое описание] 
 
 = Mock Disk (kvaz, квазидиск) =
