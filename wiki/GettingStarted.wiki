@@ -53,7 +53,7 @@ After Vector-06C is loaded, if there's nothing in RAMdisk, it expects things to 
 === Load from Tape ===
 Audio input works and you can load from .wav file, .mp3 file (96kbps seems to be working best), iPod, tape player, whatever --- provided you have any wav's or tapes. This process will not differ from the original Vector-06C or any other computer, after image is loaded, RUS/LAT LED will blink steady (LED9) and F12 on the keyboard will start the program. See [HOWTO_rom2wav ROM->WAV howto]
 
- Можно загружать программы из wav- или mp3- файлов, как было принято во времена моноклей и высоких цилиндров. В этом проекте реализован адаптивный уровень чтения, поэтому никакой настройки плеера не понадобится. См. [HOWTO_rom2wav ROM->WAV howto].
+ Можно загружать программы из wav- или mp3- файлов, как было принято во времена моноклей и высоких цилиндров. В этом проекте реализован адаптивный уровень чтения, поэтому никакой настройки плеера не понадобится. См. также [HOWTO_rom2wav ROM->WAV howto (ru)].
 
 = Other pages of interest =
  * [license Licensing information (en)]
