@@ -15,6 +15,17 @@ Clock distribution:
  * pipe_ab is an internal signal in the video controller, invisible in this short simulation
  * timer_vi53_ce is the slow 1.5MHz clock enable for 8253 soundnik
 
+= Keyboard =
+In this implementation an attempt is made to make the keyboard as accessible to the modern user as possible, while keeping the impact on compatibility minimal. A complex interface maps PS/2 keyboard codes into Vector-06C keyboard matrix, while keeping track of both PS/2 and Vector Shift status. This results in smooth interaction with modern keyboards, the user doesn't need to know where certain characters were located on the original keyboard at all. One drawback is Cyrillic keyboard layout, which is currently not mapped out. This may also cause problems in programs that assume the keyboard geometry to be fixed, e.g. piano keys simulators. Such functionality can be added: see [http://code.google.com/p/vector06cc/issues/detail?id=10 related issue].
+
+Keyboard interface consists of low level PS/2 driver located in ps2k.v, scancode converter roms in scan2matrix.v and toplevel interface with matrix encoder in vectorkeys.v. 
+
+PS/2 driver, `ps2k.v` is very basic and provides no possibility to send commands to the keyboard, e.g. to set typematic rate or change the status of keyboard LED's. The main module is `vectorkeys.v`. The state machine there handles make and release codes, while keeping track on natural, forced and negated shifts. This is necessary to properly implement keys that have different shift status on different keyboards, e.g. to enter a ':' one presses ':' key on the original Vector without Shift, while on a PS/2 one normally presses Shift+; to enter a ':'. Thus, a shift has to be neglected from the keyboard matrix. Same ':' key with shift on Vector would enter an asterisk, '{{{*}}}'. On a PS/2 keyboard, asterisk is entered by pressing Shift+8, thus the shift status is kept natural for "Shift+8". Other interesting case of shift handling is dictated by the PS/2 keyboard itself which sends make shift code before each grey arrow keypress and break shift code after it's released.
+
+The matrix itself is simulated rather physically, see `rowbits` assignment in `vectorkeys.v`. This ensures proper emulation but, of course, is far from being compact or elegant. Ideally, keymatrix should be made a RAM block and rowbits would then be updated sequentially. Unfortunately, to make this possible, the main state machine with all logic would have to be slightly rewritten.
+
+See also: [http://www.quadibloc.com/comp/scan.htm Scan Codes Demystified]
+
 = Mock Disk (kvaz, квазидиск) =
 
 Same SRAM chip is used for main memory and for the RAM disk. The complete memory map can be laid out approximately like this (addresses given in byte mode, divide by 2 for physical figures):
