@@ -15,6 +15,24 @@ Clock distribution:
  * pipe_ab is an internal signal in the video controller, invisible in this short simulation
  * timer_vi53_ce is the slow 1.5MHz clock enable for 8253 soundnik
 
+= Mock Disk (kvaz, квазидиск) =
+
+Same SRAM chip is used for RAM disk. The complete memory could be laid out approximately like this:
+||00000||Main RAM||
+||10000||Ramdisk page 0||
+||20000||Ramdisk page 1||
+||30000||Ramdisk page 2||
+||40000||Ramdisk page 3||
+
+Important signals in the toplevel:
+ * `ramdisk_control_write` ramdisk control register select, port $10 (write-only)
+ * `io_stack` stack I/O selector
+ * `ramdisk_page` bits [16:15] of external SRAM bus, fed into `sram_map`
+
+`kvaz` is basically just another level of SRAM multiplexer. Its mode of operation is controlled by the ramdisk control register. Depending on configuration, it would select SRAM page, bits [16:15] of external SRAM address bus, during regular memory access or stack access. Output `ramdisk_page` is then fed through to `sram_map` module where it's joined into the complete SRAM address.
+
+See also: [ramdisk Описание функционирования квазидиска].
+
 = Floppy Drive =
 _This section describes work in progress_
 
