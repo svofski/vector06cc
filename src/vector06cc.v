@@ -53,6 +53,7 @@
 `define WITH_KEYBOARD
 `define WITH_VI53
 `define WITH_DE1_JTAG
+`define WITH_FLOPPY
 `define JTAG_AUTOHOLD
 
 module vector06cc(CLOCK_27, KEY[3:0], LEDr[9:0], LEDg[7:0], SW[9:0], HEX0, HEX1, HEX2, HEX3, 
@@ -90,6 +91,16 @@ module vector06cc(CLOCK_27, KEY[3:0], LEDr[9:0], LEDg[7:0], SW[9:0], HEX0, HEX1,
 		TCK,  							// CPLD -> FPGA (clk)
 		TCS,  							// CPLD -> FPGA (CS)
 	    TDO,  							// FPGA -> CPLD (data out)
+
+		////////////////////	SD_Card Interface	////////////////
+		SD_DAT,							//	SD Card Data
+		SD_DAT3,						//	SD Card Data 3
+		SD_CMD,							//	SD Card Command Signal
+		SD_CLK,							//	SD Card Clock
+		
+		///////////////////// USRAT //////////////////////
+		UART_TXD,
+		UART_RXD,
 
 		// TEST PIN
 		GPIO_0
@@ -142,6 +153,15 @@ input  			TDI;					// CPLD -> FPGA (data in)
 input  			TCK;					// CPLD -> FPGA (clk)
 input  			TCS;					// CPLD -> FPGA (CS)
 output 			TDO;					// FPGA -> CPLD (data out)
+
+////////////////////	SD Card Interface	////////////////////////
+input			SD_DAT;					//	SD Card Data 			(MISO)
+output			SD_DAT3;				//	SD Card Data 3 			(CSn)
+output			SD_CMD;					//	SD Card Command Signal	(MOSI)
+output			SD_CLK;					//	SD Card Clock			(SCK)
+
+output			UART_TXD;
+input			UART_RXD;
 
 output [12:0] 	GPIO_0;
 
@@ -264,7 +284,11 @@ wire [1:0] sw23 = {SW[3],SW[2]};
 
 wire [7:0] kbd_keystatus = {kbd_mod_rus, kbd_key_shift, kbd_key_ctrl, kbd_key_rus, kbd_key_blksbr};
 
-assign LEDg = sw23 == 0 ? status_word : sw23 == 1 ? {kbd_keystatus} : sw23 == 2 ? kvaz_debug : {HLDA, mJTAG_SELECT, mJTAG_SRAM_WR_N, SRAM_ADDR[17:15]};
+assign LEDg = sw23 == 0 ? status_word 
+			: sw23 == 1 ? {floppy_rden,floppy_odata[6:0]}//{kbd_keystatus} 
+			: sw23 == 2 ? floppy_status 
+			: {HLDA, mJTAG_SELECT, mJTAG_SRAM_WR_N, SRAM_ADDR[17:15]};
+			
 SEG7_LUT_4 seg7display(HEX0, HEX1, HEX2, HEX3, SW[4] ? clock_counter : A);
 
 
@@ -470,7 +494,8 @@ wire		kbd_key_bushold;
 
 reg [7:0] peripheral_data_in;
 always peripheral_data_in = ~vm55int_oe_n ? vm55int_odata :
-							vi53_rden ? vi53_odata : 8'h00;
+							vi53_rden ? vi53_odata : 
+							floppy_rden ? floppy_odata : 8'h00;
 
 
 // Devices:
@@ -481,7 +506,7 @@ always peripheral_data_in = ~vm55int_oe_n ? vm55int_odata :
 //		011: internal: 	00: palette data out
 //						01-11: joystick inputs
 //		100: ramdisk bank switching
-//		110,111: FDC ports
+//		110: FDC ($18-$1B)
 
 reg [5:0] portmap_device;				
 always portmap_device = address_bus_r[7:2];
@@ -604,6 +629,47 @@ always @(posedge clk24) begin
 	else 
 		video_palette_wren <= 1'b0;
 end
+
+//////////////////////////////////
+// Floppy Disk Controller ports //
+//////////////////////////////////
+`ifdef WITH_FLOPPY
+
+wire		floppy_sel = portmap_device == 3'b110;
+wire		floppy_wren = ~WR_n & io_write & floppy_sel;
+wire		floppy_rden  = io_read & floppy_sel;
+wire [7:0]	floppy_odata;
+wire [7:0]	floppy_leds;
+wire [7:0]	floppy_status;
+
+floppy flappy(
+	.clk(clk24), 
+	.ce(ce3v),  // must me ce3v, hypothetically
+	.reset_n(mreset_n), 
+	
+	// sd card signals
+	.sd_dat(SD_DAT), 
+	.sd_dat3(SD_DAT3), 
+	.sd_cmd(SD_CMD), 
+	.sd_clk(SD_CLK), 
+	// uart comms
+	.uart_txd(UART_TXD),
+	
+	// io ports
+	.hostio_addr(~address_bus_r[1:0]),
+	.hostio_idata(DO),
+	.hostio_odata(floppy_odata),
+	.hostio_rd(floppy_rden),
+	.hostio_wr(floppy_wren),
+	
+	// debug 
+	.green_leds(floppy_leds),
+	.debug(floppy_status),
+	
+	);
+	//green_leds, red_leds, debug, debugidata);
+
+`endif
 
 
 //////////////////

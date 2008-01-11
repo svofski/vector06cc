@@ -172,7 +172,6 @@ set_location_assignment PIN_L5 -to altera_reserved_tdo
 set_location_assignment PIN_K6 -to altera_reserved_tms
 set_location_assignment PIN_C4 -to ~ASDO~
 set_location_assignment PIN_K2 -to altera_reserved_tck
-set_location_assignment PIN_W20 -to ~LVDS91p/nCEO~
 set_instance_assignment -name PAD_TO_CORE_DELAY 6 -from KEY[1] -to clk3mhz
 set_instance_assignment -name GLOBAL_SIGNAL "GLOBAL CLOCK" -to clk24
 set_global_assignment -name END_TIME "1 ms"
@@ -208,13 +207,31 @@ set_instance_assignment -name IO_STANDARD LVTTL -to UART_RXD
 set_instance_assignment -name IO_STANDARD LVTTL -to UART_TXD
 
 
+set_location_assignment PIN_V20 -to SD_CLK
+set_location_assignment PIN_Y20 -to SD_CMD
+set_location_assignment PIN_W20 -to SD_DAT
+set_location_assignment PIN_U20 -to SD_DAT3
+
+
 set_global_assignment -name PROJECT_OUTPUT_DIRECTORY reports
 set_location_assignment PIN_C7 -to TCK
 set_location_assignment PIN_D7 -to TDO
 set_location_assignment PIN_D8 -to TCS
 set_location_assignment PIN_E8 -to TDI
 set_global_assignment -name CYCLONEII_OPTIMIZATION_TECHNIQUE BALANCED
+set_global_assignment -name CYCLONEII_RESERVE_NCEO_AFTER_CONFIGURATION "USE AS REGULAR IO"
+set_global_assignment -name RESERVE_ASDO_AFTER_CONFIGURATION "AS INPUT TRI-STATED"
 set_global_assignment -name VECTOR_WAVEFORM_FILE clk50mhz.vwf
+set_global_assignment -name VERILOG_FILE src/floppy/floppyram.v
+set_global_assignment -name VHDL_FILE src/floppy/uart/txd.vhd
+set_global_assignment -name VHDL_FILE src/floppy/65c02/cpu65xx_en.vhd
+set_global_assignment -name VERILOG_FILE src/floppy/floppy.v
+set_global_assignment -name VERILOG_FILE src/floppy/wd1793.v
+set_global_assignment -name VERILOG_FILE src/floppy/floppyrom.v
+set_global_assignment -name VERILOG_FILE src/floppy/ram512x8a.v
+set_global_assignment -name VERILOG_FILE src/floppy/ram1024x8a.v
+set_global_assignment -name VERILOG_FILE src/floppy/spi.v
+set_global_assignment -name VERILOG_FILE src/floppy/timer100hz.v
 set_global_assignment -name VERILOG_FILE src/vector06cc.v
 set_global_assignment -name VERILOG_FILE src/ramdisk/kvaz.v
 set_global_assignment -name VERILOG_FILE src/lpm_rom0.v
@@ -251,4 +268,3 @@ set_global_assignment -name VHDL_FILE src/T80/T80_Reg.vhd
 set_global_assignment -name VHDL_FILE src/T80/T8080se.vhd
 set_global_assignment -name VHDL_FILE src/T80/T80sef.vhd
 set_global_assignment -name VERILOG_FILE src/jtag/jtag_top.v
-set_global_assignment -name VERILOG_FILE src/floppy/floppy.v
