@@ -26,9 +26,9 @@ uint8_t fdd_clearerror() {
 uint8_t fdd_load(FIL* file, FDDImage *fdd, uint8_t *bufptr) {
 	fdd_clearerror();
 	
-	fdd->ntracks = file->fsize / (2*10*SECTOR_SIZE);	// these seem to be fixed more or less
+	fdd->ntracks = file->fsize / (2*TRACK_1SIDE*SECTOR_SIZE);	// these seem to be fixed more or less
 	fdd->nsides = 2;
-	fdd->nsectors = 10;
+	fdd->nsectors = TRACK_1SIDE;
 	fdd->sectorsize = SECTOR_SIZE;
 	fdd->file = file;
 	fdd->buffer = bufptr;
@@ -76,7 +76,7 @@ FRESULT fdd_readsector(FDDImage* fdd) {
 	FRESULT r;
 	UINT bytesread;
 	
-	uint32_t offset = (fdd->nsectors*(fdd->nsides*fdd->cur_track + fdd->cur_side) + fdd->cur_sector) * fdd->sectorsize;
+	uint32_t offset = (fdd->nsectors*(fdd->nsides*fdd->cur_track + fdd->cur_side) + fdd->cur_sector - 1) * fdd->sectorsize;
 	
 	if ((r = f_lseek(fdd->file, offset)) != FR_OK) return r;
 	

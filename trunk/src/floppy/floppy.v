@@ -21,6 +21,7 @@
 
 module floppy(
 	clk, ce, reset_n, 
+	// sram interface (reserved)
 	addr, idata, odata, memwr, 
 	// sd card signals
 	sd_dat, sd_dat3, sd_cmd, sd_clk, 
@@ -76,7 +77,7 @@ input			hostio_wr;
 
 output reg[7:0]	green_leds;
 output  [7:0]	red_leds = cpu_di;
-output	[7:0]	debug;
+output	[7:0]	debug = {ce & bufmem_en, ce, hostio_rd, wd_ram_rd};//wdport_status;
 output	[7:0]	debugidata = {timer1q};
 
 wire [15:0] cpu_a;
@@ -86,7 +87,7 @@ wire [7:0]	cpu_do;
 cpu65xx_en cpu(
 		.clk(clk),
 		.reset(~reset_n),
-		.enable(ce),
+		.enable(ce & ~(wd_ram_rd|wd_ram_wr)),
 		.nmi_n(1'b1),
 		.irq_n(1'b1),
 		.di(cpu_di),
@@ -107,7 +108,7 @@ assign cpu_di = &cpu_a[15:4] ? (cpu_a[0] ? 8'h08:8'h00) // boot addr
 							  rammem_en ? ram_do : ioports_do;
 
 wire lowmem_en = |cpu_a[15:9] == 0;
-wire bufmem_en = cpu_a >= 16'h200 && cpu_a < 16'h400;
+wire bufmem_en = (wd_ram_rd|wd_ram_wr) || (cpu_a >= 16'h200 && cpu_a < 16'h600);
 //wire rammem_en = cpu_a >= 16'h0800 && cpu_a < 16'h0800 + 32768;
 wire rammem_en = cpu_a >= 16'h0800 && cpu_a < 16'h8000;
 wire ioports_en= cpu_a >= IOBASE && cpu_a < IOBASE + 256;
@@ -139,20 +140,11 @@ ram512x8a zeropa(
 	.q(lowmem_do));
 
 
-wire [8:0]	bufmem_addr = (wd_ram_rd|wd_ram_wr) ? wd_ram_addr : cpu_a - 16'h200;
+wire [9:0]	bufmem_addr = (wd_ram_rd|wd_ram_wr) ? wd_ram_addr : cpu_a - 16'h200;
 wire 		bufmem_wren = wd_ram_wr | memwr;
 wire [7:0]	bufmem_di = wd_ram_wr ? wd_ram_odata : cpu_do;
 
-/*
-ram512x8 bufpa(
-	.clk(~clk),
-	.ce(ce & bufmem_en),
-	.addr(bufmem_addr),
-	.wren(bufmem_wren),
-	.di(bufmem_di),
-	.q(bufmem_do));*/
-
-ram512x8a bufpa(
+ram1024x8a bufpa(
 	.clock(~clk),
 	.clken(ce & bufmem_en),
 	.address(bufmem_addr),
@@ -238,9 +230,6 @@ always @(posedge clk or negedge reset_n) begin
 end
 
 
-assign debug = {memwr};
-
-
 reg uart_send;
 reg [7:0] uart_data;
 wire uart_busy;
@@ -302,7 +291,7 @@ wire [7:0]	wdport_status;
 wire [7:0]	wdport_cpu_request;
 reg	 [7:0]	wdport_cpu_status;
 
-wire [8:0]	wd_ram_addr;
+wire [9:0]	wd_ram_addr;
 wire 		wd_ram_rd;
 wire		wd_ram_wr;	
 wire [7:0]	wd_ram_odata;	// this is to write to ram
@@ -386,11 +375,11 @@ output[7:0]	q;
 
 endmodule
 
-// 512 bytes of lower memory:
+// lower memory:
 // 	0000 zeropage  
 // 	0100 stack				___ lowmem1
 // 	0200 buffer
-// 	0400 <end of lowmem> 	___ lowmem2
+// 	0600 <end of lowmem> 	___ lowmem2
 module ram512x8(clk, ce, addr, wren, di, q);
 input clk, ce;
 input [8:0] addr;

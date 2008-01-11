@@ -31,31 +31,6 @@ FILINFO finfo;
 
 BYTE* Buffer = (BYTE *)0x0200;
 
-
-BYTE nybble_alpha(BYTE nybble) {
-	return nybble + (nybble < 0x0a ? '0' : 'a'-0x0a);
-}
-
-void print_hex(BYTE b) {
-	ser_putc(nybble_alpha((b & 0xf0) >> 4));
-	ser_putc(nybble_alpha(b & 0x0f));
-}
-
-#if 0
-void print_buff() {
-  WORD ofs;
-  
-  for (ofs = 0; ofs < SECTOR_SIZE; ofs++) {
-    if (ofs % 16 == 0) {
-      ser_nl();
-    } else if (ofs % 8 == 0) {
-      ser_putc('-');
-    } else ser_putc(' ');
-    print_hex(Buffer[ofs]); 
-  }
-}
-#endif
-
 void print_result(DRESULT result) {
 	switch (result) {
 		case 0:
@@ -100,7 +75,7 @@ void main(void) {
 
 	ser_puts("@");
 	delay2(100);
-	ser_puts("\r\nVECTOR06CC \r\n");
+	ser_puts("\r\nVECTOR06CC ");
 	delay2(50);
 
 	do {
@@ -110,7 +85,7 @@ void main(void) {
 #if 0
 		ser_puts("disk_read(): ");
 		result = disk_read (0, Buffer, 0, 1); 
-		print_buff();
+		//print_buff();
 		CHECKRESULT;
 #endif
 
