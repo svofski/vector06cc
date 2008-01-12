@@ -79,19 +79,14 @@ uint8_t slave(const char *imagefile, uint8_t *buffer) {
 				// touche!
 				break;
 			case CPU_REQUEST_WRITE:
-				SLAVE_STATUS = CPU_STATUS_COMPLETE; // no success
 				ser_putc('W');
+				SLAVE_STATUS = CPU_STATUS_COMPLETE; // no success
 				break;
 			case CPU_REQUEST_ACK:
 				SLAVE_STATUS = 0;
 				//ser_putc('A');
 				break;
-			case CPU_REQUEST_NOTIFY:
-				ser_putc('<');
-				print_hex(MASTER_COMMAND);
-				print_hex(MASTER_SECTOR);
-				print_hex(MASTER_TRACK);
-				ser_putc('>');
+			case CPU_REQUEST_NOP:
 				SLAVE_STATUS = CPU_STATUS_COMPLETE;
 				break;
 			case CPU_REQUEST_FAIL:
