@@ -1,4 +1,9 @@
-Copyright (c) 2007, Viacheslav Slavinsky
+THIS FILE CONTAINS SEVERAL SEPARATE LICENSES. PLEASE READ CAREFULLY.
+
+
+1. VECTOR06CC LICENSE
+~~~~~~~~~~~~~~~~~~~~~
+Copyright (c) 2007, 2008  Viacheslav Slavinsky
 
 All rights reserved.
 
@@ -23,3 +28,158 @@ PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
 LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
 NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+
+
+2. YM2149 LICENSE
+~~~~~~~~~~~~~~~~~
+
+A simulation model of YM2149 (AY-3-8910 with bells on)
+
+Copyright (c) MikeJ - Jan 2005
+
+All rights reserved
+
+Redistribution and use in source and synthezised forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+Redistributions of source code must retain the above copyright notice,
+this list of conditions and the following disclaimer.
+
+Redistributions in synthesized form must reproduce the above copyright
+notice, this list of conditions and the following disclaimer in the
+documentation and/or other materials provided with the distribution.
+
+Neither the name of the author nor the names of other contributors may
+be used to endorse or promote products derived from this software without
+specific prior written permission.
+
+THIS CODE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE
+LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+POSSIBILITY OF SUCH DAMAGE.
+
+You are responsible for any legal issues arising from your use of this code.
+
+The latest version of this file can be found at: www.fpgaarcade.com
+
+Email support@fpgaarcade.com
+
+
+
+3. 82C55 LICENSE
+~~~~~~~~~~~~~~~~
+A simulation model of Scramble hardware
+Copyright (c) MikeJ - Feb 2007
+
+All rights reserved
+
+Redistribution and use in source and synthezised forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+Redistributions of source code must retain the above copyright notice,
+this list of conditions and the following disclaimer.
+
+Redistributions in synthesized form must reproduce the above copyright
+notice, this list of conditions and the following disclaimer in the
+documentation and/or other materials provided with the distribution.
+
+Neither the name of the author nor the names of other contributors may
+be used to endorse or promote products derived from this software without
+specific prior written permission.
+
+THIS CODE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE
+LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+POSSIBILITY OF SUCH DAMAGE.
+
+You are responsible for any legal issues arising from your use of this code.
+
+The latest version of this file can be found at: www.fpgaarcade.com
+
+Email support@fpgaarcade.com
+
+
+4. T80 CPU CORE LICENSE
+~~~~~~~~~~~~~~~~~~~~~~~
+Z80 compatible microprocessor core
+
+Version : 0247
+
+Copyright (c) 2001-2002 Daniel Wallner (jesus@opencores.org)
+
+All rights reserved
+
+Redistribution and use in source and synthezised forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+Redistributions of source code must retain the above copyright notice,
+this list of conditions and the following disclaimer.
+
+Redistributions in synthesized form must reproduce the above copyright
+notice, this list of conditions and the following disclaimer in the
+documentation and/or other materials provided with the distribution.
+
+Neither the name of the author nor the names of other contributors may
+be used to endorse or promote products derived from this software without
+specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE
+LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+POSSIBILITY OF SUCH DAMAGE.
+
+Please report bugs to the author, but before you do so, please
+make sure that this is not a derivative work and that
+you have the latest version of this file.
+
+The latest version of this file can be found at:
+     http://www.opencores.org/cvsweb.shtml/t80/
+
+
+
+5. CYCLE EXACT 6502/6510 CORE
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Copyright(C) Peter Wendrich (pwsoft@syntiac.com)
+http://www.syntiac.com/fpga64.html
+
+
+
+6. UART CORE
+~~~~~~~~~~~~
+Copyright (c) 2007 Tobias Gubener <tobiflex@opencores.org>               
+                                                                        
+This source file is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published       
+by the Free Software Foundation, either version 3 of the License, or    
+(at your option) any later version.                                     
+                                                                        
+This source file is distributed in the hope that it will be useful,     
+but WITHOUT ANY WARRANTY; without even the implied warranty of          
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           
+GNU General Public License for more details.                            
+                                                                        
+You should have received a copy of the GNU General Public License       
+along with this program.  If not, see <http://www.gnu.org/licenses/>.   
+                                                                        
