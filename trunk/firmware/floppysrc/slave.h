@@ -10,7 +10,7 @@
 #define CPU_REQUEST_READ 	0x10 	// Request to read one sector at oTRACK, oSECTOR, bit 0 is side (head #) 
 #define CPU_REQUEST_WRITE	0x20 	// Request to write one sector at oTRACK, oSECTOR; bit 0 is side (head #) 
 #define CPU_REQUEST_READADDR 0x30	// Request to read sector address (return 6 byte header) 
-#define CPU_REQUEST_NOTIFY	0x40
+#define CPU_REQUEST_NOP		0x40
 #define CPU_REQUEST_ACK		0x80	// clear status
 #define CPU_REQUEST_FAIL	0xC0	// failure feedback for debug
 

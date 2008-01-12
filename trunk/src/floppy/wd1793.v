@@ -78,6 +78,8 @@ parameter STATE_WAITACK		= 2;
 parameter STATE_RESET		= 3;
 parameter STATE_BYTEFETCH   = 4;
 parameter STATE_BYTEFETCX	= 5;
+parameter STATE_WAIT_WHWRITE =6;
+parameter STATE_NEXTADDRFETCH=7;
 
 //parameter STATE_LOAD_RDDATA = 2;
 //parameter STATE_WAIT_WRDATA = 3;
@@ -133,7 +135,7 @@ wire 	    wStepDir   = idata[6] ? idata[5] : wdstat_stepdirection;
 wire [7:0]  wNextTrack = wStepDir ? disk_track - 1 : disk_track + 1;
 
 wire [10:0]	wRdLengthMinus1 = data_rdlength - 1'b1;
-
+wire [10:0]	wBuffAddrPlus1  = buff_addr + 1'b1;
 
 wire 	wReadSuccess = (state == STATE_WAIT_WHREAD) & iCPU_STATUS[0] & iCPU_STATUS[1];
 wire	wReadAByte = (state == STATE_READY) & rd & (addr == A_DATA) & (data_rdlength != 0);
@@ -144,9 +146,13 @@ wire	watchdog_bark;
 watchdog	dogbert(.clk(clk), .clken(clken), .cock(watchdog_set), .q(watchdog_bark));
 
 // common status bits
-reg		s_busy, s_readonly, s_notready, s_crcerr;
+reg		s_readonly, s_notready, s_crcerr;
 reg		s_headloaded, s_seekerr, s_track0, s_index;  // mode 1
-reg		s_lostdata, s_drq, s_wrfault; 				 // mode 2,3
+reg		s_lostdata, s_wrfault; 				 // mode 2,3
+
+reg		[1:0]	s_drq_busy;
+wire			s_drq = s_drq_busy[1];
+wire			s_busy = s_drq_busy[0];
 
 always @(disk_track) s_track0 <= disk_track == 0;
 
@@ -174,27 +180,28 @@ always @(posedge clk or negedge reset_n) begin
 		wdstat_multisector <= 0;
 		state <= STATE_READY;
 		cmd_mode <= 0;
-		{s_notready, s_readonly, s_headloaded, s_seekerr, s_crcerr, s_index, s_busy} <= 0;
-		{s_wrfault, s_lostdata, s_drq} <= 0;
+		{s_notready, s_readonly, s_headloaded, s_seekerr, s_crcerr, s_index} <= 0;
+		{s_wrfault, s_lostdata} <= 0;
+		s_drq_busy <= 2'b0;
 	end else if (clken) begin
+		
+		// REGISTER READ ACCESS
 		if (rd) case (addr)
 				A_TRACK:	odata <= wdstat_track;
 				A_SECTOR:	odata <= wdstat_sector;
 				A_STATUS:	odata <= wdstat_status;
+				A_CTL2:		odata <= {5'b11111,wdstat_side,2'b00};
 				A_DATA:		begin
 								if (state == STATE_READY) begin
 									if (s_drq) begin
 										odata <= buff_idata; // for test try this: buff_addr[7:0];
 										
-										// increment data pointer, decrement byte count
-										buff_addr <= buff_addr + 1'b1;
-										data_rdlength <= wRdLengthMinus1;
-										
 										// reset drq until next byte is read, nothing is lost
-										s_drq <= 1'b0;
+										s_drq_busy <= 2'b01;
 										s_lostdata <= 1'b0;
 										
 										if (wRdLengthMinus1 == 0) begin
+											// enable CPU
 											buff_rd <= 0;
 											
 											// either read the next sector, or stop if this is track end
@@ -202,19 +209,17 @@ always @(posedge clk or negedge reset_n) begin
 												wdstat_sector <= wdstat_sector + 1;
 												oCPU_REQUEST <= CPU_REQUEST_READ | wdstat_side;
 												wdstat_irq <= 0;
-												s_drq <= 0;
+												s_drq_busy <= 2'b01;
 
 												state <= STATE_WAIT_WHREAD;
 											end else begin
 												wdstat_irq <= 1;
 												wdstat_multisector <= 0;
-												s_busy <= 0;
-												s_drq  <= 0;
-												//oCPU_REQUEST <= CPU_REQUEST_FAIL | buff_addr;
+												s_drq_busy <= 2'b00;
 											end
 										end else begin
 											// everything is okay, fetch next byte
-											state <= STATE_BYTEFETCH;
+											state <= STATE_NEXTADDRFETCH;
 										end
 									end
 								end
@@ -222,76 +227,34 @@ always @(posedge clk or negedge reset_n) begin
 				default:;
 				endcase
 				
-		case (state) 
-		// skip a few cycles before asserting drq 
-		STATE_BYTEFETCH:
-			begin
-				read_timer <= 4'b1111;
-				state <= STATE_BYTEFETCX;
-				s_busy <= 1'b1;
-				buff_rd <= 1;
-			end
-			
-		STATE_BYTEFETCX:
-			begin
-				if (read_timer != 0) 
-					read_timer <= read_timer - 1'b1;
-				else begin
-					s_lostdata <= 1'b0;
-					s_drq <= 1'b1;
-					state <= STATE_READY;
-				end
-			end
-			
-		STATE_RESET:
-			begin
-				s_busy <= 1'b0;
-				state <= STATE_READY;
-			end
-		
-		// Initial state
-		STATE_READY:
-			begin
-				// lose data if not requested in time
-				if (s_drq && watchdog_bark) begin
-					s_lostdata <= 1'b1;
-					s_drq <= 1'b0;
-					if (data_rdlength != 0) begin
-						buff_addr <= buff_addr + 1'b1;
-						data_rdlength <= wRdLengthMinus1;					
-
-						state <= STATE_BYTEFETCH;
-					end else 
-						state <= STATE_RESET;
-				end
 				
-				if (wr) begin
-					case (addr)
-					A_TRACK:	begin
-									if (!s_busy) begin
-										wdstat_track <= idata;
-									end 
-								end
-					A_SECTOR:	begin
-									if (!s_busy) begin
-										wdstat_sector <= idata;
-									end 
-								end
-					A_CTL2:		begin
+		if (wr) 
+			case (addr)
+				A_TRACK:	begin
+								if (!s_busy) begin
+									wdstat_track <= idata;
+								end 
+							end
+				A_SECTOR:	begin
+								if (!s_busy) begin
+									wdstat_sector <= idata;
+								end 
+							end
+				A_CTL2:		begin
 								wdstat_side <= idata[2];
-								end
-					A_COMMAND:	begin
+							end
+				A_COMMAND:	if (state == STATE_READY) begin
 								cmd_mode <= idata[7];	// for wdstat_status
 								
 								case (idata[7:4]) 
 								4'h0: 	// RESTORE
 									begin
 										disk_track <= 0;
-										// head load as specified, index, track0
-										//wdstat_status <=  { 2'b00, idata[3], 5'b00110};
 										
+										// head load as specified, index, track0
 										s_headloaded <= idata[3];
-										{s_index, s_busy, s_drq} <= 3'b100;
+										s_index <= 1'b1;
+										s_drq_busy <= 2'b00;
 
 										wdstat_track <= 0;
 										wdstat_irq <= 1;
@@ -301,10 +264,9 @@ always @(posedge clk or negedge reset_n) begin
 										// rdlength/wrlength?  -- no idea so far
 										// set real track to registered value
 										disk_track <= wdstat_track;
-										//wdstat_status <= {2'b00, idata[3], 2'b00, wdstat_track == 0, 2'b10};
-										
 										s_headloaded <= idata[3];
-										{s_index, s_busy, s_drq} <= 3'b100;
+										s_index <= 1'b1;
+										s_drq_busy <= 2'b00;
 										
 										wdstat_irq <= 1;
 									end
@@ -329,7 +291,8 @@ always @(posedge clk or negedge reset_n) begin
 										end
 											
 										s_headloaded <= idata[3];
-										{s_index, s_busy, s_drq} <= 3'b100;
+										s_index <= 1'b1;
+										s_drq_busy <= 2'b00;
 										
 										wdstat_irq <= 1;
 									end
@@ -346,23 +309,29 @@ always @(posedge clk or negedge reset_n) begin
 										// probably some dino poo
 										oCPU_REQUEST <= CPU_REQUEST_READ | wdstat_side;// idata[3]; 
 
-										s_busy <= 1'b1;
-										{s_wrfault,s_seekerr,s_crcerr,s_lostdata,s_drq} <= 0;
+										s_drq_busy <= 2'b01;
+										{s_wrfault,s_seekerr,s_crcerr,s_lostdata} <= 0;
 										
-										wdstat_side <= idata[3];
 										wdstat_multisector <= idata[4];
 										state <= STATE_WAIT_WHREAD;
 										data_rdlength <= SECTOR_SIZE;
 									end
 								4'hA, 4'hB: // WRITE SECTORS
-									;
+									begin
+										state <= STATE_WAIT_WHWRITE;
+										oCPU_REQUEST <= CPU_REQUEST_WRITE | wdstat_side;
+
+										s_drq_busy <= 2'b01;
+										{s_wrfault,s_seekerr,s_crcerr,s_lostdata} <= 0;
+										wdstat_multisector <= idata[4];
+									end								
 								4'hC:	// READ ADDRESS
 									begin
 										// track, side, sector, sector size code, 2-byte checksum (crc?)
 										oCPU_REQUEST <= CPU_REQUEST_READADDR | wdstat_side;
 										
-										s_busy <= 1'b1;
-										{s_wrfault,s_seekerr,s_crcerr,s_lostdata,s_drq} <= 0;
+										s_drq_busy <= 2'b01;
+										{s_wrfault,s_seekerr,s_crcerr,s_lostdata} <= 0;
 										
 										wdstat_multisector <= 1'b0;
 										state <= STATE_WAIT_WHREAD;
@@ -373,35 +342,95 @@ always @(posedge clk or negedge reset_n) begin
 									;
 								default:;
 								endcase
-								end
-					A_DATA:		begin
-								end
-					default:;
-					endcase
+							end
+				A_DATA:		begin
+							end
+				default:;
+			endcase
+
+		// NORMAL OPERATION
+				
+		case (state) 
+		STATE_NEXTADDRFETCH:
+			begin
+				// increment data pointer, decrement byte count
+				buff_addr <= wBuffAddrPlus1;
+				data_rdlength <= wRdLengthMinus1;
+				state <= STATE_BYTEFETCH;
+			end
+		// skip a few cycles before asserting drq 
+		STATE_BYTEFETCH:
+			begin
+				read_timer <= 4'b1111;
+				state <= STATE_BYTEFETCX;
+				s_drq_busy <= 2'b01;
+				buff_rd <= 1;
+			end
+			
+		STATE_BYTEFETCX:
+			begin
+				if (read_timer != 0) 
+					read_timer <= read_timer - 1'b1;
+				else begin
+					s_lostdata <= 1'b0;
+					s_drq_busy <= 2'b11;
+					state <= STATE_READY;
 				end
 			end
+			
+		STATE_RESET:
+			begin
+				s_drq_busy <= 2'b00;
+				state <= STATE_READY;
+			end
+		
+		// Initial state
+		STATE_READY:
+			begin
+				// lose data if not requested in time
+				if (s_drq && watchdog_bark) begin
+					s_lostdata <= 1'b1;
+					s_drq_busy <= 2'b01;
+					state <= data_rdlength != 0 ? STATE_NEXTADDRFETCH : STATE_RESET;
+				end
+			end
+			
 		STATE_WAIT_WHREAD:
 			begin
-				if (iCPU_STATUS[0]) begin
-					oCPU_REQUEST <= CPU_REQUEST_ACK;
-					if (iCPU_STATUS[1]) begin
-						// read successful
-						wdstat_irq <= 0;
-						buff_addr <= 0;
-						//buff_rd <= 1;
-						
-						state <= STATE_BYTEFETCH;
-					end else begin
-						// read error
+				case (iCPU_STATUS[1:0])
+				2'b01: // complete without success
+					begin
+						oCPU_REQUEST <= CPU_REQUEST_ACK;
 						s_seekerr <= 1'b1;
-						s_busy <= 1'b0;
+						s_drq_busy <= 2'b00;
 						
 						wdstat_irq <= 1;
 						state <= STATE_READY;
-						//oCPU_REQUEST <= CPU_REQUEST_FAIL | 2;
 					end
+				2'b11: // complete and succesful
+					begin
+						oCPU_REQUEST <= CPU_REQUEST_ACK;
+						wdstat_irq <= 0;
+						buff_addr <= 0;
+						
+						state <= STATE_BYTEFETCH;
+					end
+				default:; // keep waiting
+				endcase
+			end
+			
+		STATE_WAIT_WHWRITE:
+			begin
+				if (iCPU_STATUS[0]) begin
+					oCPU_REQUEST <= CPU_REQUEST_ACK;
+					
+					s_seekerr <= 1'b1;
+					s_drq_busy <= 2'b00;
+					wdstat_irq <= 1;
+					state <= STATE_READY;
 				end
 			end
+			
 		STATE_WAITACK:
 			begin
 				odata <= 8'hff;
