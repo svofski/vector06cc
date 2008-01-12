@@ -71,6 +71,7 @@ void main(void) {
 	DRESULT result;
 	FRESULT fresult;
 	
+	SLAVE_STATUS = 0;
 	GREEN_LEDS = 0xC3;
 
 	ser_puts("@");

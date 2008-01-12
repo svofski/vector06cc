@@ -500,13 +500,14 @@ always peripheral_data_in = ~vm55int_oe_n ? vm55int_odata :
 
 // Devices:
 //   000xxxYY [a7:a0]
-//  	000: internal VM55
-//		001: external (parport) VM55
+//  	000: internal VV55
+//		001: external (parport) VV55
 //		010: VI53 interval timer
 //		011: internal: 	00: palette data out
 //						01-11: joystick inputs
 //		100: ramdisk bank switching
 //		110: FDC ($18-$1B)
+//      111: FDC ($1C, secondary control reg)
 
 reg [5:0] portmap_device;				
 always portmap_device = address_bus_r[7:2];
@@ -635,7 +636,7 @@ end
 //////////////////////////////////
 `ifdef WITH_FLOPPY
 
-wire		floppy_sel = portmap_device == 3'b110;
+wire		floppy_sel = portmap_device[2:1] == 2'b11; // both 110 and 111
 wire		floppy_wren = ~WR_n & io_write & floppy_sel;
 wire		floppy_rden  = io_read & floppy_sel;
 wire [7:0]	floppy_odata;
@@ -656,7 +657,7 @@ floppy flappy(
 	.uart_txd(UART_TXD),
 	
 	// io ports
-	.hostio_addr(~address_bus_r[1:0]),
+	.hostio_addr({address_bus_r[2],~address_bus_r[1:0]}),
 	.hostio_idata(DO),
 	.hostio_odata(floppy_odata),
 	.hostio_rd(floppy_rden),
