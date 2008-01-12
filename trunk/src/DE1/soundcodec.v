@@ -21,11 +21,13 @@
 
 `default_nettype none
 
-module soundcodec(clk18, pulses, tapein, reset_n, oAUD_BCK, oAUD_DATA, oAUD_LRCK, iAUD_ADCDAT, oAUD_ADCLRCK);
+module soundcodec(clk18, pulses, pcm, tapein, reset_n, oAUD_XCK, oAUD_BCK, oAUD_DATA, oAUD_LRCK, iAUD_ADCDAT, oAUD_ADCLRCK);
 input	clk18;
 input	[3:0] pulses;
+input	[10:0]pcm;
 output	tapein;
 input	reset_n;
+output	oAUD_XCK = clk18;
 output	oAUD_BCK;
 output	oAUD_DATA;
 output	oAUD_LRCK;
@@ -60,7 +62,7 @@ always @(posedge clk18) begin
 		sum <= pulses_sample[0] + pulses_sample[1] + pulses_sample[2] + pulses_sample[3];
 	end
 
-	ma_pulse <= {sum[7:2], 9'b0} + {m34,10'b0};
+	ma_pulse <= {sum[7:2], 9'b0} + {m34,10'b0} + {pcm,4'b0};
 	
 end
 

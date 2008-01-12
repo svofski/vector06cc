@@ -51,8 +51,9 @@
 // Undefine following for smaller/faster builds
 `define WITH_CPU			
 `define WITH_KEYBOARD
-//`define WITH_VI53
+`define WITH_VI53
 `define WITH_DE1_JTAG
+`define WITH_AY
 `define WITH_FLOPPY
 `define JTAG_AUTOHOLD
 
@@ -186,7 +187,19 @@ clockster clockmaker(
 
 assign AUD_XCK = clk18;
 wire tape_input;
-soundcodec soundnik(clk18, {vm55int_pc_out[0],vi53_out}, tape_input, mreset_n, AUD_BCLK, AUD_DACDAT, AUD_DACLRCK, AUD_ADCDAT, AUD_ADCLRCK);
+soundcodec soundnik(
+					.clk18(clk18), 
+					.pulses({vv55int_pc_out[0],vi53_out}), 
+					.pcm(ay_sound),
+					.tapein(tape_input), 
+					.reset_n(mreset_n),
+					.oAUD_XCK(AUD_XCK),
+					.oAUD_BCK(AUD_BCLK), 
+					.oAUD_DATA(AUD_DACDAT),
+					.oAUD_LRCK(AUD_DACLRCK),
+					.iAUD_ADCDAT(AUD_ADCDAT), 
+					.oAUD_ADCLRCK(AUD_ADCLRCK)
+				   );
 
 reg [15:0] slowclock;
 always @(posedge clk24) if (ce3) slowclock <= slowclock + 1'b1;
@@ -279,7 +292,7 @@ reg[9:0] gledreg;
 
 assign LEDr[7:0] = SW[0] == 0 ? DI : SW[1] == 0 ? DO : gledreg[7:0];
 assign LEDr[9:8] = gledreg[9:8];
-//assign LEDg = SW[2] ? status_word : {vm55int_pb_out[3:0],video_palette_value[3:0]};
+//assign LEDg = SW[2] ? status_word : {vv55int_pb_out[3:0],video_palette_value[3:0]};
 wire [1:0] sw23 = {SW[3],SW[2]};
 
 wire [7:0] kbd_keystatus = {kbd_mod_rus, kbd_key_shift, kbd_key_ctrl, kbd_key_rus, kbd_key_blksbr};
@@ -396,7 +409,7 @@ kvaz ramdisk(
 ///////////
 // VIDEO //
 ///////////
-wire [7:0] 	video_scroll_reg = vm55int_pa_out;
+wire [7:0] 	video_scroll_reg = vv55int_pa_out;
 reg [7:0] 	video_palette_value;
 reg [3:0]	video_border_index;
 reg			video_palette_wren;
@@ -453,7 +466,7 @@ oneshot retrace_irq(clk24, cpu_ce, ~int_delay, int_request);
 // PS/2 KEYBOARD //
 ///////////////////
 reg 		kbd_mod_rus;
-wire [7:0]	kbd_rowselect = ~vm55int_pa_out;
+wire [7:0]	kbd_rowselect = ~vv55int_pa_out;
 wire [7:0]	kbd_rowbits;
 wire 		kbd_key_shift;
 wire		kbd_key_ctrl;
@@ -493,7 +506,7 @@ wire		kbd_key_bushold;
 ///////////////
 
 reg [7:0] peripheral_data_in;
-always peripheral_data_in = ~vm55int_oe_n ? vm55int_odata :
+always peripheral_data_in = ~vv55int_oe_n ? vv55int_odata :
 							vi53_rden ? vi53_odata : 
 							floppy_rden ? floppy_odata : 8'h00;
 
@@ -506,6 +519,7 @@ always peripheral_data_in = ~vm55int_oe_n ? vm55int_odata :
 //		011: internal: 	00: palette data out
 //						01-11: joystick inputs
 //		100: ramdisk bank switching
+//		101: AY-3-8910, ports 14, 15 (00, 01)
 //		110: FDC ($18-$1B)
 //      111: FDC ($1C, secondary control reg)
 
@@ -513,53 +527,53 @@ reg [5:0] portmap_device;
 always portmap_device = address_bus_r[7:2];
 
 ///////////////////////
-// VM55 #1, internal //
+// vv55 #1, internal //
 ///////////////////////
 
-wire		vm55int_sel = portmap_device == 3'b000;
+wire		vv55int_sel = portmap_device == 3'b000;
 
-wire [1:0] 	vm55int_addr = 	~address_bus_r[1:0];
-wire [7:0] 	vm55int_idata = DO;	
-wire [7:0] 	vm55int_odata;
-wire		vm55int_oe_n;
+wire [1:0] 	vv55int_addr = 	~address_bus_r[1:0];
+wire [7:0] 	vv55int_idata = DO;	
+wire [7:0] 	vv55int_odata;
+wire		vv55int_oe_n;
 
-wire vm55int_cs_n = !(/*~ram_write_n &*/ (io_read | io_write) & vm55int_sel);
-wire vm55int_rd_n = ~io_read;//~DBIN;
-wire vm55int_wr_n = WR_n | ~cpu_ce;
+wire vv55int_cs_n = !(/*~ram_write_n &*/ (io_read | io_write) & vv55int_sel);
+wire vv55int_rd_n = ~io_read;//~DBIN;
+wire vv55int_wr_n = WR_n | ~cpu_ce;
 
-reg [7:0]	vm55int_pa_in;
-reg [7:0]	vm55int_pb_in;
-reg [7:0]	vm55int_pc_in;
+reg [7:0]	vv55int_pa_in;
+reg [7:0]	vv55int_pb_in;
+reg [7:0]	vv55int_pc_in;
 
-wire [7:0]	vm55int_pa_out;
-wire [7:0]	vm55int_pb_out;
-wire [7:0]	vm55int_pc_out;
+wire [7:0]	vv55int_pa_out;
+wire [7:0]	vv55int_pb_out;
+wire [7:0]	vv55int_pc_out;
 
-wire [7:0] vm55int_pa_oe_n;
-wire [7:0] vm55int_pb_oe_n;
-wire [7:0] vm55int_pc_oe_n;
+wire [7:0] vv55int_pa_oe_n;
+wire [7:0] vv55int_pb_oe_n;
+wire [7:0] vv55int_pc_oe_n;
 
-I82C55 vm55int(
-	vm55int_addr,
-	vm55int_idata,
-	vm55int_odata,
-	vm55int_oe_n,
+I82C55 vv55int(
+	vv55int_addr,
+	vv55int_idata,
+	vv55int_odata,
+	vv55int_oe_n,
 	
-	vm55int_cs_n,
-	vm55int_rd_n,
-	vm55int_wr_n,
+	vv55int_cs_n,
+	vv55int_rd_n,
+	vv55int_wr_n,
 	
-	vm55int_pa_in,
-	vm55int_pa_out,
-	vm55int_pa_oe_n,				// enable always
+	vv55int_pa_in,
+	vv55int_pa_out,
+	vv55int_pa_oe_n,				// enable always
 	
-	vm55int_pb_in,					// see keyboard
-	vm55int_pb_out,
-	vm55int_pb_oe_n,				// enable always
+	vv55int_pb_in,					// see keyboard
+	vv55int_pb_out,
+	vv55int_pb_oe_n,				// enable always
 	
-	vm55int_pc_in,
-	vm55int_pc_out,
-	vm55int_pc_oe_n,				// enable always
+	vv55int_pc_in,
+	vv55int_pc_out,
+	vv55int_pc_oe_n,				// enable always
 	
 	mreset, 	// active 1
 	
@@ -568,24 +582,24 @@ I82C55 vm55int(
 
 always @(posedge clk24) begin
 	// port B
-	video_border_index <= vm55int_pb_out[3:0];
+	video_border_index <= vv55int_pb_out[3:0];
 
 `ifdef WITH_CPU
-	video_mode512 <= vm55int_pb_out[4];
+	video_mode512 <= vv55int_pb_out[4];
 `else
 	video_mode512 <= 1'b0;
 `endif
 	// port C
-	gledreg[9] <= vm55int_pc_out[3];		// RUS/LAT LED
+	gledreg[9] <= vv55int_pc_out[3];		// RUS/LAT LED
 end	
 
-always @(kbd_rowbits) vm55int_pb_in <= ~kbd_rowbits;
+always @(kbd_rowbits) vv55int_pb_in <= ~kbd_rowbits;
 always @(kbd_key_shift or kbd_key_ctrl or kbd_key_rus) begin
-	vm55int_pc_in[5] <= ~kbd_key_shift;
-	vm55int_pc_in[6] <= ~kbd_key_ctrl;
-	vm55int_pc_in[7] <= ~kbd_key_rus;
+	vv55int_pc_in[5] <= ~kbd_key_shift;
+	vv55int_pc_in[6] <= ~kbd_key_ctrl;
+	vv55int_pc_in[7] <= ~kbd_key_rus;
 end
-always @(tape_input) vm55int_pc_in[4] <= tape_input;
+always @(tape_input) vv55int_pc_in[4] <= tape_input;
 
 
 ////////////////////////////////
@@ -670,9 +684,31 @@ floppy flappy(
 	);
 	//green_leds, red_leds, debug, debugidata);
 
+`else 
+wire		floppy_rden = 0;
+wire [7:0]	floppy_odata = 7'hff;
+wire [7:0]	floppy_status = 7'h00;
 `endif
 
 
+////////
+// AY //
+////////
+`ifdef WITH_AY
+wire		ay_sel = portmap_device == 3'b101; 
+wire		ay_wren = ~WR_n & io_write & ay_sel;
+wire [7:0]	ay_odata;
+wire [10:0]	ay_sound;
+ayglue shrieker(.clk(clk24), 
+				.ce(cpu_ce),
+				.reset_n(mreset_n), 
+				.address(address_bus_r[1:0]),
+				.data(DO), 
+				.wren(ay_wren), 
+				.sound(ay_sound));
+`else
+wire [10:0] ay_sound = 0;
+`endif
 //////////////////
 // Special keys //
 //////////////////

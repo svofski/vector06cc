@@ -221,6 +221,7 @@ set_location_assignment PIN_E8 -to TDI
 set_global_assignment -name CYCLONEII_OPTIMIZATION_TECHNIQUE BALANCED
 set_global_assignment -name CYCLONEII_RESERVE_NCEO_AFTER_CONFIGURATION "USE AS REGULAR IO"
 set_global_assignment -name RESERVE_ASDO_AFTER_CONFIGURATION "AS INPUT TRI-STATED"
+set_global_assignment -name VHDL_FILE src/ay/YM2149_linmix.vhd
 set_global_assignment -name VECTOR_WAVEFORM_FILE clk50mhz.vwf
 set_global_assignment -name VERILOG_FILE src/floppy/floppyram.v
 set_global_assignment -name VHDL_FILE src/floppy/uart/txd.vhd
@@ -268,3 +269,4 @@ set_global_assignment -name VHDL_FILE src/T80/T80_Reg.vhd
 set_global_assignment -name VHDL_FILE src/T80/T8080se.vhd
 set_global_assignment -name VHDL_FILE src/T80/T80sef.vhd
 set_global_assignment -name VERILOG_FILE src/jtag/jtag_top.v
+set_global_assignment -name VERILOG_FILE src/ay/ayglue.v
