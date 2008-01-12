@@ -119,6 +119,7 @@ output				wtf = watchdog_bark;
 reg [7:0] 	wdstat_track;
 reg [7:0]	wdstat_sector;
 wire [7:0]	wdstat_status;
+reg	[7:0]	wdstat_datareg;
 reg 		wdstat_stepdirection;
 reg			wdstat_multisector;
 reg			wdstat_irq;
@@ -243,113 +244,120 @@ always @(posedge clk or negedge reset_n) begin
 				A_CTL2:		begin
 								wdstat_side <= idata[2];
 							end
-				A_COMMAND:	if (state == STATE_READY) begin
-								cmd_mode <= idata[7];	// for wdstat_status
+				A_COMMAND:	begin
+								if (idata[7:4] == 4'h8) begin
+									// interrupt
+									state <= STATE_RESET;
+								end
 								
-								case (idata[7:4]) 
-								4'h0: 	// RESTORE
-									begin
-										disk_track <= 0;
-										
-										// head load as specified, index, track0
-										s_headloaded <= idata[3];
-										s_index <= 1'b1;
-										s_drq_busy <= 2'b00;
-
-										wdstat_track <= 0;
-										wdstat_irq <= 1;
-									end
-								4'h1:	// SEEK
-									begin
-										// rdlength/wrlength?  -- no idea so far
-										// set real track to registered value
-										disk_track <= wdstat_track;
-										s_headloaded <= idata[3];
-										s_index <= 1'b1;
-										s_drq_busy <= 2'b00;
-										
-										wdstat_irq <= 1;
-									end
-								4'h2,	// STEP
-								4'h3,	// STEP & UPDATE
-								4'h4,	// STEP-IN
-								4'h5,	// STEP-IN & UPDATE
-								4'h6,	// STEP-OUT
-								4'h7:	// STEP-OUT & UPDATE
-									begin
-										// if direction is specified, store it for the next time
-										if (idata[6] == 1) begin 
-											wdstat_stepdirection <= idata[5]; // 0: forward/in
-										end 
-										
-										// perform step 
-										disk_track <= wNextTrack;
-												
-										// update TRACK register too if asked to
-										if (idata[4]) begin
-											wdstat_track <= wNextTrack;
-										end
+								if (state == STATE_READY) begin
+									cmd_mode <= idata[7];	// for wdstat_status
+									
+									case (idata[7:4]) 
+									4'h0: 	// RESTORE
+										begin
+											disk_track <= 0;
 											
-										s_headloaded <= idata[3];
-										s_index <= 1'b1;
-										s_drq_busy <= 2'b00;
-										
-										wdstat_irq <= 1;
-									end
-								4'h8, 4'h9: // READ SECTORS
-									// seek data
-									// 4: m:	0: one sector, 1: until the track ends
-									// 3: S: 	SIDE
-									// 2: E:	some 15ms delay
-									// 1: C:	check side matching?
-									// 0: 0
-									begin
-										// now i'm confused, it seems that side is specified in secondary control register
-										// while it's also specified in bit 3 of command.. and matching, too.. 
-										// probably some dino poo
-										oCPU_REQUEST <= CPU_REQUEST_READ | wdstat_side;// idata[3]; 
+											// head load as specified, index, track0
+											s_headloaded <= idata[3];
+											s_index <= 1'b1;
+											s_drq_busy <= 2'b00;
 
-										s_drq_busy <= 2'b01;
-										{s_wrfault,s_seekerr,s_crcerr,s_lostdata} <= 0;
-										
-										wdstat_multisector <= idata[4];
-										state <= STATE_WAIT_WHREAD;
-										data_rdlength <= SECTOR_SIZE;
-									end
-								4'hA, 4'hB: // WRITE SECTORS
-									begin
-										state <= STATE_WAIT_WHWRITE;
-										oCPU_REQUEST <= CPU_REQUEST_WRITE | wdstat_side;
+											wdstat_track <= 0;
+											wdstat_irq <= 1;
+										end
+									4'h1:	// SEEK
+										begin
+											// rdlength/wrlength?  -- no idea so far
+											// set real track to datareg
+											disk_track <= wdstat_datareg; //wdstat_track;
+											s_headloaded <= idata[3];
+											s_index <= 1'b1;
+											s_drq_busy <= 2'b00;
+											
+											wdstat_irq <= 1;
+										end
+									4'h2,	// STEP
+									4'h3,	// STEP & UPDATE
+									4'h4,	// STEP-IN
+									4'h5,	// STEP-IN & UPDATE
+									4'h6,	// STEP-OUT
+									4'h7:	// STEP-OUT & UPDATE
+										begin
+											// if direction is specified, store it for the next time
+											if (idata[6] == 1) begin 
+												wdstat_stepdirection <= idata[5]; // 0: forward/in
+											end 
+											
+											// perform step 
+											disk_track <= wNextTrack;
+													
+											// update TRACK register too if asked to
+											if (idata[4]) begin
+												wdstat_track <= wNextTrack;
+											end
+												
+											s_headloaded <= idata[3];
+											s_index <= 1'b1;
+											s_drq_busy <= 2'b00;
+											
+											wdstat_irq <= 1;
+										end
+									4'h8, 4'h9: // READ SECTORS
+										// seek data
+										// 4: m:	0: one sector, 1: until the track ends
+										// 3: S: 	SIDE
+										// 2: E:	some 15ms delay
+										// 1: C:	check side matching?
+										// 0: 0
+										begin
+											// now i'm confused, it seems that side is specified in secondary control register
+											// while it's also specified in bit 3 of command.. and matching, too.. 
+											// probably some dino poo
+											oCPU_REQUEST <= CPU_REQUEST_READ | wdstat_side;// idata[3]; 
 
-										s_drq_busy <= 2'b01;
-										{s_wrfault,s_seekerr,s_crcerr,s_lostdata} <= 0;
-										wdstat_multisector <= idata[4];
-									end								
-								4'hC:	// READ ADDRESS
-									begin
-										// track, side, sector, sector size code, 2-byte checksum (crc?)
-										oCPU_REQUEST <= CPU_REQUEST_READADDR | wdstat_side;
-										
-										s_drq_busy <= 2'b01;
-										{s_wrfault,s_seekerr,s_crcerr,s_lostdata} <= 0;
-										
-										wdstat_multisector <= 1'b0;
-										state <= STATE_WAIT_WHREAD;
-										data_rdlength <= 6;
-									end
-								4'hE,	// READ TRACK
-								4'hF:	// WRITE TRACK
-									;
-								default:;
-								endcase
+											s_drq_busy <= 2'b01;
+											{s_wrfault,s_seekerr,s_crcerr,s_lostdata} <= 0;
+											
+											wdstat_multisector <= idata[4];
+											state <= STATE_WAIT_WHREAD;
+											data_rdlength <= SECTOR_SIZE;
+										end
+									4'hA, 4'hB: // WRITE SECTORS
+										begin
+											state <= STATE_WAIT_WHWRITE;
+											oCPU_REQUEST <= CPU_REQUEST_WRITE | wdstat_side;
+
+											s_drq_busy <= 2'b01;
+											{s_wrfault,s_seekerr,s_crcerr,s_lostdata} <= 0;
+											wdstat_multisector <= idata[4];
+										end								
+									4'hC:	// READ ADDRESS
+										begin
+											// track, side, sector, sector size code, 2-byte checksum (crc?)
+											oCPU_REQUEST <= CPU_REQUEST_READADDR | wdstat_side;
+											
+											s_drq_busy <= 2'b01;
+											{s_wrfault,s_seekerr,s_crcerr,s_lostdata} <= 0;
+											
+											wdstat_multisector <= 1'b0;
+											state <= STATE_WAIT_WHREAD;
+											data_rdlength <= 6;
+										end
+									4'hE,	// READ TRACK
+									4'hF:	// WRITE TRACK
+										;
+									default:;
+									endcase
+								end
 							end
 				A_DATA:		begin
+								wdstat_datareg <= idata; // for SEEK
 							end
 				default:;
 			endcase
 
 		// NORMAL OPERATION
-				
 		case (state) 
 		STATE_NEXTADDRFETCH:
 			begin
@@ -381,6 +389,8 @@ always @(posedge clk or negedge reset_n) begin
 		STATE_RESET:
 			begin
 				s_drq_busy <= 2'b00;
+				{s_wrfault,s_seekerr,s_crcerr,s_lostdata} <= 0;
+				oCPU_REQUEST <= CPU_REQUEST_ACK;
 				state <= STATE_READY;
 			end
 		

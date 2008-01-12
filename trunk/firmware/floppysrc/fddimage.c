@@ -76,7 +76,7 @@ FRESULT fdd_readsector(FDDImage* fdd) {
 	FRESULT r;
 	UINT bytesread;
 	
-	uint32_t offset = fdd->nsides*fdd->cur_track + fdd->cur_side;
+	uint32_t offset = fdd->nsides*fdd->cur_track + (1-fdd->cur_side);
 	offset *= fdd->nsectors;
 	offset += fdd->cur_sector - 1;
 	offset *= fdd->sectorsize;
