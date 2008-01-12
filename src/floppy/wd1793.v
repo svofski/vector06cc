@@ -5,7 +5,7 @@
 //DATA 				011		000
 //TRACK				001		010
 //SECTOR			010		001
-
+ 
 module wd1793(clk, clken, reset_n, 
 
 				// host interface
@@ -33,6 +33,8 @@ module wd1793(clk, clken, reset_n,
 parameter CPU_REQUEST_READ 		= 8'h10;
 parameter CPU_REQUEST_WRITE  	= 8'h20;
 parameter CPU_REQUEST_READADDR  = 8'h30;
+
+parameter CPU_REQUEST_NOTIFY	= 8'h40;
 parameter CPU_REQUEST_ACK		= 8'h80;
 parameter CPU_REQUEST_FAIL		= 8'hC0;
 				
@@ -41,6 +43,7 @@ parameter A_STATUS	= 3'b000;
 parameter A_TRACK 	= 3'b001;
 parameter A_SECTOR	= 3'b010;
 parameter A_DATA	= 3'b011;
+parameter A_CTL2	= 3'b111; // $1C: bit0 = drive #, bit2 = head#
 
 parameter SBIT_BUSY 	= 	0;	// command is being executed
 parameter BV_BUSY		=	8'h01;
@@ -71,6 +74,8 @@ parameter SBIT_NOTFOUND = 4;
 
 parameter STATE_READY 		= 0;
 parameter STATE_WAIT_WHREAD	= 1;
+parameter STATE_WAITACK		= 2;
+parameter STATE_RESET		= 3;
 parameter STATE_BYTEFETCH   = 4;
 parameter STATE_BYTEFETCX	= 5;
 
@@ -172,58 +177,13 @@ always @(posedge clk or negedge reset_n) begin
 		{s_notready, s_readonly, s_headloaded, s_seekerr, s_crcerr, s_index, s_busy} <= 0;
 		{s_wrfault, s_lostdata, s_drq} <= 0;
 	end else if (clken) begin
-		case (state) 
-		// skip a few cycles before asserting drq 
-		STATE_BYTEFETCH:
-			begin
-				odata <= wdstat_status;
-				read_timer <= 4'b0001;
-				state <= STATE_BYTEFETCX;
-			end
-			
-		STATE_BYTEFETCX:
-			begin
-				if (read_timer != 0) 
-					read_timer <= read_timer - 1'b1;
-				else begin
-					s_lostdata <= 1'b0;
-					s_drq <= 1'b1;
-					state <= STATE_READY;
-				end
-			end
-		
-		// Initial state
-		STATE_READY:
-			begin
-				// lose data if not requested in time
-				if (s_drq && watchdog_bark) begin
-					s_lostdata <= 1'b1;
-					s_drq <= 1'b0;
-					if (data_rdlength != 0) begin
-						state <= STATE_BYTEFETCH;
-					end
-					//if (data_wrlength != 0) begin
-					//	state <= STATE_BYTELOAD;
-					//end
-					oCPU_REQUEST <= CPU_REQUEST_FAIL | 1;
-				end
-				
-				if (rd) begin
-					case (addr)
-					A_TRACK:	begin
-								odata <= wdstat_track;
-								end
-					A_SECTOR:	begin
-								odata <= wdstat_sector;
-								end
-					A_STATUS:	begin
-								odata <= wdstat_status;
-								end
-					A_DATA:		begin
-									if (data_rdlength == 0) begin
-										// no data, nothing
-									end 
-									else begin
+		if (rd) case (addr)
+				A_TRACK:	odata <= wdstat_track;
+				A_SECTOR:	odata <= wdstat_sector;
+				A_STATUS:	odata <= wdstat_status;
+				A_DATA:		begin
+								if (state == STATE_READY) begin
+									if (s_drq) begin
 										odata <= buff_idata; // for test try this: buff_addr[7:0];
 										
 										// increment data pointer, decrement byte count
@@ -258,21 +218,67 @@ always @(posedge clk or negedge reset_n) begin
 										end
 									end
 								end
-					default:;
-					endcase
-				end 
-				else 
+							end
+				default:;
+				endcase
+				
+		case (state) 
+		// skip a few cycles before asserting drq 
+		STATE_BYTEFETCH:
+			begin
+				read_timer <= 4'b1111;
+				state <= STATE_BYTEFETCX;
+				s_busy <= 1'b1;
+				buff_rd <= 1;
+			end
+			
+		STATE_BYTEFETCX:
+			begin
+				if (read_timer != 0) 
+					read_timer <= read_timer - 1'b1;
+				else begin
+					s_lostdata <= 1'b0;
+					s_drq <= 1'b1;
+					state <= STATE_READY;
+				end
+			end
+			
+		STATE_RESET:
+			begin
+				s_busy <= 1'b0;
+				state <= STATE_READY;
+			end
+		
+		// Initial state
+		STATE_READY:
+			begin
+				// lose data if not requested in time
+				if (s_drq && watchdog_bark) begin
+					s_lostdata <= 1'b1;
+					s_drq <= 1'b0;
+					if (data_rdlength != 0) begin
+						buff_addr <= buff_addr + 1'b1;
+						data_rdlength <= wRdLengthMinus1;					
+
+						state <= STATE_BYTEFETCH;
+					end else 
+						state <= STATE_RESET;
+				end
+				
 				if (wr) begin
 					case (addr)
 					A_TRACK:	begin
 									if (!s_busy) begin
 										wdstat_track <= idata;
-									end
+									end 
 								end
 					A_SECTOR:	begin
 									if (!s_busy) begin
 										wdstat_sector <= idata;
-									end
+									end 
+								end
+					A_CTL2:		begin
+								wdstat_side <= idata[2];
 								end
 					A_COMMAND:	begin
 								cmd_mode <= idata[7];	// for wdstat_status
@@ -285,7 +291,7 @@ always @(posedge clk or negedge reset_n) begin
 										//wdstat_status <=  { 2'b00, idata[3], 5'b00110};
 										
 										s_headloaded <= idata[3];
-										{s_index, s_busy} <= 2'b10;
+										{s_index, s_busy, s_drq} <= 3'b100;
 
 										wdstat_track <= 0;
 										wdstat_irq <= 1;
@@ -298,7 +304,7 @@ always @(posedge clk or negedge reset_n) begin
 										//wdstat_status <= {2'b00, idata[3], 2'b00, wdstat_track == 0, 2'b10};
 										
 										s_headloaded <= idata[3];
-										{s_index, s_busy} <= 2'b10;
+										{s_index, s_busy, s_drq} <= 3'b100;
 										
 										wdstat_irq <= 1;
 									end
@@ -323,7 +329,7 @@ always @(posedge clk or negedge reset_n) begin
 										end
 											
 										s_headloaded <= idata[3];
-										{s_index, s_busy} <= 2'b10;
+										{s_index, s_busy, s_drq} <= 3'b100;
 										
 										wdstat_irq <= 1;
 									end
@@ -335,9 +341,12 @@ always @(posedge clk or negedge reset_n) begin
 									// 1: C:	check side matching?
 									// 0: 0
 									begin
-										oCPU_REQUEST <= CPU_REQUEST_READ | idata[3]; // side
+										// now i'm confused, it seems that side is specified in secondary control register
+										// while it's also specified in bit 3 of command.. and matching, too.. 
+										// probably some dino poo
+										oCPU_REQUEST <= CPU_REQUEST_READ | wdstat_side;// idata[3]; 
 
-										s_busy <= 1;
+										s_busy <= 1'b1;
 										{s_wrfault,s_seekerr,s_crcerr,s_lostdata,s_drq} <= 0;
 										
 										wdstat_side <= idata[3];
@@ -373,13 +382,13 @@ always @(posedge clk or negedge reset_n) begin
 			end
 		STATE_WAIT_WHREAD:
 			begin
-				if (iCPU_STATUS[0] == 1'b1) begin
+				if (iCPU_STATUS[0]) begin
 					oCPU_REQUEST <= CPU_REQUEST_ACK;
 					if (iCPU_STATUS[1]) begin
 						// read successful
 						wdstat_irq <= 0;
 						buff_addr <= 0;
-						buff_rd <= 1;
+						//buff_rd <= 1;
 						
 						state <= STATE_BYTEFETCH;
 					end else begin
@@ -389,9 +398,14 @@ always @(posedge clk or negedge reset_n) begin
 						
 						wdstat_irq <= 1;
 						state <= STATE_READY;
-						oCPU_REQUEST <= CPU_REQUEST_FAIL | 2;
+						//oCPU_REQUEST <= CPU_REQUEST_FAIL | 2;
 					end
 				end
+			end
+		STATE_WAITACK:
+			begin
+				odata <= 8'hff;
+				buff_rd <= 0;
 			end
 		endcase
 	end
@@ -400,8 +414,8 @@ end
 endmodule
 
 module watchdog(clk, clken, cock, q);
-//parameter TIME = 255;
-parameter TIME = 65535;
+parameter TIME = 255;
+//parameter TIME = 65535;
 input clk, clken;
 input cock;
 output q = timer == 0;

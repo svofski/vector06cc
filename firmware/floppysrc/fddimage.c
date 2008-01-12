@@ -76,7 +76,12 @@ FRESULT fdd_readsector(FDDImage* fdd) {
 	FRESULT r;
 	UINT bytesread;
 	
-	uint32_t offset = (fdd->nsectors*(fdd->nsides*fdd->cur_track + fdd->cur_side) + fdd->cur_sector - 1) * fdd->sectorsize;
+	uint32_t offset = fdd->nsides*fdd->cur_track + fdd->cur_side;
+	offset *= fdd->nsectors;
+	offset += fdd->cur_sector - 1;
+	offset *= fdd->sectorsize;
+	
+	//uint32_t offset = (fdd->nsectors*(fdd->nsides*fdd->cur_track + fdd->cur_side) + fdd->cur_sector - 1) * fdd->sectorsize;
 	
 	if ((r = f_lseek(fdd->file, offset)) != FR_OK) return r;
 	
