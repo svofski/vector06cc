@@ -2,13 +2,7 @@
 
 = Introduction =
 
-For licensing information on T80 and 82C55 code, see their respective code.
-
-T80 core is Copyright (c) 2001-2002 Daniel Wallner (jesus@opencores.org)
-
-82C55 core is Copyright (c) MikeJ - Feb 2007 (www.fpgaarcade.com)
-
-Parts of sample code of Altera DE1 Starter Kit are also used, see their respective comments.
+Please see [http://vector06cc.googlecode.com/svn/trunk/LICENSE.TXT LICENSE.TXT] for licensing information about all used modules. This file must be redistributed with every binary and source code copy of this project.
 
 = License =
 
