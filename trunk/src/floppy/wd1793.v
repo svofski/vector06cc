@@ -34,7 +34,7 @@ parameter CPU_REQUEST_READ 		= 8'h10;
 parameter CPU_REQUEST_WRITE  	= 8'h20;
 parameter CPU_REQUEST_READADDR  = 8'h30;
 
-parameter CPU_REQUEST_NOTIFY	= 8'h40;
+parameter CPU_REQUEST_NOP		= 8'h40;
 parameter CPU_REQUEST_ACK		= 8'h80;
 parameter CPU_REQUEST_FAIL		= 8'hC0;
 				
@@ -256,15 +256,17 @@ always @(posedge clk or negedge reset_n) begin
 									case (idata[7:4]) 
 									4'h0: 	// RESTORE
 										begin
-											disk_track <= 0;
 											
 											// head load as specified, index, track0
 											s_headloaded <= idata[3];
 											s_index <= 1'b1;
-											s_drq_busy <= 2'b00;
-
 											wdstat_track <= 0;
-											wdstat_irq <= 1;
+											disk_track <= 0;
+
+											// some programs like it when FDC gets busy for a while
+											s_drq_busy <= 2'b01;
+											oCPU_REQUEST <= CPU_REQUEST_NOP;
+											state <= STATE_WAITACK;
 										end
 									4'h1:	// SEEK
 										begin
@@ -273,9 +275,11 @@ always @(posedge clk or negedge reset_n) begin
 											disk_track <= wdstat_datareg; //wdstat_track;
 											s_headloaded <= idata[3];
 											s_index <= 1'b1;
-											s_drq_busy <= 2'b00;
 											
-											wdstat_irq <= 1;
+											// some programs like it when FDC gets busy for a while
+											s_drq_busy <= 2'b01;
+											oCPU_REQUEST <= CPU_REQUEST_NOP;
+											state <= STATE_WAITACK;
 										end
 									4'h2,	// STEP
 									4'h3,	// STEP & UPDATE
@@ -299,9 +303,11 @@ always @(posedge clk or negedge reset_n) begin
 												
 											s_headloaded <= idata[3];
 											s_index <= 1'b1;
-											s_drq_busy <= 2'b00;
-											
-											wdstat_irq <= 1;
+
+											// some programs like it when FDC gets busy for a while
+											s_drq_busy <= 2'b01;
+											oCPU_REQUEST <= CPU_REQUEST_NOP;
+											state <= STATE_WAITACK;
 										end
 									4'h8, 4'h9: // READ SECTORS
 										// seek data
@@ -443,8 +449,13 @@ always @(posedge clk or negedge reset_n) begin
 			
 		STATE_WAITACK:
 			begin
-				odata <= 8'hff;
-				buff_rd <= 0;
+				if (iCPU_STATUS[0]) begin
+					oCPU_REQUEST <= CPU_REQUEST_ACK;
+					
+					s_drq_busy <= 2'b00;
+					wdstat_irq <= 1;
+					state <= STATE_READY;
+				end
 			end
 		endcase
 	end
