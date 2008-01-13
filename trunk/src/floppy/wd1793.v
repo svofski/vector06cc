@@ -193,9 +193,10 @@ always @(posedge clk or negedge reset_n) begin
 				A_STATUS:	odata <= wdstat_status;
 				A_CTL2:		odata <= {5'b11111,wdstat_side,2'b00};
 				A_DATA:		begin
+								odata <= wdstat_datareg;
 								if (state == STATE_READY) begin
 									if (s_drq) begin
-										odata <= buff_idata; // for test try this: buff_addr[7:0];
+										//odata <= buff_idata; // for test try this: buff_addr[7:0];
 										
 										// reset drq until next byte is read, nothing is lost
 										s_drq_busy <= 2'b01;
@@ -388,6 +389,7 @@ always @(posedge clk or negedge reset_n) begin
 				else begin
 					s_lostdata <= 1'b0;
 					s_drq_busy <= 2'b11;
+					wdstat_datareg <= buff_idata;
 					state <= STATE_READY;
 				end
 			end
