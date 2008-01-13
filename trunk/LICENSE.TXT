@@ -183,3 +183,48 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License       
 along with this program.  If not, see <http://www.gnu.org/licenses/>.   
                                                                         
+
+
+7. MMC AND FAT SOFTWARE
+~~~~~~~~~~~~~~~~~~~~~~~
+
+ The FatFs module is an experimenal project to implement FAT file system to
+ cheap microcontrollers. This is a free software and is opened for education,
+ research and development under license policy of following trems.
+
+  Copyright (C) 2007, ChaN, all right reserved.
+
+ * The FatFs module is a free software and there is no warranty.
+ * You can use, modify and/or redistribute it for personal, non-profit or
+   profit use without any restriction under your responsibility.
+ * Redistributions of source code must retain the above copyright notice.
+
+
+
+
+8. CC65 RUNTIME LIBRARY
+~~~~~~~~~~~~~~~~~~~~~~~
+
+ (C) 2002      Ullrich von Bassewitz                                       
+               Wacholderweg 14                                             
+               D-70597 Stuttgart                                           
+ EMail:        uz@musoftware.de                                            
+                                                                           
+                                                                           
+ This software is provided 'as-is', without any expressed or implied       
+ warranty.  In no event will the authors be held liable for any damages    
+ arising from the use of this software.                                    
+                                                                           
+ Permission is granted to anyone to use this software for any purpose,     
+ including commercial applications, and to alter it and redistribute it    
+ freely, subject to the following restrictions:                            
+                                                                           
+ 1. The origin of this software must not be misrepresented; you must not   
+    claim that you wrote the original software. If you use this software   
+    in a product, an acknowledgment in the product documentation would be  
+    appreciated but is not required.                                       
+ 2. Altered source versions must be plainly marked as such, and must not   
+    be misrepresented as being the original software.                      
+ 3. This notice may not be removed or altered from any source              
+    distribution.                                                          
+

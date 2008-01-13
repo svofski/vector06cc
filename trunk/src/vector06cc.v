@@ -508,13 +508,14 @@ wire		kbd_key_bushold;
 reg [7:0] peripheral_data_in;
 always peripheral_data_in = ~vv55int_oe_n ? vv55int_odata :
 							vi53_rden ? vi53_odata : 
-							floppy_rden ? floppy_odata : 8'h00;
+							floppy_rden ? floppy_odata : 
+							~vv55pu_oe_n ? vv55pu_odata : 8'hFF;
 
 
 // Devices:
 //   000xxxYY [a7:a0]
 //  	000: internal VV55
-//		001: external (parport) VV55
+//		001: external VV55 (PU)
 //		010: VI53 interval timer
 //		011: internal: 	00: palette data out
 //						01-11: joystick inputs
@@ -600,6 +601,16 @@ always @(kbd_key_shift or kbd_key_ctrl or kbd_key_rus) begin
 	vv55int_pc_in[7] <= ~kbd_key_rus;
 end
 always @(tape_input) vv55int_pc_in[4] <= tape_input;
+
+//////////////////////
+// vv55 #1, fake PU //
+//////////////////////
+wire		vv55pu_sel = portmap_device == 3'b001;
+
+wire [1:0] 	vv55pu_addr = 	~address_bus_r[1:0];
+wire [7:0] 	vv55pu_idata = DO;	
+wire [7:0] 	vv55pu_odata = 8'h00;
+wire		vv55pu_oe_n = ~(io_read & vv55pu_sel);
 
 
 ////////////////////////////////
