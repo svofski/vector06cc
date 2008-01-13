@@ -23,6 +23,7 @@ disk:	$(OBJS)
 	$(L65) -C vector.lc lib/vector.o $(OBJS) lib/vector.lib -o disk.bin -m disk.map
 	bin2hex disk.bin
 	copy disk.hex ..\..\workbench\floppy\src
+	copy disk.hex ..\..
 
 clean:
 	rm $(OBJS) $(ASSS) disk.bin disk.map disk.hex

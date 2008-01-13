@@ -75,9 +75,8 @@ void main(void) {
 	GREEN_LEDS = 0xC3;
 
 	ser_puts("@");
-	delay2(100);
+	delay2(10);
 	ser_puts("\r\nVECTOR06CC ");
-	delay2(50);
 
 	do {
 		ser_putc('F');
