@@ -1,5 +1,24 @@
 `default_nettype none
 
+// ====================================================================
+//                         VECTOR-06C FPGA REPLICA
+//
+// 					Copyright (C) 2007, Viacheslav Slavinsky
+//
+// This core is distributed under modified BSD license. 
+// For complete licensing information see LICENSE.TXT.
+// -------------------------------------------------------------------- 
+//
+// An open implementation of Vector-06C home computer
+//
+// Author: Viacheslav Slavinsky, http://sensi.org/~svo
+// 
+// Design File: spi.v
+//
+// SPI host, mimics AVR SPI in its most basic mode
+//
+// --------------------------------------------------------------------
+
 module spi(clk, ce, reset_n, mosi, miso, sck, di, wr, do, dsr);
 input		clk;
 input 		ce;
