@@ -1,3 +1,22 @@
+// ====================================================================
+//                         VECTOR-06C FPGA REPLICA
+//
+// 					Copyright (C) 2007, Viacheslav Slavinsky
+//
+// This code is distributed under modified BSD license. 
+// For complete licensing information see LICENSE.TXT.
+// -------------------------------------------------------------------- 
+//
+// An open implementation of Vector-06C home computer
+//
+// Author: Viacheslav Slavinsky, http://sensi.org/~svo
+// 
+// Source file: serial.c
+//
+// UART output functions for debugging
+//
+// --------------------------------------------------------------------
+
 #include "specialio.h"
 #include "serial.h"
 #include "integer.h"
