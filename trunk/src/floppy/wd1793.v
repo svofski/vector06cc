@@ -1,4 +1,26 @@
 `default_nettype none
+
+// ====================================================================
+//                         VECTOR-06C FPGA REPLICA
+//
+// 					Copyright (C) 2007, Viacheslav Slavinsky
+//
+// This core is distributed under modified BSD license. 
+// For complete licensing information see LICENSE.TXT.
+// -------------------------------------------------------------------- 
+//
+// An open implementation of Vector-06C home computer
+//
+// Author: Viacheslav Slavinsky, http://sensi.org/~svo
+// 
+// Design File: wd1793.v
+//
+// This is not actually a wd1793, it needs external things like CPU
+// and memory buffer. The top lefel is located in floppy.v
+//
+// --------------------------------------------------------------------
+
+
 // In Vector, addresses are inverted, as usual
 //                  WD		VECTOR
 //COMMAND/STATUS	000		011	
