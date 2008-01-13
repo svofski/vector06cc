@@ -64,6 +64,7 @@ uint8_t slave(const char *imagefile, uint8_t *buffer) {
 			ser_nl();
 			ser_putc('Q');
 
+			fdd_seek(&fddimage, 0x01 & MASTER_COMMAND, MASTER_TRACK, MASTER_SECTOR);
 			result = fdd_readadr(&fddimage);
 			
 			for (t1 = 0; t1 < 6; t1++) print_hex(buffer[t1]);
@@ -80,6 +81,10 @@ uint8_t slave(const char *imagefile, uint8_t *buffer) {
 			//ser_putc('A');
 			break;
 		case CPU_REQUEST_NOP:
+			SLAVE_STATUS = 0;
+			ser_putc('`');
+			print_hex(MASTER_COMMAND);
+			print_hex(MASTER_SECTOR);
 			SLAVE_STATUS = CPU_STATUS_COMPLETE;
 			break;
 		case CPU_REQUEST_FAIL:

@@ -698,7 +698,7 @@ wire [7:0]	floppy_status = 7'h00;
 wire		ay_sel = portmap_device == 3'b101; 
 wire		ay_wren = ~WR_n & io_write & ay_sel;
 wire [7:0]	ay_odata;
-wire [10:0]	ay_sound;
+wire [7:0]	ay_sound;
 ayglue shrieker(.clk(clk24), 
 				.ce(cpu_ce),
 				.reset_n(mreset_n), 

@@ -7,7 +7,7 @@ input [7:0]		data;
 input			wren;
 input			rden;
 
-output[10:0]	sound;
+output[7:0]	sound;
 
 reg [2:0] 	div6;
 wire 		derived6 = div6[2];

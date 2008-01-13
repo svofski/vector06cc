@@ -265,7 +265,7 @@ always @(posedge clk or negedge reset_n) begin
 
 											// some programs like it when FDC gets busy for a while
 											s_drq_busy <= 2'b01;
-											oCPU_REQUEST <= CPU_REQUEST_NOP;
+											oCPU_REQUEST <= CPU_REQUEST_NOP | idata[7:4];
 											state <= STATE_WAITACK;
 										end
 									4'h1:	// SEEK
@@ -278,7 +278,7 @@ always @(posedge clk or negedge reset_n) begin
 											
 											// some programs like it when FDC gets busy for a while
 											s_drq_busy <= 2'b01;
-											oCPU_REQUEST <= CPU_REQUEST_NOP;
+											oCPU_REQUEST <= CPU_REQUEST_NOP | idata[7:4];
 											state <= STATE_WAITACK;
 										end
 									4'h2,	// STEP
@@ -306,7 +306,7 @@ always @(posedge clk or negedge reset_n) begin
 
 											// some programs like it when FDC gets busy for a while
 											s_drq_busy <= 2'b01;
-											oCPU_REQUEST <= CPU_REQUEST_NOP;
+											oCPU_REQUEST <= CPU_REQUEST_NOP | idata[7:4];
 											state <= STATE_WAITACK;
 										end
 									4'h8, 4'h9: // READ SECTORS
