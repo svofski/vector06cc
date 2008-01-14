@@ -3,11 +3,31 @@
 
 === Rev.192 ===
 
- * Got rid of priority encoder in peripheral_data_in bus: this fixed some timing issues 
+ * Got rid of priority encoder in peripheral_data_in bus: this fixed some timing issues
+
+ A construct like this unwraps into a loooong cascade:
+   {{{
+always peripheral_data_in = ~vv55int_oe_n ? vv55int_odata :
+			vi53_rden ? vi53_odata : 
+			floppy_rden ? floppy_odata : 
+			~vv55pu_oe_n ? vv55pu_odata : 8'hFF;
+}}}
+ I tried a more linear and clearly defined selector and it seems to be working nicely:
+   {{{
+always
+	case ({~vv55int_oe_n, vi53_rden, floppy_rden, ~vv55pu_oe_n}) 
+		4'b1000: peripheral_data_in <= vv55int_odata;
+		4'b0100: peripheral_data_in <= vi53_odata;
+		4'b0010: peripheral_data_in <= floppy_odata;
+		4'b0001: peripheral_data_in <= vv55pu_odata;
+		default: peripheral_data_in <= 8'hFF;
+	endcase
+}}}
+ There are plenty of constructs like the former one in vector06cc, but I'm not sure if many of them are worth replacing. SRAM multiplexer, for one, definitely wants some attention, even though there are no apparent problems with it yet.
 
 === Rev.184 ===
 
- * AY sound added
+ * AY sound added (YM2149 by MikeJ)
  * 8-bit pcm is added to soundcodec.v
 
 === Rev.183 ===
@@ -16,7 +36,7 @@
 
 === Rev.73 ===
 
- * JTAG access via Control Panel.
+ * [JTAG_Implementation JTAG access] via Control Panel.
 
 === Rev.62 ===
 
