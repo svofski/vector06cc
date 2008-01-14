@@ -221,22 +221,16 @@ always @(posedge clk24) begin
 		clock_counter <= clock_counter + 1'b1;
 end
 
+/////////////////
+// WAIT STATES //
+/////////////////
+
 // a very special waitstate generator
 reg [4:0] 	ws_counter;
 reg 		ws_latch;
 always @(posedge clk24) ws_counter <= ws_counter + 1'b1;
 wire [3:0] ws_rom = ws_counter[4:1];
 wire ws_cpu_time = ws_rom[2] & ws_rom[1] & ws_rom[3];
-
-/////////////////
-// WAIT STATES //
-/////////////////
-
-// adding a waitstate for OUT screws up writes into timer registers
-// subjectively, OUT WS makes DIZREK2 look more stable
-// objectively, lack of OUT WS makes sound proper
-// also, it seems that originally a WS for OUT only makes sense because of the palette
-// but it's known that Vector had an error with that.. Undecided.
 wire ws_req_n = ~(DO[7] | ~DO[1]) | DO[4];	// == 0 when cpu wants cock
 //wire ws_req_n = ~(DO[7] | ~DO[1] | DO[4]);	
 
@@ -261,10 +255,7 @@ end
 /////////////////
 // DEBUG PINS  //
 /////////////////
-//assign GPIO_0[4:0] = {VAIT, cpu_ce, READY, ws_cpu_time, ~ws_req_n};
 assign GPIO_0[8:0] = {clk24, ce12, ce6, ce3, ce3v, video_slice, pipe_ab, vi53_timer_ce, pipe_ab};
-//assign GPIO_0[7:4] = {vi53_wren, vi53_out};
-//assign GPIO_0[8] = clk24;
 
 /////////////////
 // CPU SECTION //
@@ -423,19 +414,19 @@ video vidi(.clk24(clk24), .ce12(ce12), .ce6(ce6), .video_slice(video_slice), .pi
 		   .SRAM_DQ(sram_data_in), .SRAM_ADDR(VIDEO_A), 
 		   .hsync(VGA_HS), .vsync(VGA_VS), 
 		   .coloridx(coloridx),
-		   .realcolor_in(realcolor_buf),
+		   .realcolor_in(realcolor2buf),
 		   .realcolor_out(realcolor),
 		   .retrace(retrace),
 		   .video_scroll_reg(video_scroll_reg),
 		   .border_idx(video_border_index),
 		   .testpin(GPIO_0[12:9]));
 		
-wire [7:0] realcolor;		
-wire [7:0] realcolor_buf;		
+wire [7:0] realcolor;		// this truecolour value fetched from buffer directly to display
+wire [7:0] realcolor2buf;	// this truecolour value goes into the scan doubler buffer
 
-//wire [3:0] paletteram_adr = (retrace|video_palette_wren) ? video_palette_address : border ? video_border_index : coloridx;
 wire [3:0] paletteram_adr = (retrace|video_palette_wren) ? video_border_index : coloridx;
-palette_ram paletteram(paletteram_adr, video_palette_value, clk24, clk24, video_palette_wren, realcolor_buf);
+
+palette_ram paletteram(paletteram_adr, video_palette_value, clk24, clk24, video_palette_wren, realcolor2buf);
 
 reg [3:0] video_r;
 reg [3:0] video_g;
@@ -457,8 +448,10 @@ end
 ///////////
 wire int_delay;
 wire int_request;
+
 oneshot #(36) retrace_delay(clk24, cpu_ce, retrace, int_delay);
 oneshot retrace_irq(clk24, cpu_ce, ~int_delay, int_request);
+
 //oneshot retrace_irq(clk24, cpu_ce, retrace, int_request);
 
 
@@ -506,11 +499,21 @@ wire		kbd_key_bushold;
 ///////////////
 
 reg [7:0] peripheral_data_in;
-always peripheral_data_in = ~vv55int_oe_n ? vv55int_odata :
-							vi53_rden ? vi53_odata : 
-							floppy_rden ? floppy_odata : 
-							~vv55pu_oe_n ? vv55pu_odata : 8'hFF;
 
+// Priority encoder is a poor choice for bus selector, see case below, works much better
+//
+//always peripheral_data_in = ~vv55int_oe_n ? vv55int_odata :
+//							vi53_rden ? vi53_odata : 
+//							floppy_rden ? floppy_odata : 
+//							~vv55pu_oe_n ? vv55pu_odata : 8'hFF;
+always
+	case ({~vv55int_oe_n, vi53_rden, floppy_rden, ~vv55pu_oe_n}) 
+		4'b1000: peripheral_data_in <= vv55int_odata;
+		4'b0100: peripheral_data_in <= vi53_odata;
+		4'b0010: peripheral_data_in <= floppy_odata;
+		4'b0001: peripheral_data_in <= vv55pu_odata;
+		default: peripheral_data_in <= 8'hFF;
+	endcase
 
 // Devices:
 //   000xxxYY [a7:a0]
@@ -583,7 +586,7 @@ I82C55 vv55int(
 
 always @(posedge clk24) begin
 	// port B
-	video_border_index <= vv55int_pb_out[3:0];
+	video_border_index <= vv55int_pb_out[3:0];	// == palette address for out $0C
 
 `ifdef WITH_CPU
 	video_mode512 <= vv55int_pb_out[4];
@@ -670,7 +673,7 @@ wire [7:0]	floppy_status;
 
 floppy flappy(
 	.clk(clk24), 
-	.ce(ce3v),  // must me ce3v, hypothetically
+	.ce(ce3v),  
 	.reset_n(mreset_n), 
 	
 	// sd card signals
