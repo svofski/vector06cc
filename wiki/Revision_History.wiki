@@ -1,0 +1,23 @@
+#summary Here be the manually updated log of significant changes
+#labels Featured,Phase-Implementation
+
+=== Rev.192 ===
+
+ * Got rid of priority encoder in peripheral_data_in bus: this fixed some timing issues 
+
+=== Rev.184 ===
+
+ * AY sound added
+ * 8-bit pcm is added to soundcodec.v
+
+=== Rev.183 ===
+
+ * First release of FDC.
+
+=== Rev.73 ===
+
+ * JTAG access via Control Panel.
+
+=== Rev.62 ===
+
+ * Keyboard shiftness stuckness resolved: shift+: or {{{*}}} can be safely pressed and depressed.
