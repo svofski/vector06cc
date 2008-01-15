@@ -9,13 +9,6 @@ input			rden;
 
 output[7:0]	sound;
 
-reg [2:0] 	div6;
-wire 		derived6 = div6[2];
-
-always @(posedge clk) begin
-	div6 <= div6 + 1;
-end
-
 YM2149 digeridoo(
   .I_DA(data),
   .O_DA(),
