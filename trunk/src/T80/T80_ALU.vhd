@@ -1,3 +1,7 @@
+-- 
+-- svofski's changes: in Mode 2 (8080), DAA doesn't take sign flag into account
+--
+
 -- ****
 -- T80(b) core. In an effort to merge and maintain bug fixes ....
 --
@@ -220,7 +224,7 @@ begin
 			F_Out(Flag_C) <= F_In(Flag_C);
 			DAA_Q(7 downto 0) := unsigned(BusA);
 			DAA_Q(8) := '0';
-			if F_In(Flag_N) = '0' then
+			if F_In(Flag_N) = '0' or Mode = 2 then
 				-- After addition
 				-- Alow > 9 or H = 1
 				if DAA_Q(3 downto 0) > 9 or F_In(Flag_H) = '1' then

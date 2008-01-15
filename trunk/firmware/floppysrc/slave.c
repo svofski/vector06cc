@@ -46,8 +46,6 @@ uint8_t slave(const char *imagefile, uint8_t *buffer) {
 	fdd_seek(&fddimage, 1, 4, 1);
 	if (fdd_readsector(&fddimage) != FR_OK) return SR_READERR;
 
-	if (buffer[0] != '\000' || buffer[1] == '\000') return SR_FORMAT;	// directory starts with a 0
-	
 	// tests passed, clear to slave forever
 	
 	SLAVE_STATUS = 0;

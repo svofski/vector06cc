@@ -424,7 +424,7 @@ video vidi(.clk24(clk24), .ce12(ce12), .ce6(ce6), .video_slice(video_slice), .pi
 wire [7:0] realcolor;		// this truecolour value fetched from buffer directly to display
 wire [7:0] realcolor2buf;	// this truecolour value goes into the scan doubler buffer
 
-wire [3:0] paletteram_adr = (retrace|video_palette_wren) ? video_border_index : coloridx;
+wire [3:0] paletteram_adr = (retrace/*|video_palette_wren*/) ? video_border_index : coloridx;
 
 palette_ram paletteram(paletteram_adr, video_palette_value, clk24, clk24, video_palette_wren, realcolor2buf);
 
@@ -446,6 +446,11 @@ end
 ///////////
 // RST38 //
 ///////////
+
+// Retrace irq delay:
+// For 36 seems to be the best compromise. m@color looks great and Black Ice isn't too broken
+// At 32, m@color demo starts showing horizontal stripes across the entire screen
+// Now the real problem is: nobody knows how it's ought to look!
 wire int_delay;
 wire int_request;
 
@@ -721,7 +726,7 @@ ayglue shrieker(.clk(clk24),
 				.wren(ay_wren), 
 				.sound(ay_sound));
 `else
-wire [10:0] ay_sound = 0;
+wire [7:0] ay_sound = 0;
 `endif
 //////////////////
 // Special keys //
