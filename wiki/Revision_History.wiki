@@ -1,6 +1,11 @@
 #summary Here be the manually updated log of significant changes
 #labels Featured,Phase-Implementation
 
+=== Rev.195 ===
+ * [http://code.google.com/p/vector06cc/issues/detail?id=16 .fdd check fixed]
+ * [http://code.google.com/p/vector06cc/issues/detail?id=14 multicolor in Black Ice fixed]
+ * [http://code.google.com/p/vector06cc/issues/detail?id=13 DAA instruction fixed]
+
 === Rev.192 ===
 
  * Got rid of priority encoder in peripheral_data_in bus: this fixed some timing issues
