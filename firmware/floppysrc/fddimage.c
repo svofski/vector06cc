@@ -46,10 +46,10 @@ uint8_t fdd_clearerror() {
 uint8_t fdd_load(FIL* file, FDDImage *fdd, uint8_t *bufptr) {
 	fdd_clearerror();
 	
-	fdd->ntracks = file->fsize / (2*TRACK_1SIDE*SECTOR_SIZE);	// these seem to be fixed more or less
-	fdd->nsides = 2;
-	fdd->nsectors = TRACK_1SIDE;
-	fdd->sectorsize = SECTOR_SIZE;
+	fdd->ntracks = file->fsize / (2*FDD_NSECTORS*FDD_SECTOR_SIZE);	// these seem to be fixed more or less
+	fdd->nsides = FDD_NSIDES;
+	fdd->nsectors = FDD_NSECTORS;
+	fdd->sectorsize = FDD_SECTOR_SIZE;
 	fdd->file = file;
 	fdd->buffer = bufptr;
 	
@@ -59,9 +59,9 @@ uint8_t fdd_load(FIL* file, FDDImage *fdd, uint8_t *bufptr) {
 uint8_t fdd_seek(FDDImage *fdd, uint8_t side, uint8_t track, uint8_t sector) {
 	fdd_clearerror();
 	
-	if (side > fdd->nsides||
+	if (side > FDD_NSIDES||
 		track > fdd->ntracks ||
-		sector > fdd->nsectors) seterror(FDD_SEEK_ERROR);
+		sector > FDD_NSECTORS) seterror(FDD_SEEK_ERROR);
 		
 	fdd->cur_side = side;
 	fdd->cur_track = track;
@@ -70,42 +70,18 @@ uint8_t fdd_seek(FDDImage *fdd, uint8_t side, uint8_t track, uint8_t sector) {
 	fdd->ready = 0;
 }
 
-/*
-uint8_t fdd_nextbyte(FDDImage *fdd) {
-	uint8_t result;
-	
-	if (!fdd->ready) {
-		fdd->ready = fdd_readsector(fdd) == FR_OK ? 1 : 0;
-		if (!fdd->ready)
-			seterror(FDD_READ_ERROR);
-	}
-	
-	if (fdd->ready) {
-		result = fdd->buffer[fdd->offset];
-		fdd->offset++;
-		if (fdd->offset >= fdd->sectorsize) {
-			fdd->ready = 0;
-		}
-	} 
-	
-	return result;
-}
-*/
-
 FRESULT fdd_readsector(FDDImage* fdd) {
 	FRESULT r;
 	UINT bytesread;
 	
-	uint32_t offset = fdd->nsides*fdd->cur_track + (1-fdd->cur_side);
-	offset *= fdd->nsectors;
+	uint32_t offset = FDD_NSIDES*fdd->cur_track + (1-fdd->cur_side);
+	offset *= FDD_NSECTORS; 
 	offset += fdd->cur_sector - 1;
-	offset *= fdd->sectorsize;
-	
-	//uint32_t offset = (fdd->nsectors*(fdd->nsides*fdd->cur_track + fdd->cur_side) + fdd->cur_sector - 1) * fdd->sectorsize;
+	offset *= FDD_SECTOR_SIZE;
 	
 	if ((r = f_lseek(fdd->file, offset)) != FR_OK) return r;
 	
-	r = f_read(fdd->file, fdd->buffer, fdd->sectorsize, &bytesread);
+	r = f_read(fdd->file, fdd->buffer, FDD_SECTOR_SIZE, &bytesread);
 	
 	return r;
 }

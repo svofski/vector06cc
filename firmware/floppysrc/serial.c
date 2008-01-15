@@ -52,7 +52,7 @@ void print_hex(BYTE b) {
 void print_buff(BYTE *Buffer) {
   WORD ofs;
   
-  for (ofs = 0; ofs < SECTOR_SIZE; ofs++) {
+  for (ofs = 0; ofs < FDD_SECTOR_SIZE; ofs++) {
     if (ofs % 16 == 0) {
       ser_nl();
     } else if (ofs % 8 == 0) {

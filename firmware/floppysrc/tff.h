@@ -46,7 +46,7 @@
 /* When _USE_SJIS is set to 1, Shift-JIS code transparency is enabled, otherwise
 /  only US-ASCII(7bit) code can be accepted as file/directory name. */
 
-#define	_USE_NTFLAG	1
+#define	_USE_NTFLAG	0
 /* When _USE_NTFLAG is set to 1, upper/lower case of the file name is preserved.
 /  Note that the files are always accessed in case insensitive. */
 

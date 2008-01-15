@@ -30,6 +30,30 @@ FDDImage fddimage;
 
 #define DELAY_RELOAD 4096
 
+
+#define vputs(s) {}
+#define vputc(s) {}
+#define vputh(s) {}
+#define vdump(s) {}
+#define vnl()	 {}
+
+#if VERBOSE >= 3
+  #undef vdump
+  #define vdump(b)  print_buff(b)
+#endif
+
+#if VERBOSE >= 2
+  #undef vputs
+  #undef vputc
+  #undef vputh
+  #undef vnl
+  #define vputs(s) ser_puts(s)
+  #define vputc(c) ser_putc(c)
+  #define vputh(x) print_hex(x)
+  #define vnl()	   ser_nl()
+#endif
+
+
 // thrall forever
 uint8_t slave(const char *imagefile, uint8_t *buffer) {
 	FIL	file1;
@@ -45,7 +69,6 @@ uint8_t slave(const char *imagefile, uint8_t *buffer) {
 	fdd_load(&file1, &fddimage, buffer);
 	fdd_seek(&fddimage, 1, 4, 1);
 	if (fdd_readsector(&fddimage) != FR_OK) return SR_READERR;
-
 	// tests passed, clear to slave forever
 	
 	SLAVE_STATUS = 0;
@@ -54,21 +77,21 @@ uint8_t slave(const char *imagefile, uint8_t *buffer) {
 		switch (MASTER_COMMAND & 0xf0) {
 		case CPU_REQUEST_READ:
 			SLAVE_STATUS = 0;
-			ser_nl();
-			ser_puts("rHST:");
+
+			vnl();
+			vputs("rHST:");
+
 			fdd_seek(&fddimage, 0x01 & MASTER_COMMAND, MASTER_TRACK, MASTER_SECTOR);
 
-			print_hex(fddimage.cur_side);
-			print_hex(fddimage.cur_sector);
-			print_hex(fddimage.cur_track);
+			vputh(fddimage.cur_side);
+			vputh(fddimage.cur_sector);
+			vputh(fddimage.cur_track);
 
 			result = fdd_readsector(&fddimage);
 			
-			ser_putc(':');
-			print_hex(result);
-		
-			//print_buff(fddimage.buffer);
-
+			vputc(':');
+			vputh(result);
+			vdump(fddimage.buffer);
 			
 			SLAVE_STATUS = CPU_STATUS_COMPLETE | (result == FR_OK ? CPU_STATUS_SUCCESS : 0);
 			// touche!
@@ -78,37 +101,38 @@ uint8_t slave(const char *imagefile, uint8_t *buffer) {
 			// fill the beginning of buffer with position info
 			// 6 bytes: track, side, sector, sectorsize code, crc1, crc2
 			SLAVE_STATUS = 0;
-			ser_nl();
-			ser_putc('Q');
+
+			vnl();
+			vputc('Q');
 
 			fdd_seek(&fddimage, 0x01 & MASTER_COMMAND, MASTER_TRACK, MASTER_SECTOR);
 			result = fdd_readadr(&fddimage);
 			
-			for (t1 = 0; t1 < 6; t1++) print_hex(buffer[t1]);
+			for (t1 = 0; t1 < 6; t1++) vputh(buffer[t1]);
 			
 			SLAVE_STATUS = CPU_STATUS_COMPLETE | (result == FR_OK ? CPU_STATUS_SUCCESS : 0);
 			// touche!
 			break;
 		case CPU_REQUEST_WRITE:
-			ser_putc('W');
+			SLAVE_STATUS = 0;
+			vputc('W');
 			SLAVE_STATUS = CPU_STATUS_COMPLETE; // no success
 			break;
 		case CPU_REQUEST_ACK:
 			SLAVE_STATUS = 0;
-			//ser_putc('A');
 			break;
 		case CPU_REQUEST_NOP:
 			SLAVE_STATUS = 0;
-			ser_putc('`');
-			print_hex(MASTER_COMMAND);
-			print_hex(MASTER_SECTOR);
+			vputc('`');
+			vputh(MASTER_COMMAND);
+			vputh(MASTER_SECTOR);
 			SLAVE_STATUS = CPU_STATUS_COMPLETE;
 			break;
 		case CPU_REQUEST_FAIL:
-			ser_putc('[');
-			print_hex(MASTER_COMMAND);
-			print_hex(MASTER_SECTOR);
-			ser_putc(']');
+			vputc('[');
+			vputh(MASTER_COMMAND);
+			vputh(MASTER_SECTOR);
+			vputc(']');
 			break;
 		default:
 			break;

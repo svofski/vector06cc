@@ -3,10 +3,14 @@
 
 #define WITH_SERIAL
 
+#define VERBOSE 1	// 1: mostly quiet
+			// 2: log all requests
+			// 3: obsessive, print sector dumps
 
 
-#define SECTOR_SIZE 		1024
-#define TRACK_1SIDE		5
-#define SECTOR_SIZE_CODE	3		// 0 = 128, 1 = 256, 2 = 512, 3 = 1024
+#define FDD_SECTOR_SIZE		1024U
+#define FDD_NSIDES		2U
+#define FDD_NSECTORS		5U
+#define SECTOR_SIZE_CODE	3U		// 0 = 128, 1 = 256, 2 = 512, 3 = 1024
 
 #endif
