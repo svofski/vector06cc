@@ -19,6 +19,10 @@
 // optimal, probably can be heavily optimized if counter units are
 // implemented in RTL level.
 //
+// The compatibility with the real 8253 is only verified as much as is 
+// necessary for the software that requires the timer. Signal set/hold
+// times are pretty poor, too, probably functional only up to 20MHz tops.
+//
 // --------------------------------------------------------------------
 
 `default_nettype none
@@ -288,9 +292,12 @@ always @(posedge clk) begin
 						outreg <= 1;
 					end
 				end
-			M1: ; // NOT IMPLEMENTED
+			M1: ; // M1 NOT IMPLEMENTED
 			M2:	begin
-					if (counter_q == 16'd1) begin
+					// technically we should trigger/reload on 1
+					// but we need to do this up front to be ready
+					// by the next clk/tce
+					if (counter_q == 16'd2) begin
 						outreg <= 0;
 						counter_wren <= 1;
 					end else begin
@@ -311,7 +318,7 @@ always @(posedge clk) begin
 					end else
 						outreg <= 1; // reset out on next cycle
 				end
-			M5: ; // NOT IMPLEMENTED
+			M5: ; // M5 NOT IMPLEMENTED
 			default:;
 		endcase
 	end
