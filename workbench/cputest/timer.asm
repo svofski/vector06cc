@@ -142,13 +142,16 @@ noir:
 		lxi		h, badnik
 		call	msg
 gagg:
-		mvi		a, 30
-		mvi		b, 40
+		mvi		a, 10h
+		mvi		b, 40h
 		out		8
+		out		0bh
 		add		b
 		out		8
+		out		0ah
 		add		b
 		out		8
+		out		09h
 		ret
 fail1:
 		lxi	h, bad1
@@ -181,5 +184,4 @@ flag:
 
 		end
 
-
-	            
+;; $Id$
