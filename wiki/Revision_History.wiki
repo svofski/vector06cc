@@ -1,6 +1,10 @@
 #summary Here be the manually updated log of significant changes
 #labels Featured,Phase-Implementation
 
+=== Rev.204 ===
+ * 8253 timer partially fixed, but only somewhat.. Events happen in time, but Exolon that depends on it still doesn't work as expected; SkyNet "emulator detection" now takes vector06cc for the real thing
+ * floppy now automatically remounts the disk image after mmc is reinserted but since there's no door contact of any kind, this happens not before a read operation has failed
+
 === Rev.195 ===
  * [http://code.google.com/p/vector06cc/issues/detail?id=16 .fdd check fixed]
  * [http://code.google.com/p/vector06cc/issues/detail?id=14 multicolor in Black Ice fixed]
