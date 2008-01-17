@@ -73,7 +73,8 @@ uint8_t slave(const char *imagefile, uint8_t *buffer) {
 	
 	SLAVE_STATUS = 0;
 
-	for (;;) {
+	for (;result != FR_RW_ERROR;) {
+		result = FR_OK;
 		switch (MASTER_COMMAND & 0xf0) {
 		case CPU_REQUEST_READ:
 			SLAVE_STATUS = 0;

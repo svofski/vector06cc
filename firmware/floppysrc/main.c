@@ -75,7 +75,7 @@ void fill_filename(char *buf, char *fname) {
 	strncpy(buf, fname, 12);
 }
 
-#define CHECKRESULT {if (result) break;}
+#define CHECKRESULT {/*if (result) break;*/}
 
 void main(void) {
 	FATFS *fs = &fatfs;
@@ -96,7 +96,7 @@ void main(void) {
 	delay2(10);
 	ser_puts("\r\nVECTOR06CC ");
 
-	do {
+	for(;;) {
 		ser_putc('F');
 		result = disk_initialize(0); CHECKRESULT;
 
@@ -152,11 +152,12 @@ void main(void) {
 #endif
 
 		slave(ptrfile, Buffer);
-
+		ser_puts("RELOAD");
+		delay2(100);
 #if 0
 		print_buff();
 #endif		
-	} while (0);
+	}
 	print_result(result);
 	ser_puts("\r\nWTF?");
 }
