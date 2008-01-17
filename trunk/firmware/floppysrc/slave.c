@@ -81,18 +81,24 @@ uint8_t slave(const char *imagefile, uint8_t *buffer) {
 
 			vnl();
 			vputs("rHST:");
-
-			fdd_seek(&fddimage, 0x01 & MASTER_COMMAND, MASTER_TRACK, MASTER_SECTOR);
-
-			vputh(fddimage.cur_side);
-			vputh(fddimage.cur_sector);
-			vputh(fddimage.cur_track);
-
-			result = fdd_readsector(&fddimage);
+			t1 = MASTER_COMMAND & 0x02; // side
 			
-			vputc(':');
-			vputh(result);
-			vdump(fddimage.buffer);
+			if (t1 == 0) {
+				fdd_seek(&fddimage, 0x01 & MASTER_COMMAND, MASTER_TRACK, MASTER_SECTOR);
+
+				vputh(fddimage.cur_side);
+				vputh(fddimage.cur_sector);
+				vputh(fddimage.cur_track);
+
+				result = fdd_readsector(&fddimage);
+				
+				vputc(':');
+				vputh(result);
+				vdump(fddimage.buffer);
+			} else {
+				result = FR_INVALID_DRIVE;
+				vputs("DRVERR");
+			}
 			
 			SLAVE_STATUS = CPU_STATUS_COMPLETE | (result == FR_OK ? CPU_STATUS_SUCCESS : 0);
 			// touche!
@@ -105,11 +111,17 @@ uint8_t slave(const char *imagefile, uint8_t *buffer) {
 
 			vnl();
 			vputc('Q');
-
-			fdd_seek(&fddimage, 0x01 & MASTER_COMMAND, MASTER_TRACK, MASTER_SECTOR);
-			result = fdd_readadr(&fddimage);
+			t1 = MASTER_COMMAND & 0x02; // side
 			
-			for (t1 = 0; t1 < 6; t1++) vputh(buffer[t1]);
+			if (t1 == 0) {
+				fdd_seek(&fddimage, 0x01 & MASTER_COMMAND, MASTER_TRACK, MASTER_SECTOR);
+				result = fdd_readadr(&fddimage);
+				
+				for (t1 = 0; t1 < 6; t1++) vputh(buffer[t1]);
+			} else {
+				result = FR_INVALID_DRIVE;
+				vputs("DRVERR");
+			}
 			
 			SLAVE_STATUS = CPU_STATUS_COMPLETE | (result == FR_OK ? CPU_STATUS_SUCCESS : 0);
 			// touche!

@@ -146,6 +146,7 @@ reg 		wdstat_stepdirection;
 reg			wdstat_multisector;
 reg			wdstat_irq;
 reg			wdstat_side;
+reg			wdstat_drive;
 
 reg	[7:0]	disk_track;		// "real" heads position
 
@@ -194,18 +195,18 @@ always @(posedge clk or negedge reset_n) begin
 		disk_track <= 8'hff;
 		wdstat_track <= 0;
 		wdstat_sector <= 0;
+		{wdstat_side,wdstat_drive} <= 2'b00;
 		data_rdlength <= 0;
-		buff_rd <= 0;
-		buff_wr <= 0;
 		buff_addr <= 0;
+		{buff_rd,buff_wr} <= 0;
 		oCPU_REQUEST <= CPU_REQUEST_ACK;
-		odata <= 0;
-		wdstat_multisector <= 0;
+		odata <= 8'b0;
+		wdstat_multisector <= 1'b0;
 		state <= STATE_READY;
-		cmd_mode <= 0;
+		cmd_mode <= 1'b0;
 		{s_notready, s_readonly, s_headloaded, s_seekerr, s_crcerr, s_index} <= 0;
 		{s_wrfault, s_lostdata} <= 0;
-		s_drq_busy <= 2'b0;
+		s_drq_busy <= 2'b00;
 	end else if (clken) begin
 		
 		// REGISTER READ ACCESS
@@ -213,7 +214,7 @@ always @(posedge clk or negedge reset_n) begin
 				A_TRACK:	odata <= wdstat_track;
 				A_SECTOR:	odata <= wdstat_sector;
 				A_STATUS:	odata <= wdstat_status;
-				A_CTL2:		odata <= {5'b11111,wdstat_side,2'b00};
+				A_CTL2:		odata <= {5'b11111,wdstat_side,1'b0,wdstat_drive};
 				A_DATA:		begin
 								odata <= wdstat_datareg;
 								if (state == STATE_READY) begin
@@ -230,15 +231,15 @@ always @(posedge clk or negedge reset_n) begin
 											
 											// either read the next sector, or stop if this is track end
 											if (wdstat_multisector && wdstat_sector <= SECTORS_PER_TRACK) begin
-												wdstat_sector <= wdstat_sector + 1;
+												wdstat_sector <= wdstat_sector + 1'b1;
 												oCPU_REQUEST <= CPU_REQUEST_READ | wdstat_side;
-												wdstat_irq <= 0;
+												wdstat_irq <= 1'b0;
 												s_drq_busy <= 2'b01;
 
 												state <= STATE_WAIT_WHREAD;
 											end else begin
-												wdstat_irq <= 1;
-												wdstat_multisector <= 0;
+												wdstat_irq <= 1'b1;
+												wdstat_multisector <= 1'b0;
 												s_drq_busy <= 2'b00;
 											end
 										end else begin
@@ -266,6 +267,7 @@ always @(posedge clk or negedge reset_n) begin
 							end
 				A_CTL2:		begin
 								wdstat_side <= idata[2];
+								wdstat_drive <= idata[0];
 							end
 				A_COMMAND:	begin
 								if (idata[7:4] == 4'h8) begin
@@ -343,7 +345,7 @@ always @(posedge clk or negedge reset_n) begin
 											// now i'm confused, it seems that side is specified in secondary control register
 											// while it's also specified in bit 3 of command.. and matching, too.. 
 											// probably some dino poo
-											oCPU_REQUEST <= CPU_REQUEST_READ | wdstat_side;// idata[3]; 
+											oCPU_REQUEST <= CPU_REQUEST_READ | {wdstat_drive,wdstat_side};// idata[3]; 
 
 											s_drq_busy <= 2'b01;
 											{s_wrfault,s_seekerr,s_crcerr,s_lostdata} <= 0;
@@ -355,7 +357,7 @@ always @(posedge clk or negedge reset_n) begin
 									4'hA, 4'hB: // WRITE SECTORS
 										begin
 											state <= STATE_WAIT_WHWRITE;
-											oCPU_REQUEST <= CPU_REQUEST_WRITE | wdstat_side;
+											oCPU_REQUEST <= CPU_REQUEST_WRITE | {wdstat_drive,wdstat_side};
 
 											s_drq_busy <= 2'b01;
 											{s_wrfault,s_seekerr,s_crcerr,s_lostdata} <= 0;
@@ -364,7 +366,7 @@ always @(posedge clk or negedge reset_n) begin
 									4'hC:	// READ ADDRESS
 										begin
 											// track, side, sector, sector size code, 2-byte checksum (crc?)
-											oCPU_REQUEST <= CPU_REQUEST_READADDR | wdstat_side;
+											oCPU_REQUEST <= CPU_REQUEST_READADDR | {wdstat_drive,wdstat_side};
 											
 											s_drq_busy <= 2'b01;
 											{s_wrfault,s_seekerr,s_crcerr,s_lostdata} <= 0;
