@@ -69,12 +69,9 @@ wire ram_sel = cr_ram_on & addr_sel & (memwr|memrd);
 
 wire stack_sel = cr_stack_on & stack & (memwr|memrd);
 
-always @(stack_sel,ram_sel) 
-	case ({stack_sel,ram_sel}) 
-		2'b10:	bigram_addr <= cr_stack_page;
-		2'b01:  bigram_addr <= cr_ram_page;
-		default:bigram_addr <= 3'b000;
-	endcase
+always @(stack,memrd,memwr,stack_sel,cr_stack_page,ram_sel,cr_ram_page) begin
+	bigram_addr <= stack_sel ? cr_stack_page : ram_sel ? cr_ram_page : 3'b000;
+end	
 
 endmodule
 
