@@ -35,10 +35,15 @@ See README.txt, or comments in vector06cc.v for details, but long story short: S
 
  Вкратце, понимая тяжесть прочения README.txt и коментариев в vector06cc.v, сообщаю, что переключатели SW8 и SW9 должны быть в верхнем положении "1", остальные лучше перевести в положение "0". Кроме того, есть кнопки: KEY0 выполняет полный сброс, кнопка KEY3 -- загрузку, то же что клавиша F12 на клавиатуре или БЛК+СБР на настоящем Векторе. Клавиша F11 == БЛК+ВВОД.
 
-== Uploading software ==
+== Using software ==
 There are several methods of running software. Here they are in order of ease of use. You will need *Cyclone II Starter Kit Control Panel* program supplied with your DE1 board in order to transfer data to the board's SRAM.
 
  Есть несколько способов запускать программы. Они приводятся в порядке убывания простоты использования. К плате DE1 прилагается интересный пример под названием Cyclone II Starter Kit Control Panel, он позволяет общаться с памятью установленной на плате. Это очень полезная программа.
+
+=== Floppy disk images ===
+vector06cc can load standard Vector-06C floppy disk images in .fdd format. You need to create a folder called "VECTOR06" in the root of a FAT16-formatted SD/MMC card and put a .fdd file in that folder. As of now, there is no possibility to choose what image file to use so don't put more than one .fdd file in that folder. If a floppy you're using is not bootable you can still boot MicroDOS from the RAM disk.
+ 
+ vector06cc может загружать стандартные эмуляторные образы в формате .fdd. Создайте каталог под названием "VECTOR06" в корне SD или MMC карточки, отформатированной в FAT16. В этот каталог можно положить образ дискетки. Пока нет механизма выбора образа, не имеет смысла класть в этот каталог больше одного файла с расширением .fdd. Если образ дискеты не загрузочный, можно загрузить МикроДОС с квазидиска.
 
 === RAMdisk image ===
 Use the control panel to upload ramdisk.img (or .edd or whatever, the size should be 256K) starting with address *8000* (this is hex). Make sure that you select SRAM tab, select sequential upload, check "File size" checkbox and chose a file. After you uploaded the image, press RESET (KEY0) again, the screen must fill with full yellow boxes, address "EB" should be held on the hex display and LED9 must be blinking steady. Now you can press F12 on the PS/2 keyboard to boot into MicroDOS. Change disk to C:, "D" is for "Directory". See [MicroDOS_manual] for more on MicroDOS.
