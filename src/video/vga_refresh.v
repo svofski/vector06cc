@@ -1,7 +1,7 @@
 // ====================================================================
 //                         VECTOR-06C FPGA REPLICA
 //
-// 					Copyright (C) 2007, Viacheslav Slavinsky
+// 				  Copyright (C) 2007,2008 Viacheslav Slavinsky
 //
 // This core is distributed under modified BSD license. 
 // For complete licensing information see LICENSE.TXT.
@@ -15,6 +15,11 @@
 //
 // VGA refresh signals generator. Also takes care of retrace, bordery, 
 // videoActive signals and row counter for framebuffer/scan doubler.
+//
+// This version simulates a rather strange PAL mode with only 624
+// lines. The original computer sacrificed standard compliance to allow
+// some simplification and had 2x312 line scan instead of 312/313
+// alternation.
 //
 // --------------------------------------------------------------------
 
@@ -31,7 +36,7 @@ input	[7:0]	video_scroll_reg;
 output	[8:0]	fb_row;
 
 parameter SCREENWIDTH = 10'd640;	
-parameter SCREENHEIGHT = 10'd588;
+parameter SCREENHEIGHT = 10'd587;
 
 reg videoActiveX;			// 1 == X is within visible area
 reg videoActiveY;			// 1 == Y is within visible area

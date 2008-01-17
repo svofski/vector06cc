@@ -1,7 +1,7 @@
 // ====================================================================
 //                         VECTOR-06C FPGA REPLICA
 //
-// 					Copyright (C) 2007, Viacheslav Slavinsky
+// 				 Copyright (C) 2007,2008 Viacheslav Slavinsky
 //
 // This core is distributed under modified BSD license. 
 // For complete licensing information see LICENSE.TXT.
@@ -62,7 +62,7 @@ always @(posedge clk18) begin
 		sum <= pulses_sample[0] + pulses_sample[1] + pulses_sample[2] + pulses_sample[3];
 	end
 
-	ma_pulse <= {sum[7:2], 9'b0} + {m34,10'b0} + {pcm,5'b0};
+	ma_pulse <= {sum[7:2], 7'b0} + {m34,8'b0} + {pcm,5'b0};
 	
 end
 
