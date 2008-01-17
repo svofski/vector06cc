@@ -22,7 +22,7 @@
 module sram_map(SRAM_ADDR, SRAM_DQ, SRAM_WE_N, SRAM_UB_N, SRAM_LB_N, memwr_n, abus, dout, din, ramdisk_page, 
 				jtag_addr, jtag_din, jtag_do, jtag_jtag, jtag_nwe);
 output [17:0] 	SRAM_ADDR;
-inout  [15:0] 	SRAM_DQ;
+inout  reg[15:0] 	SRAM_DQ;
 output 			SRAM_WE_N;
 output 			SRAM_UB_N;
 output 			SRAM_LB_N;
@@ -43,13 +43,14 @@ assign SRAM_UB_N = jtag_jtag ? 1'b0 : ~abus[0];
 assign SRAM_LB_N = jtag_jtag ? 1'b0 : abus[0];
 assign SRAM_WE_N = jtag_jtag ? jtag_nwe : memwr_n;
 
-wire lsbz =  abus[0] & ~jtag_jtag;
-wire msbz = ~abus[0] & ~jtag_jtag;
-wire [15:0] effective_do = memwr_n & jtag_nwe ? 16'bZZZZZZZZZZZZZZZZ : jtag_nwe ? {dout,dout} : jtag_din;
-
-assign SRAM_DQ[7:0]  = lsbz ? 8'bZZZZZZZZ : effective_do[7:0];
-assign SRAM_DQ[15:8] = msbz ? 8'bZZZZZZZZ : effective_do[15:8];
-
+always 
+	if (jtag_jtag & ~jtag_nwe) 
+		SRAM_DQ[15:0] <= jtag_din;
+	else if (~memwr_n)
+		SRAM_DQ[15:0] <= abus[0] ? {dout, 8'bZZZZZZZZ} : {8'bZZZZZZZZ, dout};
+	else
+		SRAM_DQ[15:0] <= 16'bZZZZZZZZZZZZZZZZ;
+	
 assign din = abus[0] ? SRAM_DQ[15:8] : SRAM_DQ[7:0];
 
 endmodule
