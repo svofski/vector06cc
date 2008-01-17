@@ -512,11 +512,12 @@ reg [7:0] peripheral_data_in;
 //							floppy_rden ? floppy_odata : 
 //							~vv55pu_oe_n ? vv55pu_odata : 8'hFF;
 always
-	case ({~vv55int_oe_n, vi53_rden, floppy_rden, ~vv55pu_oe_n}) 
-		4'b1000: peripheral_data_in <= vv55int_odata;
-		4'b0100: peripheral_data_in <= vi53_odata;
-		4'b0010: peripheral_data_in <= floppy_odata;
-		4'b0001: peripheral_data_in <= vv55pu_odata;
+	case ({ay_rden, ~vv55int_oe_n, vi53_rden, floppy_rden, ~vv55pu_oe_n}) 
+		5'b10000: peripheral_data_in <= ay_rden;
+		5'b01000: peripheral_data_in <= vv55int_odata;
+		5'b00100: peripheral_data_in <= vi53_odata;
+		5'b00010: peripheral_data_in <= floppy_odata;
+		5'b00001: peripheral_data_in <= vv55pu_odata;
 		default: peripheral_data_in <= 8'hFF;
 	endcase
 
@@ -716,6 +717,7 @@ wire [7:0]	floppy_status = 7'h00;
 `ifdef WITH_AY
 wire		ay_sel = portmap_device == 3'b101; 
 wire		ay_wren = ~WR_n & io_write & ay_sel;
+wire		ay_rden = io_read & ay_sel;
 wire [7:0]	ay_odata;
 wire [7:0]	ay_sound;
 ayglue shrieker(.clk(clk24), 
@@ -723,10 +725,13 @@ ayglue shrieker(.clk(clk24),
 				.reset_n(mreset_n), 
 				.address(address_bus_r[1:0]),
 				.data(DO), 
-				.wren(ay_wren), 
+				.q(ay_odata),
+				.wren(ay_wren),
+				.rden(ay_rden),
 				.sound(ay_sound));
 `else
-wire [7:0] ay_sound = 0;
+wire [7:0] 	ay_sound = 8'b0;
+wire		ay_rden = 1'b0;
 `endif
 //////////////////
 // Special keys //
