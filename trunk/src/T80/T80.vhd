@@ -76,6 +76,8 @@
 --
 --      0247 : Fixed bus req/ack cycle
 --
+-- 		(svofski): forced bits 1, 3, 5 of flags register in 8080 mode
+--
 
 library IEEE;
 use IEEE.std_logic_1164.all;
@@ -700,11 +702,14 @@ begin
 				when "11001" =>
 					SP(15 downto 8) <= unsigned(Save_Mux);
 				when "11011" =>
-					F <= Save_Mux;
+					if Mode = 2 then
+						F <= (Save_Mux and "11010111") or "00000010";	-- svofski: force 8080 flags
+					else
+						F <= Save_Mux;
+					end if;
 				when others =>
 				end case;
 			end if;
-
 		end if;
 
 		end if;
@@ -875,7 +880,11 @@ begin
 			when "1010" =>
 				BusB <= "00000001";
 			when "1011" =>
-				BusB <= F;
+				if Mode = 2 then
+					BusB <= (F and "11010111") or "00000010";	-- svofski: force 8080 flags
+				else
+					BusB <= F;
+				end if;				
 			when "1100" =>
 				BusB <= std_logic_vector(PC(7 downto 0));
 			when "1101" =>
