@@ -1,6 +1,21 @@
 #summary Here be the manually updated log of significant changes
 #labels Featured,Phase-Implementation
 
+=== Rev.212 ===
+ * Display frame changed to 624 lines which matches the original HW
+ * 8253 timer: terminal count in mode 2 fixed for proper rate generation 
+ * T80: 8080 mode -- status bit 1 is now always '1', bits 3 and 5 are '0'; this prevents programs from detecting is as a *КР580ВМ1* (test program available in workbench/cputest)
+ * AY reading from registers. Not really tested but MicroDOS probe detects AY presence
+ * Floppy controller now faults when drive B is accessed
+ * Simplified SRAM bus multiplexer (without noticable side effects)
+
+*Revision Notes:*
+ The first two changes fix probs with Exolon [http://code.google.com/p/vector06cc/issues/detail?id=3&can=1#c4 =>]_.
+
+ Same thing apparently enabled SkyNet demo to work farther. Now it flawlessly passes the `KIROV CODERS` part and crashes near the end of photo part with what appears to be a minor memory corruption at first (always a black stripe across Sunami's mouth, how omnious!), with more dramatic effects following. It's worth noting that it's still a single overlay module.
+
+ ВМ1 detection probably wasn't an issue due to low availability of the latter. But I definitely have a more adequate 8080 now.
+ 
 === Rev.204 ===
  * 8253 timer partially fixed, but only somewhat.. Events happen in time, but Exolon that depends on it still doesn't work as expected; SkyNet "emulator detection" now takes vector06cc for the real thing
  * floppy now automatically remounts the disk image after mmc is reinserted but since there's no door contact of any kind, this happens not before a read operation has failed
