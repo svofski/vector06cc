@@ -61,11 +61,12 @@ Audio input works and you can load from .wav file, .mp3 file (96kbps seems to be
  Можно загружать программы из wav- или mp3- файлов, как было принято во времена моноклей и высоких цилиндров. В этом проекте реализован адаптивный уровень чтения, поэтому никакой настройки плеера не понадобится. См. также [HOWTO_rom2wav ROM->WAV howto (ru)].
 
 = Other pages of interest =
+ * [HOWTO_Floppy Floppy howto | Как пользоваться дисководом]
+ * [HOWTO_rom2wav ROM->WAV howto (ru) | Как из .ROM сделать .WAV]
  * [license Licensing information (en)]
  * [Technical_Description Technical Description of Vector-06C by Alexander Timoshenko (ru) | Техническое описание Вектора-06Ц]
  * [MicroDOS_manual MicroDOS manual (ru) | Руководство пользователя МикроДОС]
  * [ramdisk RAM disk documentation, various sources (ru) | Описание квазидиска]
- * [HOWTO_rom2wav ROM->WAV howto (ru) | Как из .ROM сделать .WAV]
  * [ImplementationNotes FPGA Implementation Notes]
  * [JTAG_Implementation DE1 USB API compatible JTAG implementation]
  * [SoundCodec Audio Codec interface]
