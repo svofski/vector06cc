@@ -1,0 +1,25 @@
+#summary How to use floppy images
+#labels Phase-Deploy
+
+= Introduction =
+Floppies are good (only) when emulated.
+Хороший флоп -- эмулированный флоп.
+
+= Как воспользоваться дисководом =
+Надо взять SD или MMC карточку. Она должна быть отформатирована в FAT16, совсем необязательно только что, можно вчера или год назад. На ней надо создать каталог под названием VECTOR06 (без суффикса C!) и в этот каталог положить только один файл с расширением .fdd. Поскольку никакого механизма выбора пока не предусмотрено, если там будет два файла, то загрузится первый попавшийся. Если диск загружаемый, то система его увидит и через короткий промежуток времени радостно замигает индикатором РУС/ЛАТ (LEDR9) в ожидании БЛК+СБР (F12). Если нет, можно посмотреть в консоль на RS-232:115200-8-N-1. Правда, вряд ли там просто понять что не так.
+
+Образы дискет годятся традиционные .fdd 1024x5x2xNN, .mst вроде бы то же самое. Если диск не загрузочный, можно загрузить образ квазидиска -- тамошний МикроДОС будет видеть и дискету. Обмениваться файлами между диском и образом дискеты можно с помощью плагина MI_V004 к Far-у. Для запуска игры в формате .rom с диска, проще всего предаврительно переименовать файл в .com, тогда он будет запускаться как обычная дисковая программа.
+
+Для загрузки с дискеты при загруженном квазидиске нужно крепко удерживать F1+F2 при сбросе через F11 или KEY0.
+
+= How to use a floppy image = 
+You need a FAT16-formatted SD or MMC card and a floppy image in .fdd or .mst format. Create a folder called `VECTOR06` in the root directory of your SD card and put the .fdd file in it. There can be as many files as you wish but only the first .fdd found will be used as working image. That's it, after you insert the card into the SD slot and reset (KEY0), Vector-06C should see your floppy.
+
+If it doesn't, you can check the output on the serial port. If the disk is detected but isn't bootable, you can still load ramdisk image as described in [GettingStarted] and it will be visible as drive A:
+
+If ramdisk is loaded with a bootable image, but you need to reboot from a floppy, hold F1+F2 keys while resetting by F11 or KEY0.
+
+Files can be transferred to and fro floppies with the help of file exchange plugin for Far Manager. The (freeware) plugin can be found in the downloads section. To run a .rom file from disk, it must be renamed into .com before it is transferred to the .fdd image.
+
+= See also =
+[GettingStarted Getting Started]
