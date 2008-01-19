@@ -160,4 +160,7 @@ uint8_t slave(const char *imagefile, uint8_t *buffer) {
 		//	}
 		//}
 	}
+
+	SLAVE_STATUS = 0;
+	return result;
 }

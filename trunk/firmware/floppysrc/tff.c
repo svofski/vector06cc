@@ -46,6 +46,8 @@ FATFS *FatFs;			/* Pointer to the file system objects (logical drive) */
 static
 WORD fsid;				/* File system mount ID */
 
+BYTE fs__win[512];
+
 
 /*-------------------------------------------------------------------------
 
@@ -72,19 +74,19 @@ BOOL move_window (		/* TRUE: successful, FALSE: failed */
 #if !_FS_READONLY
 		BYTE n;
 		if (fs->winflag) {	/* Write back dirty window if needed */
-			if (disk_write(0, fs->win, wsect, 1) != RES_OK)
+			if (disk_write(0, fs__win, wsect, 1) != RES_OK)
 				return FALSE;
 			fs->winflag = 0;
 			if (wsect < (fs->fatbase + fs->sects_fat)) {	/* In FAT area */
 				for (n = fs->n_fats; n >= 2; n--) {	/* Refrect the change to all FAT copies */
 					wsect += fs->sects_fat;
-					disk_write(0, fs->win, wsect, 1);
+					disk_write(0, fs__win, wsect, 1);
 				}
 			}
 		}
 #endif
 		if (sector) {
-			if (disk_read(0, fs->win, sector, 1) != RES_OK)
+			if (disk_read(0, fs__win, sector, 1) != RES_OK)
 				return FALSE;
 			fs->winsect = sector;
 		}
@@ -112,13 +114,13 @@ FRESULT sync (void)		/* FR_OK: successful, FR_RW_ERROR: failed */
 	/* Update FSInfo sector if needed */
 	if (fs->fs_type == FS_FAT32 && fs->fsi_flag) {
 		fs->winsect = 0;
-		memset(fs->win, 0, 512);
-		ST_WORD(&fs->win[BS_55AA], 0xAA55);
-		ST_DWORD(&fs->win[FSI_LeadSig], 0x41615252);
-		ST_DWORD(&fs->win[FSI_StrucSig], 0x61417272);
-		ST_DWORD(&fs->win[FSI_Free_Count], fs->free_clust);
-		ST_DWORD(&fs->win[FSI_Nxt_Free], fs->last_clust);
-		disk_write(0, fs->win, fs->fsi_sector, 1);
+		memset(fs__win, 0, 512);
+		ST_WORD(&fs__win[BS_55AA], 0xAA55);
+		ST_DWORD(&fs__win[FSI_LeadSig], 0x41615252);
+		ST_DWORD(&fs__win[FSI_StrucSig], 0x61417272);
+		ST_DWORD(&fs__win[FSI_Free_Count], fs->free_clust);
+		ST_DWORD(&fs__win[FSI_Nxt_Free], fs->last_clust);
+		disk_write(0, fs__win, fs->fsi_sector, 1);
 		fs->fsi_flag = 0;
 	}
 #endif
@@ -151,18 +153,18 @@ CLUST get_cluster (		/* 0,>=2: successful, 1: failed */
 		case FS_FAT12 :
 			bc = (WORD)clust * 3 / 2;
 			if (!move_window(fatsect + bc / 512)) break;
-			wc = fs->win[bc % 512]; bc++;
+			wc = fs__win[bc % 512]; bc++;
 			if (!move_window(fatsect + bc / 512)) break;
-			wc |= (WORD)fs->win[bc % 512] << 8;
+			wc |= (WORD)fs__win[bc % 512] << 8;
 			return (clust & 1) ? (wc >> 4) : (wc & 0xFFF);
 
 		case FS_FAT16 :
 			if (!move_window(fatsect + clust / 256)) break;
-			return LD_WORD(&fs->win[((WORD)clust * 2) % 512]);
+			return LD_WORD(&fs__win[((WORD)clust * 2) % 512]);
 #if _FAT32
 		case FS_FAT32 :
 			if (!move_window(fatsect + clust / 128)) break;
-			return LD_DWORD(&fs->win[((WORD)clust * 4) % 512]) & 0x0FFFFFFF;
+			return LD_DWORD(&fs__win[((WORD)clust * 4) % 512]) & 0x0FFFFFFF;
 #endif
 		}
 	}
@@ -195,23 +197,23 @@ BOOL put_cluster (		/* TRUE: successful, FALSE: failed */
 	case FS_FAT12 :
 		bc = (WORD)clust * 3 / 2;
 		if (!move_window(fatsect + bc / 512)) return FALSE;
-		p = &fs->win[bc % 512];
+		p = &fs__win[bc % 512];
 		*p = (clust & 1) ? ((*p & 0x0F) | ((BYTE)val << 4)) : (BYTE)val;
 		bc++;
 		fs->winflag = 1; 
 		if (!move_window(fatsect + bc / 512)) return FALSE;
-		p = &fs->win[bc % 512];
+		p = &fs__win[bc % 512];
 		*p = (clust & 1) ? (BYTE)(val >> 4) : ((*p & 0xF0) | ((BYTE)(val >> 8) & 0x0F));
 		break;
 
 	case FS_FAT16 :
 		if (!move_window(fatsect + clust / 256)) return FALSE;
-		ST_WORD(&fs->win[((WORD)clust * 2) % 512], (WORD)val);
+		ST_WORD(&fs__win[((WORD)clust * 2) % 512], (WORD)val);
 		break;
 #if _FAT32
 	case FS_FAT32 :
 		if (!move_window(fatsect + clust / 128)) return FALSE;
-		ST_DWORD(&fs->win[((WORD)clust * 4) % 512], val);
+		ST_DWORD(&fs__win[((WORD)clust * 4) % 512], val);
 		break;
 #endif
 	default :
@@ -520,7 +522,7 @@ FRESULT trace_path (	/* FR_OK(0): successful, !=0: error code */
 		if (ds == 1) return FR_INVALID_NAME;
 		for (;;) {
 			if (!move_window(dirobj->sect)) return FR_RW_ERROR;
-			dptr = &fs->win[(dirobj->index & 15) * 32];		/* Pointer to the directory entry */
+			dptr = &fs__win[(dirobj->index & 15) * 32];		/* Pointer to the directory entry */
 			if (dptr[DIR_Name] == 0)						/* Has it reached to end of dir? */
 				return !ds ? FR_NO_FILE : FR_NO_PATH;
 			if (dptr[DIR_Name] != 0xE5						/* Matched? */
@@ -573,7 +575,7 @@ FRESULT reserve_direntry (	/* FR_OK: successful, FR_DENIED: no free entry, FR_RW
 
 	do {
 		if (!move_window(dirobj->sect)) return FR_RW_ERROR;
-		dptr = &fs->win[(dirobj->index & 15) * 32];	/* Pointer to the directory entry */
+		dptr = &fs__win[(dirobj->index & 15) * 32];	/* Pointer to the directory entry */
 		c = dptr[DIR_Name];
 		if (c == 0 || c == 0xE5) {			/* Found an empty entry! */
 			*dir = dptr; return FR_OK;
@@ -586,14 +588,14 @@ FRESULT reserve_direntry (	/* FR_OK: successful, FR_DENIED: no free entry, FR_RW
 	if (clust == 1 || !move_window(0)) return FR_RW_ERROR;
 
 	fs->winsect = sector = clust2sect(clust);			/* Cleanup the expanded table */
-	memset(fs->win, 0, 512);
+	memset(fs__win, 0, 512);
 	for (n = fs->sects_clust; n; n--) {
-		if (disk_write(0, fs->win, sector, 1) != RES_OK)
+		if (disk_write(0, fs__win, sector, 1) != RES_OK)
 			return FR_RW_ERROR;
 		sector++;
 	}
 	fs->winflag = 1;
-	*dir = fs->win;
+	*dir = fs__win;
 	return FR_OK;
 }
 #endif /* !_FS_READONLY */
@@ -612,15 +614,15 @@ BYTE check_fs (		/* 0:The FAT boot record, 1:Valid boot record but not an FAT, 2
 {
 	FATFS *fs = FatFs;
 
-	if (disk_read(0, fs->win, sect, 1) != RES_OK)	/* Load boot record */
+	if (disk_read(0, fs__win, sect, 1) != RES_OK)	/* Load boot record */
 		return 2;
-	if (LD_WORD(&fs->win[BS_55AA]) != 0xAA55)		/* Check record signature */
+	if (LD_WORD(&fs__win[BS_55AA]) != 0xAA55)		/* Check record signature */
 		return 2;
 
-	if (!memcmp(&fs->win[BS_FilSysType], "FAT", 3))	/* Check FAT signature */
+	if (!memcmp(&fs__win[BS_FilSysType], "FAT", 3))	/* Check FAT signature */
 		return 0;
 #if _FAT32
-	if (!memcmp(&fs->win[BS_FilSysType32], "FAT32", 5) && !(fs->win[BPB_ExtFlags] & 0x80))
+	if (!memcmp(&fs__win[BS_FilSysType32], "FAT32", 5) && !(fs__win[BPB_ExtFlags] & 0x80))
 		return 0;
 #endif
 	return 1;
@@ -681,27 +683,27 @@ FRESULT auto_mount (		/* FR_OK(0): successful, !=0: any error occured */
 	fmt = check_fs(bootsect = 0);		/* Check sector 0 as an SFD format */
 	if (fmt == 1) {						/* Not a FAT boot record, it may be patitioned */
 		/* Check a partition listed in top of the partition table */
-		if (fs->win[MBR_Table+4]) {					/* Is the 1st partition existing? */
-			bootsect = LD_DWORD(&fs->win[MBR_Table+8]);	/* Partition offset in LBA */
+		if (fs__win[MBR_Table+4]) {					/* Is the 1st partition existing? */
+			bootsect = LD_DWORD(&fs__win[MBR_Table+8]);	/* Partition offset in LBA */
 			fmt = check_fs(bootsect);				/* Check the partition */
 		}
 	}
-	if (fmt || LD_WORD(&fs->win[BPB_BytsPerSec]) != 512)	/* No valid FAT patition is found */
+	if (fmt || LD_WORD(&fs__win[BPB_BytsPerSec]) != 512)	/* No valid FAT patition is found */
 		return FR_NO_FILESYSTEM;
 
 	/* Initialize the file system object */
-	fatsize = LD_WORD(&fs->win[BPB_FATSz16]);			/* Number of sectors per FAT */
-	if (!fatsize) fatsize = LD_DWORD(&fs->win[BPB_FATSz32]);
+	fatsize = LD_WORD(&fs__win[BPB_FATSz16]);			/* Number of sectors per FAT */
+	if (!fatsize) fatsize = LD_DWORD(&fs__win[BPB_FATSz32]);
 	fs->sects_fat = (CLUST)fatsize;
-	fs->n_fats = fs->win[BPB_NumFATs];					/* Number of FAT copies */
+	fs->n_fats = fs__win[BPB_NumFATs];					/* Number of FAT copies */
 	fatsize *= fs->n_fats;								/* (Number of sectors in FAT area) */
-	fs->fatbase = bootsect + LD_WORD(&fs->win[BPB_RsvdSecCnt]);	/* FAT start sector (lba) */
-	fs->sects_clust = fs->win[BPB_SecPerClus];			/* Number of sectors per cluster */
-	fs->n_rootdir = LD_WORD(&fs->win[BPB_RootEntCnt]);	/* Nmuber of root directory entries */
-	totalsect = LD_WORD(&fs->win[BPB_TotSec16]);		/* Number of sectors on the file system */
-	if (!totalsect) totalsect = LD_DWORD(&fs->win[BPB_TotSec32]);
+	fs->fatbase = bootsect + LD_WORD(&fs__win[BPB_RsvdSecCnt]);	/* FAT start sector (lba) */
+	fs->sects_clust = fs__win[BPB_SecPerClus];			/* Number of sectors per cluster */
+	fs->n_rootdir = LD_WORD(&fs__win[BPB_RootEntCnt]);	/* Nmuber of root directory entries */
+	totalsect = LD_WORD(&fs__win[BPB_TotSec16]);		/* Number of sectors on the file system */
+	if (!totalsect) totalsect = LD_DWORD(&fs__win[BPB_TotSec32]);
 	fs->max_clust = maxclust = (totalsect				/* Last cluster# + 1 */
-		- LD_WORD(&fs->win[BPB_RsvdSecCnt]) - fatsize - fs->n_rootdir / 16
+		- LD_WORD(&fs__win[BPB_RsvdSecCnt]) - fatsize - fs->n_rootdir / 16
 		) / fs->sects_clust + 2;
 
 	fmt = FS_FAT12;										/* Determine the FAT sub type */
@@ -712,7 +714,7 @@ FRESULT auto_mount (		/* FR_OK(0): successful, !=0: any error occured */
 #else
 		fmt = FS_FAT32;
 	if (fmt == FS_FAT32)
-		fs->dirbase = LD_DWORD(&fs->win[BPB_RootClus]);	/* Root directory start cluster */
+		fs->dirbase = LD_DWORD(&fs__win[BPB_RootClus]);	/* Root directory start cluster */
 	else
 #endif
 		fs->dirbase = fs->fatbase + fatsize;			/* Root directory start sector (lba) */
@@ -724,13 +726,13 @@ FRESULT auto_mount (		/* FR_OK(0): successful, !=0: any error occured */
 #if _USE_FSINFO
 	/* Load fsinfo sector if needed */
 	if (fmt == FS_FAT32) {
-		fs->fsi_sector = bootsect + LD_WORD(&fs->win[BPB_FSInfo]);
-		if (disk_read(0, fs->win, fs->fsi_sector, 1) == RES_OK &&
-			LD_WORD(&fs->win[BS_55AA]) == 0xAA55 &&
-			LD_DWORD(&fs->win[FSI_LeadSig]) == 0x41615252 &&
-			LD_DWORD(&fs->win[FSI_StrucSig]) == 0x61417272) {
-			fs->last_clust = LD_DWORD(&fs->win[FSI_Nxt_Free]);
-			fs->free_clust = LD_DWORD(&fs->win[FSI_Free_Count]);
+		fs->fsi_sector = bootsect + LD_WORD(&fs__win[BPB_FSInfo]);
+		if (disk_read(0, fs__win, fs->fsi_sector, 1) == RES_OK &&
+			LD_WORD(&fs__win[BS_55AA]) == 0xAA55 &&
+			LD_DWORD(&fs__win[FSI_LeadSig]) == 0x41615252 &&
+			LD_DWORD(&fs__win[FSI_StrucSig]) == 0x61417272) {
+			fs->last_clust = LD_DWORD(&fs__win[FSI_Nxt_Free]);
+			fs->free_clust = LD_DWORD(&fs__win[FSI_Free_Count]);
 		}
 	}
 #endif
@@ -953,7 +955,7 @@ FRESULT f_read (
 		if (!move_window(fp->curr_sect)) goto fr_error;	/* Move sector window */
 		rcnt = 512 - (WORD)(fp->fptr % 512);			/* Copy fractional bytes from sector window */
 		if (rcnt > btr) rcnt = btr;
-		memcpy(rbuff, &fs->win[(WORD)fp->fptr % 512], rcnt);
+		memcpy(rbuff, &fs__win[(WORD)fp->fptr % 512], rcnt);
 	}
 
 	return FR_OK;
@@ -1032,7 +1034,7 @@ FRESULT f_write (
 			goto fw_error;
 		wcnt = 512 - (WORD)(fp->fptr % 512);		/* Copy fractional bytes bytes to sector window */
 		if (wcnt > btw) wcnt = btw;
-		memcpy(&fs->win[(WORD)fp->fptr % 512], wbuff, wcnt);
+		memcpy(&fs__win[(WORD)fp->fptr % 512], wbuff, wcnt);
 		fs->winflag = 1;
 	}
 
@@ -1257,7 +1259,7 @@ FRESULT f_readdir (
 	while (dirobj->sect) {
 		if (!move_window(dirobj->sect))
 			return FR_RW_ERROR;
-		dir = &fs->win[(dirobj->index & 15) * 32];		/* pointer to the directory entry */
+		dir = &fs__win[(dirobj->index & 15) * 32];		/* pointer to the directory entry */
 		c = dir[DIR_Name];
 		if (c == 0) break;								/* Has it reached to end of dir? */
 		if (c != 0xE5 && !(dir[DIR_Attr] & AM_VOL))		/* Is it a valid entry? */
@@ -1349,7 +1351,7 @@ FRESULT f_getfree (
 		do {
 			if (!f) {
 				if (!move_window(sect++)) return FR_RW_ERROR;
-				p = fs->win;
+				p = fs__win;
 			}
 			if (!_FAT32 || fat == FS_FAT16) {
 				if (LD_WORD(p) == 0) n++;
@@ -1408,7 +1410,7 @@ FRESULT f_unlink (
 		dirobj.index = 2;
 		do {
 			if (!move_window(dirobj.sect)) return FR_RW_ERROR;
-			sdir = &fs->win[(dirobj.index & 15) * 32];
+			sdir = &fs__win[(dirobj.index & 15) * 32];
 			if (sdir[DIR_Name] == 0) break;
 			if (sdir[DIR_Name] != 0xE5 && !(sdir[DIR_Attr] & AM_VOL))
 				return FR_DENIED;	/* The directory is not empty */
@@ -1459,7 +1461,7 @@ FRESULT f_mkdir (
 	if (!dsect) return FR_DENIED;
 	if (!move_window(dsect)) return FR_RW_ERROR;
 
-	fw = fs->win;
+	fw = fs__win;
 	memset(fw, 0, 512);							/* Clear the directory table */
 	for (n = 1; n < fs->sects_clust; n++) {
 		if (disk_write(0, fw, ++dsect, 1) != RES_OK)

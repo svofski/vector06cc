@@ -87,7 +87,7 @@ typedef struct _FATFS {
 	BYTE	sects_clust;	/* Sectors per cluster */
 	BYTE	n_fats;			/* Number of FAT copies */
 	BYTE	winflag;		/* win[] dirty flag (1:must be written back) */
-	BYTE	win[512];		/* Disk access window for Directory/FAT/File */
+	//BYTE	win[512];		/* Disk access window for Directory/FAT/File */
 } FATFS;
 
 
