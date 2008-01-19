@@ -44,9 +44,12 @@ uint8_t fdd_clearerror() {
 }
 
 uint8_t fdd_load(FIL* file, FDDImage *fdd, uint8_t *bufptr) {
+	WORD w1;
 	fdd_clearerror();
 	
-	fdd->ntracks = file->fsize / (2*FDD_NSECTORS*FDD_SECTOR_SIZE);	// these seem to be fixed more or less
+	//fdd->ntracks = file->fsize / (2*FDD_NSECTORS*FDD_SECTOR_SIZE);	// these seem to be fixed more or less
+	fdd->ntracks = (file->fsize >> 10) / 2*FDD_NSECTORS;
+
 	fdd->nsides = FDD_NSIDES;
 	fdd->nsectors = FDD_NSECTORS;
 	fdd->sectorsize = FDD_SECTOR_SIZE;

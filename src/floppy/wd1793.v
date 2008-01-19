@@ -270,11 +270,11 @@ always @(posedge clk or negedge reset_n) begin
 								wdstat_drive <= idata[0];
 							end
 				A_COMMAND:	begin
-								if (idata[7:4] == 4'h8) begin
+								if (idata[7:4] == 4'hD) begin
 									// interrupt
 									state <= STATE_RESET;
 								end
-								
+								else
 								if (state == STATE_READY) begin
 									cmd_mode <= idata[7];	// for wdstat_status
 									
