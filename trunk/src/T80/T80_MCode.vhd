@@ -519,7 +519,11 @@ begin
 			end if;
 		when "11111001" =>
 			-- LD SP,HL
-			TStates <= "110";
+			if Mode = 2 then
+				TStates <= "101";	-- svofski: 8080 SPHL takes 5 TStates
+			else
+				TStates <= "110";
+			end if;
 			LDSPHL <= '1';
 		when "11000101"|"11010101"|"11100101"|"11110101" =>
 			-- PUSH qq
@@ -670,7 +674,10 @@ begin
 				when 3 =>
 					IncDec_16 <= "0111";
 					Set_Addr_To <= aSP;
-					TStates <= "100";
+					-- svofski: Z80 has 4,3,4,3,5 Tstates, 8080 has 4,3,3,3,5
+					if Mode /= 2 then
+						TStates <= "100";
+					end if;
 					Write <= '1';
 				when 4 =>
 					Read_To_Reg <= '1';
@@ -761,7 +768,9 @@ begin
 			when 1 =>
 				Set_Addr_To <= aXY;
 			when 2 =>
-				TStates <= "100";
+				if Mode /= 2 then
+					TStates <= "100"; -- svo: 8080: INR M is 4,3,3
+				end if;
 				Set_Addr_To <= aXY;
 				Read_To_Reg <= '1';
 				Save_ALU <= '1';
@@ -791,7 +800,9 @@ begin
 			when 1 =>
 				Set_Addr_To <= aXY;
 			when 2 =>
-				TStates <= "100";
+				if Mode /= 2 then
+					TStates <= "100"; -- svo: 8080: INR M is 4,3,3
+				end if;
 				Set_Addr_To <= aXY;
 				ALU_Op <= "0010";
 				Read_To_Reg <= '1';
@@ -898,7 +909,9 @@ begin
 				when others =>
 					Set_BusB_To <= "1000";
 				end case;
-				TStates <= "100";
+				if Mode /= 2 then
+					TStates <= "100"; -- svofski: 8080 timing for DAD rp: 4,3,3
+				end if;
 				Arith16 <= '1';
 			when 3 =>
 				NoRead <= '1';
@@ -1021,6 +1034,11 @@ begin
 				-- JP cc,nn
 				MCycles <= "011";
 				case to_integer(unsigned(MCycle)) is
+				--when 1 =>
+				--	-- svofski: 8080: Jcond 5,3,3 -- still unclear about this, all other sources say 10 total so 4,3,3
+				--	if Mode = 2 then
+				--		TStates <= "101";
+				--	end if;
 				when 2 =>
 					Inc_PC <= '1';
 					LDZ <= '1';
@@ -1163,13 +1181,21 @@ begin
 			-- CALL nn
 			MCycles <= "101";
 			case to_integer(unsigned(MCycle)) is
+			when 1 =>
+				-- svo: 8080
+				if (Mode = 2) then
+					TStates <= "101";
+				end if;
 			when 2 =>
 				Inc_PC <= '1';
 				LDZ <= '1';
 			when 3 =>
 				IncDec_16 <= "1111";
 				Inc_PC <= '1';
-				TStates <= "100";
+				-- svo: 8080 CALL is 5,3,3,3,3
+				if Mode /= 2 then
+					TStates <= "100";
+				end if;
 				Set_Addr_To <= aSP;
 				LDW <= '1';
 				Set_BusB_To <= "1101";
@@ -1188,6 +1214,11 @@ begin
 				-- CALL cc,nn
 				MCycles <= "101";
 				case to_integer(unsigned(MCycle)) is
+				when 1 =>
+					-- svo: 8080: Ccond 5,3,3(,3,3)
+					if (Mode = 2) then
+						TStates <= "101";
+					end if;
 				when 2 =>
 					Inc_PC <= '1';
 					LDZ <= '1';
@@ -1197,8 +1228,10 @@ begin
 					if is_cc_true(F, to_bitvector(IR(5 downto 3))) then
 						IncDec_16 <= "1111";
 						Set_Addr_TO <= aSP;
-						TStates <= "100";
 						Set_BusB_To <= "1101";
+						if (Mode /= 2) then -- svo: 8080 has 3 TStates on M3
+							TStates <= "100"; 
+						end if;
 					else
 						MCycles <= "011";
 					end if;
@@ -1218,7 +1251,10 @@ begin
 			MCycles <= "011";
 			case to_integer(unsigned(MCycle)) is
 			when 1 =>
-				TStates <= "101";
+				-- svo: 8080 RET is 10 TStates total, 4+3+3
+				if Mode /= 2 then
+					TStates <= "101";
+				end if;
 				Set_Addr_TO <= aSP;
 			when 2 =>
 				IncDec_16 <= "0111";
@@ -1348,7 +1384,7 @@ begin
 					Inc_PC <= '1';
 					Set_Addr_To <= aIOA;
 				when 3 =>
-					Read_To_Acc <= '1';
+					Read_To_Acc <= '1';		-- svo: Z80 should have 4,3,4: this be a bug? the timing is proper for 8080
 					IORQ <= '1';
 				when others => null;
 				end case;
@@ -1364,7 +1400,7 @@ begin
 					Set_BusB_To <= "0111";
 				when 3 =>
 					Write <= '1';
-					IORQ <= '1';
+					IORQ <= '1';			-- svo: Z80 should have 4,3,4: this be a bug? the timing is proper for 8080
 				when others => null;
 				end case;
 			end if;
