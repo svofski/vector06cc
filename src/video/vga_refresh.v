@@ -35,8 +35,12 @@ output 			retrace;
 input	[7:0]	video_scroll_reg;
 output	[8:0]	fb_row;
 
+// total = 624
+// visible = (16 + 256 + 16)*2 = 288*2 = 576
+// rest = 624-576 = 48
+
 parameter SCREENWIDTH = 10'd640;	
-parameter SCREENHEIGHT = 10'd587;
+parameter SCREENHEIGHT = 10'd576;//10'd587;
 
 reg videoActiveX;			// 1 == X is within visible area
 reg videoActiveY;			// 1 == Y is within visible area
@@ -63,19 +67,16 @@ reg [8:0] fb_row_count;
 
 
 
-parameter state0 = 3'b000, state1 = 3'b001, state2 = 3'b010, state3 = 3'b011, state4 = 3'b100;
+parameter state0 = 3'b000, state1 = 3'b001, state2 = 3'b010, state3 = 3'b011, state4 = 3'b100, state5 = 3'b101, state6 = 3'b110, state7 = 3'b111;
 
 always @(posedge clk24) begin
 		if (scanyy == 0) begin 
 			case (scanyy_state)
 			state0:
 					begin
-`ifdef x800x600					
-						scanyy <= 27;
-`else
-						scanyy <= 17;
-`endif						
+						scanyy <= 16 + 5;
 						scanyy_state <= state1;
+						bordery <= 0;
 						videoActiveY <= 0;
 					end
 			state1: // VSYNC
@@ -85,19 +86,32 @@ always @(posedge clk24) begin
 					end
 			state2: // BACK PORCH + TOP BORDER
 					begin
-						scanyy <= 15;
+						scanyy <= 16 + 6;
 						scanyy_state <= state3;
 					end
 			state3:
 					begin
-`ifdef x800x600					
-						scanyy <= SCREENHEIGHT + 10;
-`else
-						scanyy <= SCREENHEIGHT;
-`endif						
-						scanyy_state <= state0;
+						scanyy <= 16 * 2;
 						videoActiveY <= 1;
 						realy <= 0;
+						bordery <= 1;
+						scanyy_state <= state4;
+					end
+			state4:
+					begin
+						fb_row <= {video_scroll_reg, 1'b1};
+						fb_row_count <= 511;
+					
+						scanyy <= SCREENHEIGHT - 16*2*2;
+						bordery <= 0;
+						scanyy_state <= state5;
+					end
+			state5:
+					begin
+						//fb_row <= 1;
+						scanyy <= 16 * 2;
+						bordery <= 1;
+						scanyy_state <= state0;
 					end
 			default:
 					begin
@@ -122,17 +136,6 @@ always @(posedge clk24) begin
 						if (fb_row_count != 0) begin
 							fb_row_count <= fb_row_count - 1'b1;
 						end 
-							else bordery <= 1;
-							
-						if (realy == 42) begin
-							fb_row <= {video_scroll_reg, 1'b1};
-							fb_row_count <= 511;
-							bordery <= 0;
-						end else if (realy == 0) begin
-							fb_row <= 1;
-						end
-						
-							
 					end
 			state1: // enter HSYNC PULSE
 					begin 
@@ -141,11 +144,7 @@ always @(posedge clk24) begin
 					end
 			state2:	// enter BACK PORCH + RIGHT BORDER
 					begin
-`ifdef x800x600					
-						scanxx <= 10'd28;
-`else
 						scanxx <= 10'd60;
-`endif						
 						scanxx_state <= state3;
 					end
 			state3:	// enter VISIBLE AREA

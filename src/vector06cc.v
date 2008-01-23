@@ -45,9 +45,6 @@
 
 `default_nettype none
 
-//`define x800x600		-- 	marginal, only kept for possible monitor issues; 
-//							not compatible with Vector-06C
-
 // Undefine following for smaller/faster builds
 `define WITH_CPU			
 `define WITH_KEYBOARD
@@ -231,8 +228,8 @@ reg 		ws_latch;
 always @(posedge clk24) ws_counter <= ws_counter + 1'b1;
 wire [3:0] ws_rom = ws_counter[4:1];
 wire ws_cpu_time = ws_rom[2] & ws_rom[1] & ws_rom[3];
-wire ws_req_n = ~(DO[7] | ~DO[1]) | DO[4];	// == 0 when cpu wants cock
-//wire ws_req_n = ~(DO[7] | ~DO[1] | DO[4]);	
+wire ws_req_n = ~(DO[7] | ~DO[1]) | DO[4] | DO[6];	// == 0 when cpu wants cock
+//wire ws_req_n = ~(DO[7] | ~DO[1] | DO[4] | DO[6]); // enable waitstates for in/out
 
 always @(posedge clk24) begin
 	if (cpu_ce) begin
@@ -452,12 +449,26 @@ end
 // At 32, m@color demo starts showing horizontal stripes across the entire screen
 // Now the real problem is: nobody knows how it's ought to look!
 wire int_delay;
-wire int_request;
+reg int_request;
+wire int_rq;
+// 36: sssshhh in the evolution pic, skynet does not pass (?)
+// 34: no visible changes in m@color or b-ice, skynet passes, trr in evolution pic, pentium bug
+// 33: trrr in skynet (evolution pic)
+// 32: no visible changes in m@color, tv shifts left in b-ice (which is nice), skynet breaks+
+// 31: trrrr between skynet parts, but passes with pentium bug
+// 30: no visible changes in m@color, tv in b-ice as in 32, skynet passes with the usual pentium bug -- breaks
+// 29: is the absolute limit, b-ice breaks
+oneshot #(33) retrace_delay(clk24, cpu_ce, retrace, int_delay);
+oneshot #(192) retrace_irq(clk24, cpu_ce, ~int_delay, int_rq);
 
-oneshot #(36) retrace_delay(clk24, cpu_ce, retrace, int_delay);
-oneshot retrace_irq(clk24, cpu_ce, ~int_delay, int_request);
+always @(posedge clk24) begin
+	if (int_rq & !interrupt_ack)
+		int_request <= 1;
+	else
+		int_request <= 0;
+end
 
-//oneshot retrace_irq(clk24, cpu_ce, retrace, int_request);
+//oneshot #(144) retrace_irq(clk24, 1, retrace, int_request);
 
 
 ///////////////////
