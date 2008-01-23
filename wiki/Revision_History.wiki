@@ -1,8 +1,7 @@
 #summary Here be the manually updated log of significant changes
 #labels Featured,Phase-Implementation
 === Rev.222 ===
- * Reviewed all 8080 instructions regarding TStates. Everything but HLT must be
-matching now
+ * Reviewed all 8080 instructions regarding TStates. Everything but HLT must be matching now
  * Changed vga_refresh a little bit: made borders even according to the docs, simplified yborder and framebuffer line counter logic. It looks much more clear now.
  * Retrace interrupt: still unclear about that, currently it holds for 192 cycles and resets on INTA or after the period of time is over.
 
