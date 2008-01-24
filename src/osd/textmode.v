@@ -111,7 +111,8 @@ reg [2:0]			tile_y;
 reg [2:0]			tile_xinv;
 
 
-wire [2:0]	wNextTileX = tile_x + 1'b1;
+wire [2:0]			wNextTileX = tile_x + 1'b1;
+wire [`LOG2TXT-1:0] wNextTextX = text_x + (wNextTileX == 2);
 
 // "scanline doubler" of sorts
 reg	linediv;
@@ -142,18 +143,18 @@ always @(posedge clk) begin
 	else
 	if (ce) begin 
 		case (state)
-		0,1:
-			if (linebegin | state == 1) begin
+		0,1: if (linebegin | state == 1) begin
 				state <= 1;
-				video_enable <= 1;
-				if (text_x <= `WINDOW_W) begin
-					text_x <= text_x + (wNextTileX == 2);
-					tile_x <= wNextTileX == `TILE_W ? 0 : wNextTileX;
-				end 
-				else begin// x went far right 
+				
+				if (state == 1)	video_enable <= 1;
+
+				text_x <= wNextTextX;
+				tile_x <= wNextTileX == `TILE_W ? 0 : wNextTileX;
+				
+				if (wNextTileX == 1 && wNextTextX == `WINDOW_W) begin
 					state <= 2;
-					video_enable <= 0;
 				end
+				
 			end
 		2:
 			begin
