@@ -119,7 +119,7 @@ reg	linediv;
 always @(posedge clk) begin
 	if (framebegin)
 		linediv <= 0;
-	else if (state == 2) 
+	else if (ce && (state == 2)) 
 		linediv <= linediv + 1'b1;
 end
 
