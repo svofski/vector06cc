@@ -30,6 +30,8 @@
 #include "config.h"
 #include "slave.h"
 
+#include "osd.h"
+
 /*---------------------------------------------------------*/
 /* User Provided Timer Function for FatFs module           */
 /*---------------------------------------------------------*/
@@ -77,11 +79,14 @@ void fill_filename(char *buf, char *fname) {
 
 #define CHECKRESULT {/*if (result) break;*/}
 
+char* cnotice1 = "    VECTOR-06C FPGA REPLICA     ";
+char* cnotice2 = "  (C)2008 VIACHESLAV SLAVINSKY  ";
+char *ptrfile = "/VECTOR06/xxxxxxxx.xxx";
+
 void main(void) {
 	FATFS *fs = &fatfs;
 	BYTE res;
 	DIR dir;
-	char *ptrfile = "/VECTOR06/xxxxxxxx.xxx";
 	UINT bytesread;
 	FIL	file1;
 
@@ -94,7 +99,13 @@ void main(void) {
 
 	ser_puts("@");
 	delay2(10);
-	ser_puts("\r\nVECTOR06CC ");
+	ser_nl();
+	ser_puts(cnotice1);
+	ser_puts(cnotice2);
+
+	osd_cls();
+	osd_inv(1); osd_puts(cnotice1); osd_inv(0);
+	osd_gotoxy(0,1); osd_puts(cnotice2);
 
 	for(;;) {
 		ser_putc('F');
@@ -121,7 +132,7 @@ void main(void) {
 		if (fresult == FR_OK) {
 			while ((f_readdir(&dir, &finfo) == FR_OK) && finfo.fname[0]) {
 				if (finfo.fattrib & AM_DIR) {
-					ser_putc('['); ser_puts(finfo.fname); ser_putc(']');
+					// no need for this: ser_putc('['); ser_puts(finfo.fname); ser_putc(']');
 				} else {
 					if (endsWith(finfo.fname, ".fdd")) {
 						ser_puts(" * ");

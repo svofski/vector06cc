@@ -41,6 +41,9 @@ module video(
 	hsync, 				// VGA hsync
 	vsync, 				// VGA vsync
 	
+	osd_hsync,
+	osd_vsync,
+	
 	coloridx,			// output: 	palette ram address
 	realcolor_in,		// input:  	real colour value
 	realcolor_out,		// output: 	real colour value --> vga
@@ -66,6 +69,8 @@ output[15:0]	SRAM_ADDR;
 // video outputs
 output 			hsync;
 output 			vsync;
+output			osd_hsync;
+output			osd_vsync;
 output [3:0] 	coloridx;
 input  [7:0]	realcolor_in;
 output [7:0]	realcolor_out;
@@ -83,6 +88,7 @@ wire border = bordery | borderx;
 wire videoActive;
 
 wire	[8:0]	fb_row;
+wire	[8:0]	fb_row_count;
 
 vga_refresh 	refresher(
 							.clk24(clk24),
@@ -92,7 +98,8 @@ vga_refresh 	refresher(
 							.bordery(bordery),
 							.retrace(retrace),
 							.video_scroll_reg(video_scroll_reg),
-							.fb_row(fb_row)
+							.fb_row(fb_row),
+							.fb_row_count(fb_row_count)
 						);
 
 
@@ -160,6 +167,20 @@ rambuffer line2(.clk(clk24),
 				.din(realcolor_in),
 				.dout(rc_b)
 				);
+				
+// osd
+reg	osd_vsync, osd_hsync;
+
+reg 		osd_xdelaybuf;
+wire		osd_xdelay;
+oneshot	#(128) lineos0(.clk(clk24), .ce(1), .trigger(hsync), .q(osd_xdelay));
+always @(posedge clk24) begin
+	osd_vsync = ~(fb_row_count == 128);
+
+	osd_xdelaybuf <= osd_xdelay;
+	osd_hsync <= ~(osd_xdelaybuf & ~osd_xdelay);
+end
+
 				
 endmodule
 

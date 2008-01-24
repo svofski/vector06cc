@@ -34,6 +34,12 @@ module floppy(
 	hostio_odata,
 	hostio_rd,
 	hostio_wr,
+	
+	// screen memory
+	display_addr,
+	display_data,
+	display_wren,
+	
 	// debug 
 	green_leds, red_leds, debug, debugidata);
 	
@@ -75,6 +81,12 @@ output  [7:0]	hostio_odata;
 input			hostio_rd;
 input			hostio_wr;
 
+// screen memory
+output	[7:0]	display_addr;
+output 	[7:0]	display_data;
+output			display_wren;
+
+
 output reg[7:0]	green_leds;
 output  [7:0]	red_leds = cpu_di;
 output	[7:0]	debug = {ce & bufmem_en, ce, hostio_rd, wd_ram_rd};//wdport_status;
@@ -112,6 +124,12 @@ wire bufmem_en = (wd_ram_rd|wd_ram_wr) || (cpu_a >= 16'h200 && cpu_a < 16'h600);
 //wire rammem_en = cpu_a >= 16'h0800 && cpu_a < 16'h0800 + 32768;
 wire rammem_en = cpu_a >= 16'h0800 && cpu_a < 16'h8000;
 wire ioports_en= cpu_a >= IOBASE && cpu_a < IOBASE + 256;
+wire osd_en = cpu_a >= IOBASE + 256 && cpu_a < IOBASE + 512;
+
+assign display_addr = cpu_a[7:0];
+assign display_data = cpu_do;
+assign display_wren = osd_en & memwr;
+
 
 floppyram flopramnik(
 	.address(cpu_a-16'h0800),
@@ -122,15 +140,6 @@ floppyram flopramnik(
 	.q(ram_do)
 	);
 
-/*
-ram512x8 zeropa(
-	.clk(~clk),
-	.ce(ce & lowmem_en),
-	.addr(cpu_a),
-	.wren(memwr),
-	.di(cpu_do),
-	.q(lowmem_do));
-*/	
 ram512x8a zeropa(
 	.clock(~clk),
 	.clken(ce & lowmem_en),
