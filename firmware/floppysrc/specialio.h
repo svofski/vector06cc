@@ -41,6 +41,11 @@
 
 #define		IOPORT_GLEDS		0x10
 
+#define		DISPLAY_BASE		0xE100
+#define		DISPLAY_W			32
+#define		DISPLAY_H			8
+#define		DISPLAY_RAMSIZE		256
+
 #define		MMC_A		(*((unsigned char *)(IOPORT_BASE+IOPORT_MMC_A)))
 #define		SPDR		(*((unsigned char *)(IOPORT_BASE+IOPORT_SPDR)))
 #define		SPSR        (*((unsigned char *)(IOPORT_BASE+IOPORT_SPSR)))

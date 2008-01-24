@@ -77,7 +77,7 @@ module lpm_rom0 (
 		altsyncram_component.clock_enable_output_a = "BYPASS",
 		altsyncram_component.init_file = "ZAGR512.HEX",
 		altsyncram_component.intended_device_family = "Cyclone II",
-		altsyncram_component.lpm_hint = "ENABLE_RUNTIME_MOD=YES, INSTANCE_NAME=ROM",
+		altsyncram_component.lpm_hint = "ENABLE_RUNTIME_MOD=NO",
 		altsyncram_component.lpm_type = "altsyncram",
 		altsyncram_component.numwords_a = 2048,
 		altsyncram_component.operation_mode = "ROM",
@@ -107,7 +107,7 @@ endmodule
 // Retrieval info: PRIVATE: INIT_FILE_LAYOUT STRING "PORT_A"
 // Retrieval info: PRIVATE: INIT_TO_SIM_X NUMERIC "0"
 // Retrieval info: PRIVATE: INTENDED_DEVICE_FAMILY STRING "Cyclone II"
-// Retrieval info: PRIVATE: JTAG_ENABLED NUMERIC "1"
+// Retrieval info: PRIVATE: JTAG_ENABLED NUMERIC "0"
 // Retrieval info: PRIVATE: JTAG_ID STRING "ROM"
 // Retrieval info: PRIVATE: MAXIMUM_DEPTH NUMERIC "0"
 // Retrieval info: PRIVATE: MIFfilename STRING "ZAGR512.HEX"
@@ -125,7 +125,7 @@ endmodule
 // Retrieval info: CONSTANT: CLOCK_ENABLE_OUTPUT_A STRING "BYPASS"
 // Retrieval info: CONSTANT: INIT_FILE STRING "ZAGR512.HEX"
 // Retrieval info: CONSTANT: INTENDED_DEVICE_FAMILY STRING "Cyclone II"
-// Retrieval info: CONSTANT: LPM_HINT STRING "ENABLE_RUNTIME_MOD=YES, INSTANCE_NAME=ROM"
+// Retrieval info: CONSTANT: LPM_HINT STRING "ENABLE_RUNTIME_MOD=NO"
 // Retrieval info: CONSTANT: LPM_TYPE STRING "altsyncram"
 // Retrieval info: CONSTANT: NUMWORDS_A NUMERIC "2048"
 // Retrieval info: CONSTANT: OPERATION_MODE STRING "ROM"
@@ -146,7 +146,7 @@ endmodule
 // Retrieval info: GEN_FILE: TYPE_NORMAL lpm_rom0.cmp FALSE
 // Retrieval info: GEN_FILE: TYPE_NORMAL lpm_rom0.bsf TRUE FALSE
 // Retrieval info: GEN_FILE: TYPE_NORMAL lpm_rom0_inst.v FALSE
-// Retrieval info: GEN_FILE: TYPE_NORMAL lpm_rom0_bb.v TRUE
-// Retrieval info: GEN_FILE: TYPE_NORMAL lpm_rom0_waveforms.html TRUE
-// Retrieval info: GEN_FILE: TYPE_NORMAL lpm_rom0_wave*.jpg TRUE
+// Retrieval info: GEN_FILE: TYPE_NORMAL lpm_rom0_bb.v FALSE
+// Retrieval info: GEN_FILE: TYPE_NORMAL lpm_rom0_waveforms.html FALSE
+// Retrieval info: GEN_FILE: TYPE_NORMAL lpm_rom0_wave*.jpg FALSE
 // Retrieval info: LIB_FILE: altera_mf

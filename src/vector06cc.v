@@ -52,6 +52,7 @@
 `define WITH_DE1_JTAG
 `define WITH_AY
 `define WITH_FLOPPY
+`define WITH_OSD
 `define JTAG_AUTOHOLD
 
 module vector06cc(CLOCK_27, KEY[3:0], LEDr[9:0], LEDg[7:0], SW[9:0], HEX0, HEX1, HEX2, HEX3, 
@@ -259,7 +260,7 @@ assign GPIO_0[8:0] = {clk24, ce12, ce6, ce3, ce3v, video_slice, pipe_ab, vi53_ti
 /////////////////
 wire RESET_n = mreset_n & !blksbr_reset_pulse;
 reg READY;
-wire HOLD = jHOLD | SW[7] | scrollock_hold;
+wire HOLD = jHOLD | SW[7];// | scrollock_hold;
 wire INT = int_request;
 wire INTE;
 wire DBIN;
@@ -410,6 +411,7 @@ video vidi(.clk24(clk24), .ce12(ce12), .ce6(ce6), .video_slice(video_slice), .pi
 		   .mode512(video_mode512), 
 		   .SRAM_DQ(sram_data_in), .SRAM_ADDR(VIDEO_A), 
 		   .hsync(VGA_HS), .vsync(VGA_VS), 
+		   .osd_hsync(osd_hsync), .osd_vsync(osd_vsync),
 		   .coloridx(coloridx),
 		   .realcolor_in(realcolor2buf),
 		   .realcolor_out(realcolor),
@@ -433,10 +435,16 @@ assign VGA_R = video_r;
 assign VGA_G = video_g;
 assign VGA_B = video_b;
 
+wire [1:0] 	lowcolor_b = {2{osd_active}} & {realcolor[7],1'b0};
+wire 		lowcolor_g = osd_active & realcolor[5];
+wire 		lowcolor_r = osd_active & realcolor[2];
+
+wire [7:0] 	overlayed_colour = osd_active ? osd_colour : realcolor;
+
 always @(posedge clk24) begin
-	video_r <= {realcolor[2:0], 1'b0};
-	video_g <= {realcolor[5:3], 1'b0};
-	video_b <= {realcolor[7:6], 2'b00};
+	video_r <= {overlayed_colour[2:0], lowcolor_r};
+	video_g <= {overlayed_colour[5:3], lowcolor_g};
+	video_b <= {overlayed_colour[7:6], lowcolor_b};
 end
 
 
@@ -708,6 +716,11 @@ floppy flappy(
 	.hostio_rd(floppy_rden),
 	.hostio_wr(floppy_wren),
 	
+	// screen memory
+	.display_addr(osd_address),
+	.display_data(osd_data),
+	.display_wren(osd_wren),
+	
 	// debug 
 	.green_leds(floppy_leds),
 	.debug(floppy_status),
@@ -720,6 +733,43 @@ wire		floppy_rden = 0;
 wire [7:0]	floppy_odata = 7'hff;
 wire [7:0]	floppy_status = 7'h00;
 `endif
+
+///////////////////////
+// On-Screen Display //
+///////////////////////
+wire			osd_hsync, osd_vsync; 	// provided by video.v
+reg				osd_active;
+reg	[7:0]		osd_colour;
+always @(posedge clk24)
+	if (scrollock_hold & osd_bg) begin
+		osd_active <= 1;
+		osd_colour <= osd_fg ? 8'b11111110 : 8'b01011001;	// slightly greenish tint hopefully
+	end else 
+		osd_active <= 0;
+
+wire			osd_fg;
+wire			osd_bg;
+wire			osd_wren;
+wire[7:0]		osd_data;
+wire[7:0]		osd_address;
+
+`ifdef WITH_OSD
+textmode osd(
+	.clk(clk24),
+	.ce(1),
+	.vsync(osd_vsync),
+	.hsync(osd_hsync),
+	.pixel(osd_fg),
+	.background(osd_bg),
+	.address(osd_address),
+	.data(osd_data - 32),		// OSD encoding has 00 == 32
+	.wren(osd_wren)
+	);
+`else
+assign osd_fg = 0;
+assign osd_bg = 0;
+`endif
+
 
 
 ////////

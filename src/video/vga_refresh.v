@@ -25,7 +25,7 @@
 
 `default_nettype none
 
-module vga_refresh(clk24, hsync, vsync, videoActive, bordery, retrace, video_scroll_reg, fb_row);
+module vga_refresh(clk24, hsync, vsync, videoActive, bordery, retrace, video_scroll_reg, fb_row, fb_row_count);
 input			clk24;
 output			hsync;
 output			vsync;
@@ -34,6 +34,7 @@ output	reg		bordery;
 output 			retrace;
 input	[7:0]	video_scroll_reg;
 output	[8:0]	fb_row;
+output  [8:0]	fb_row_count;
 
 // total = 624
 // visible = (16 + 256 + 16)*2 = 288*2 = 576
