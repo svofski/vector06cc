@@ -287,7 +287,7 @@ wire [1:0] sw23 = {SW[3],SW[2]};
 wire [7:0] kbd_keystatus = {kbd_mod_rus, kbd_key_shift, kbd_key_ctrl, kbd_key_rus, kbd_key_blksbr};
 
 assign LEDg = sw23 == 0 ? status_word 
-			: sw23 == 1 ? {floppy_rden,floppy_odata[6:0]}//{kbd_keystatus} 
+			: sw23 == 1 ? floppy_leds//{floppy_rden,floppy_odata[6:0]}//{kbd_keystatus} 
 			: sw23 == 2 ? floppy_status 
 			: {HLDA, mJTAG_SELECT, mJTAG_SRAM_WR_N, SRAM_ADDR[17:15]};
 			
@@ -491,6 +491,7 @@ wire		kbd_key_rus;
 wire		kbd_key_blksbr;
 wire		kbd_key_blkvvod;
 wire		kbd_key_bushold;
+wire [5:0]	kbd_keys_osd;
 
 `ifdef WITH_KEYBOARD
 	vectorkeys kbdmatrix(
@@ -506,7 +507,9 @@ wire		kbd_key_bushold;
 		.key_rus(kbd_key_rus), 
 		.key_blksbr(kbd_key_blksbr), 
 		.key_blkvvod(kbd_key_blkvvod),
-		.key_bushold(kbd_key_bushold)
+		.key_bushold(kbd_key_bushold),
+		.key_osd(kbd_keys_osd),
+		.osd_active(scrollock_hold)
 		);
 `else
 	assign kbd_rowbits = 8'hff;
@@ -720,6 +723,8 @@ floppy flappy(
 	.display_addr(osd_address),
 	.display_data(osd_data),
 	.display_wren(osd_wren),
+	
+	.keyboard_keys(kbd_keys_osd),
 	
 	// debug 
 	.green_leds(floppy_leds),

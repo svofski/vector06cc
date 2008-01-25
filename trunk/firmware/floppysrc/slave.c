@@ -23,12 +23,9 @@
 #include "fddimage.h"
 #include "integer.h"
 #include "timer.h"
+#include "menu.h"
 
 #include "serial.h"
-
-FDDImage fddimage;
-
-#define DELAY_RELOAD 4096
 
 
 #define vputs(s) {}
@@ -53,23 +50,31 @@ FDDImage fddimage;
   #define vnl()	   ser_nl()
 #endif
 
+FDDImage fddimage;
+FIL	file1;
 
-// thrall forever
-uint8_t slave(const char *imagefile, uint8_t *buffer) {
-	FIL	file1;
-	uint8_t leds = 0x01;
-	uint16_t delay = 1;
-	uint8_t last_request = 0377;
+#define DELAY_RELOAD 4096
 
-	uint8_t result;
-	uint8_t t1;
+void blink(void);
 
+
+uint8_t useimage(const char *imagefile, uint8_t *buffer) {
+	menu_init();
+	
 	if (f_open(&file1, imagefile, FA_READ) != FR_OK) return SR_OPENERR;
 
 	fdd_load(&file1, &fddimage, buffer);
 	fdd_seek(&fddimage, 1, 4, 1);
 	if (fdd_readsector(&fddimage) != FR_OK) return SR_READERR;
 	// tests passed, clear to slave forever
+	slave(buffer);
+}
+
+// thrall forever
+uint8_t slave(uint8_t *buffer) {
+	uint8_t result;
+	uint8_t t1;
+
 	
 	SLAVE_STATUS = 0;
 
@@ -133,6 +138,7 @@ uint8_t slave(const char *imagefile, uint8_t *buffer) {
 			break;
 		case CPU_REQUEST_ACK:
 			SLAVE_STATUS = 0;
+			blink();
 			break;
 		case CPU_REQUEST_NOP:
 			SLAVE_STATUS = 0;
@@ -150,17 +156,23 @@ uint8_t slave(const char *imagefile, uint8_t *buffer) {
 		default:
 			break;
 		}
-       
-		//} else {
-		//	if (--delay == 0) {
-		//		delay = DELAY_RELOAD;
-		//		GREEN_LEDS = leds;
-		//		leds <<= 1;
-		//		if (leds == 0) leds = 0x01;
-		//	}
-		//}
 	}
 
 	SLAVE_STATUS = 0;
 	return result;
+}
+
+void blink(void) {
+	static uint8_t leds = 0x01;
+	static uint16_t delay = 1;
+
+	menu_dispatch();
+	
+	//GREEN_LEDS = JOYSTICK;
+	if (--delay == 0) {
+		delay = DELAY_RELOAD;
+		GREEN_LEDS = leds;
+		leds <<= 1;
+		if (leds == 0) leds = 0x01;
+	}
 }

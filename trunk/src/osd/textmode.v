@@ -1,3 +1,23 @@
+// ====================================================================
+//                         VECTOR-06C FPGA REPLICA
+//
+//               Copyright (C) 2007,2008 Viacheslav Slavinsky
+//
+// This core is distributed under modified BSD license. 
+// For complete licensing information see LICENSE.TXT.
+// -------------------------------------------------------------------- 
+//
+// An open implementation of Vector-06C home computer
+//
+// Author: Viacheslav Slavinsky, http://sensi.org/~svo
+// 
+// Design File: textmode.v
+//
+// Text mode video controller
+//
+// --------------------------------------------------------------------
+
+
 `default_nettype none
 
 `define TILE_W 6		// can only be <= 7
