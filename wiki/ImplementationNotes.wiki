@@ -86,38 +86,11 @@ Also see Technical_Description for Vector-06C port map, [VectorSecrets_by_Lebede
 
 == Practice ==
 
-=== Preliminary HW layer tests ===
-[http://vector06cc.googlecode.com/svn/trunk/doc/wd-clocks-preliminarytest.png]
-Test simulation run of the HW layer. The "program" being executed here would be roughly:
-{{{
- RESET (as in hw pin)
- 
- RESTORE:     (0)=0F
- TRACK:       (1)=12
- SEEK:        (0)=1F
- STEPF:       (0)=4F (no update)
- STEP:        (0)=3F (previous direction, update)
- READ STATUS ==> 22
- SECTOR:      (2)=03
- READADDR:    (0)=C0 
-   -> CPU command issued
-   <- CPU completion status set
-   -> CPU "ACK" command issued
-   DRQ set
- READ STATUS ==> 03
- READ DATA
- READ DATA
- ...
-}}}
- 
-Remarks:
- * ~~Buffer read takes 2 clocks as opposed to single-clock operation for everything else~~ not anymore
- * 9ns is about minimal required settle time for `idata`
-
 === CPU Requests ===
 ||`CPU_REQUEST_READ` || 8'h10 || Request to read one sector at `oTRACK`, `oSECTOR`, bit1=drive,bit0=side (head #) ||
 ||`CPU_REQUEST_WRITE`||8'h20 ||  Request to write one sector at `oTRACK`, `oSECTOR`; bit1=drive,bit0=side (head #) ||
 ||`CPU_REQUEST_READADDR` || 8'h30|| Request to read sector address (return 6 byte header),bit 1=drive,bit0=side ||
+||`CPU_REQUEST_NOP`||8'h40|| A time waster ||
 ||`CPU_REQUEST_ACK`|| 8'h80|| Acknowledge: clear CPU status bits ||
 
 After CPU has done with processing any request other than `CPU_REQUEST_ACK`, it sets two bits in `iCPU_STATUS`:
@@ -129,7 +102,7 @@ Ports start at memory location $E000:
 ||E000||MMC_A: bit0 = SD_DAT3/CS||
 ||E001||SPDR: SPI data register, same as in AVR||
 ||E002||SPSR: SPI status register, only SPIF (bit 0) is implemented||
-||E003||reserved||
+||E003||OSD Joystick: {0,0,0,Right,Left,Up,Down,Fire}||
 ||E004||TxD||
 ||E005||RxD (not implemented)||
 ||E006||SERIAL_CTL (status, bit 0 == busy)||
@@ -140,3 +113,18 @@ Ports start at memory location $E000:
 ||E00B||TRACK (read-only) track index from the hardware||
 ||EOOC||SECTOR (read-only) sector index from the hardware||
 ||E010||GLEDS green leds||
+
+--
+
+= OSD Menu =
+OSD Menu is a cooperative effort of a secondary hardware display and the floppy workhorse CPU.
+
+== Display ==
+The display implements a hardware text mode: 5x7 characters with 1-pixel padding. Bit 7 of character code is the inversion attribute. Only characters between $20-$60 exist in the character generator, although characters up to $80 can be added at the expense of some M4K. The character generator ROM is M4K-based, organized in 5-bit wide words. ASCII codes starting with $20 are mapped to 0x00 internally.
+
+Video RAM is 256x8 dual-port RAM located in M4K. It is mapped into CPU memory space at addresses $E100-$E200. The screen configuration is 8 lines of 32 characters each.
+
+When OSD is active, its display is overlaid on top of the primary display. High bits of the primary display true colour components are shifted to the LSB of RGB signals, thus providing simple transparency effect.
+
+== Input ==
+When ScrollLock key is pressed, "not in matrix" bit is forced for all keys in the keyboard driver. Instead, Arrow keys and the Enter key start toggling corresponding bits in the OSD joystick ($E003) register.
