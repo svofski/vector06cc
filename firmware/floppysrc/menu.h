@@ -11,20 +11,34 @@
 //
 // Author: Viacheslav Slavinsky, http://sensi.org/~svo
 // 
-// Source file: osd.h
+// Source file: menu.h
 //
-// On-Screen Display functions
+// Menu functions
 //
 // --------------------------------------------------------------------
 
-#ifndef _OSD_H
-#define _OSD_H
-
 #include "integer.h"
+#include "specialio.h"
+#include "osd.h"
 
-void osd_cls(uint8_t hdr);
-void osd_gotoxy(uint8_t _x, uint8_t _y);
-void osd_puts(char *s);
-void osd_inv(uint8_t i);
+#define AUTOREPEAT 4096
 
-#endif
+
+#define TXT_MENU_MIDDLE	" DISK "
+#define TXT_MENU_LEFT 	" RESET "
+#define TXT_MENU_RIGHT	" RESTART "
+#define TXT_MENU_UP		" HOLD "
+#define TXT_MENU_DOWN	" ABOUT "
+
+#define TXT_MENU_HALP	"  SELECT WITH ARROWS AND ENTER  "
+
+#define ALIGN_RIGHT		0
+#define ALIGN_MIDDLE 	1
+#define ALIGN_LEFT 		2
+
+#define FSEL_ITEMS_PER_PAGE		2*6	// two columns, 6 lines
+
+uint8_t menu_dispatch();
+void menu_init();
+void draw_menu();
+void draw_item(char *s, uint8_t x, uint8_t y, uint8_t align);

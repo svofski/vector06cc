@@ -35,6 +35,9 @@ module floppy(
 	hostio_rd,
 	hostio_wr,
 	
+	// keyboard input for osd menu
+	keyboard_keys,
+	
 	// screen memory
 	display_addr,
 	display_data,
@@ -47,6 +50,7 @@ parameter IOBASE = 16'hE000;
 parameter PORT_MMCA= 0;
 parameter PORT_SPDR= 1;
 parameter PORT_SPSR= 2;
+parameter PORT_JOY = 3;
 parameter PORT_TXD = 4;
 parameter PORT_RXD = 5;
 parameter PORT_CTL = 6;
@@ -80,6 +84,9 @@ input	[7:0]	hostio_idata;
 output  [7:0]	hostio_odata;
 input			hostio_rd;
 input			hostio_wr;
+
+// keyboard interface
+input	[5:0]	keyboard_keys;	// {reserved,left,right,up,down,enter}
 
 // screen memory
 output	[7:0]	display_addr;
@@ -175,6 +182,8 @@ always @(negedge clk) begin
 						ioports_do <= wdport_cpu_request;
 	IOBASE+PORT_TRACK:	ioports_do <= wdport_track;
 	IOBASE+PORT_SECTOR:	ioports_do <= wdport_sector;
+	
+	IOBASE+PORT_JOY:	ioports_do <= keyboard_keys;
 	default:			ioports_do <= 8'hFF;
 	endcase
 end

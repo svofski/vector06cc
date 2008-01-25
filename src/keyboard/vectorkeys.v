@@ -1,7 +1,7 @@
 // ====================================================================
 //                         VECTOR-06C FPGA REPLICA
 //
-// 					Copyright (C) 2007, Viacheslav Slavinsky
+//               Copyright (C) 2007,2008 Viacheslav Slavinsky
 //
 // This core is distributed under modified BSD license. 
 // For complete licensing information see LICENSE.TXT.
@@ -28,22 +28,24 @@
 
 
 `default_nettype none
-module vectorkeys(clkk, reset, ps2_clk, ps2_dat, mod_rus, rowselect, rowbits, key_shift, key_ctrl, key_rus, key_blksbr, key_blkvvod, key_bushold);
-input 		clkk;
-input 		reset;
-input 		ps2_clk;
-input 		ps2_dat;
+module vectorkeys(clkk, reset, ps2_clk, ps2_dat, mod_rus, rowselect, rowbits, key_shift, key_ctrl, key_rus, key_blksbr, key_blkvvod, key_bushold, key_osd, osd_active);
+input 				clkk;
+input 				reset;
+input 				ps2_clk;
+input 				ps2_dat;
 
-input		mod_rus;		// RUS on
+input				mod_rus;		// RUS on
 
-input [7:0]	rowselect;		// PA output inverted
-output[7:0] rowbits;		// PB input  inverted
-output		key_shift;
-output 		key_ctrl;
-output		key_rus;
-output		key_blksbr;
-output		key_blkvvod;
-output		key_bushold;
+input [7:0]			rowselect;		// PA output inverted
+output[7:0] 		rowbits;		// PB input  inverted
+output				key_shift;
+output 				key_ctrl;
+output				key_rus;
+output				key_blksbr;
+output				key_blkvvod;
+output				key_bushold;
+output reg[5:0] 	key_osd;
+input				osd_active;
 
 // for testing
 //output[3:0] lastrownum;
@@ -64,10 +66,11 @@ reg			key_bushold = 0;
 wire [2:0]	matrix_row;
 wire [2:0]	matrix_col;
 wire		matrix_shift;
-wire		neo;			// not in matrix
+wire		neo_raw;			// not in matrix
+wire		neo = osd_active | neo_raw;
 wire [7:0]	decoded_col;
 
-scan2matrix scan2xy(clkk, ps2q, saved_ps2_shift|qey_shift, mod_rus, matrix_row, matrix_col, matrix_shift, neo);
+scan2matrix scan2xy(clkk, ps2q, saved_ps2_shift|qey_shift, mod_rus, matrix_row, matrix_col, matrix_shift, neo_raw);
 
 assign 	key_shift = qey_shift ^ qmatrix_shift; 
 reg		qmatrix_shift;
@@ -106,6 +109,7 @@ always @(posedge clkk) begin
 		key_blksbr <= 0;
 		key_blkvvod <= 0;
 		key_bushold <= 0;
+		key_osd <= 0;
 		saved_shift_trigger <= 0;
 		state <= 0;
 	end 
@@ -154,6 +158,15 @@ always @(posedge clkk) begin
 							case (ps2q) 
 								8'h75,8'h72,8'h6b,8'h74: qey_shift <= saved_shift;
 							endcase
+							
+							case (ps2q) 
+								8'h75:	key_osd[2] <= 1;
+								8'h72:  key_osd[1] <= 1;
+								8'h6b:	key_osd[4] <= 1;
+								8'h74:  key_osd[3] <= 1;
+								8'h5a:	key_osd[0] <= 1;
+							endcase
+							
 							if (!neo) begin
 								keymatrix[matrix_row] <= tmp | decoded_col;
 								qmatrix_shift <= qmatrix_shift | matrix_shift;
@@ -199,10 +212,20 @@ always @(posedge clkk) begin
 					8'h7E:	key_bushold <= 0;
 					8'hE0:	;// do nada plz
 					default: 
-						if (!neo) begin
-							keymatrix[matrix_row] <=  tmp & ~decoded_col;
-							if (saved_ps2_shift & matrix_shift) saved_ps2_shift <= 1'b0;
-							qmatrix_shift <= 1'b0;
+						begin
+							case (ps2q) 
+								8'h75:	key_osd[2] <= 0;
+								8'h72:  key_osd[1] <= 0;
+								8'h6b:	key_osd[4] <= 0;
+								8'h74:  key_osd[3] <= 0;
+								8'h5a:	key_osd[0] <= 0;
+							endcase
+						
+							if (!neo) begin
+								keymatrix[matrix_row] <=  tmp & ~decoded_col;
+								if (saved_ps2_shift & matrix_shift) saved_ps2_shift <= 1'b0;
+								qmatrix_shift <= 1'b0;
+							end
 						end
 				endcase
 				state <= 0;

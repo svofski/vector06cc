@@ -36,7 +36,7 @@
 #define CPU_STATUS_COMPLETE	0x01
 #define CPU_STATUS_SUCCESS	0x02
 
-
-uint8_t slave(const char *imagefile, uint8_t *buffer);
+uint8_t useimage(const char *imagefile, uint8_t *buffer);
+uint8_t slave(uint8_t *buffer);
 
 #endif
