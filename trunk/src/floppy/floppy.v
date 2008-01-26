@@ -42,6 +42,10 @@ module floppy(
 	display_addr,
 	display_data,
 	display_wren,
+	display_idata,
+	
+	// return from OSD
+	osd_command,
 	
 	// debug 
 	green_leds, red_leds, debug, debugidata);
@@ -64,6 +68,7 @@ parameter PORT_TRACK		= 11;
 parameter PORT_SECTOR		= 12;
 
 parameter PORT_LED = 16;
+parameter PORT_OSD_COMMAND = 17;		// {F11,F12,HOLD}
 
 input			clk;
 input			ce;
@@ -92,15 +97,17 @@ input	[5:0]	keyboard_keys;	// {reserved,left,right,up,down,enter}
 output	[7:0]	display_addr;
 output 	[7:0]	display_data;
 output			display_wren;
+input   [7:0]	display_idata;
 
-
+output reg[7:0] osd_command;
 output reg[7:0]	green_leds;
+
 output  [7:0]	red_leds = cpu_di;
 output	[7:0]	debug = {ce & bufmem_en, ce, hostio_rd, wd_ram_rd};//wdport_status;
 output	[7:0]	debugidata = {timer1q};
 
 wire [15:0] cpu_a;
-wire [7:0]	cpu_di;
+reg  [7:0]	cpu_di;
 wire [7:0]	cpu_do;
 
 cpu65xx_en cpu(
@@ -121,10 +128,23 @@ wire [7:0] 	lowmem_do;
 wire [7:0]	bufmem_do;
 reg  [7:0]	ioports_do;
 
+/*
 assign cpu_di = &cpu_a[15:4] ? (cpu_a[0] ? 8'h08:8'h00) // boot addr
 							: lowmem_en ? lowmem_do :
 							  bufmem_en ? bufmem_do :
-							  rammem_en ? ram_do : ioports_do;
+							  rammem_en ? ram_do : 
+							  osd_en    ? display_idata :  ioports_do;
+*/							
+always begin: _cpu_datain
+	case({&cpu_a[15:4], lowmem_en, bufmem_en, rammem_en, osd_en}) 
+	5'b10000:	cpu_di <= (cpu_a[0] ? 8'h08:8'h00);
+	5'b01000:	cpu_di <= lowmem_do;
+	5'b00100:	cpu_di <= bufmem_do;
+	5'b00010:	cpu_di <= ram_do;
+	5'b00001:	cpu_di <= display_idata;
+	default:	cpu_di <= ioports_do;
+	endcase
+end							
 
 wire lowmem_en = |cpu_a[15:9] == 0;
 wire bufmem_en = (wd_ram_rd|wd_ram_wr) || (cpu_a >= 16'h200 && cpu_a < 16'h600);
@@ -217,6 +237,10 @@ always @(posedge clk or negedge reset_n) begin
 			// CPU status return
 			if (memwr && cpu_a == IOBASE+PORT_CPU_STATUS) begin
 				wdport_cpu_status <= cpu_do;
+			end
+			
+			if (memwr && cpu_a == IOBASE+PORT_OSD_COMMAND) begin
+				osd_command <= cpu_do;
 			end
 			
 			// uart state machine

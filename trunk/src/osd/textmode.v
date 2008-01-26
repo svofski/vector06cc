@@ -30,7 +30,7 @@
 
 
 
-module textmode(clk, ce, vsync, hsync, pixel, background, address, data, wren,
+module textmode(clk, ce, vsync, hsync, pixel, background, address, data, wren, q,
 				// debug stuff
 				linebegin, textaddr, loadchar, tileaddr, tile_y, tileline, pixelreg);
 input					clk;
@@ -44,12 +44,13 @@ output					background;
 input [`LOG2TXT-1:0]	address;
 input [7:0]				data;
 input					wren;
+output[7:0]				q;
 
 // stuff for debug
 output		linebegin;
 output[7:0]	textaddr;
 output 		loadchar;
-output[8:0]	tileaddr;
+output[9:0]	tileaddr;
 output[2:0] tile_y;
 
 output[`TILE_W-1:0]	tileline;
@@ -76,14 +77,15 @@ textmode_counter tcu(
 wire [7:0]	charcode;
 screenbuffer ram0(			
 			.clock(clk),
-			.data(data),
-			.rdaddress(textaddr),
-			.wraddress(address),
-			.wren(wren),
-			.q(charcode));
+			.data_b(data),
+			.address_a(textaddr),
+			.address_b(address),
+			.wren_b(wren),
+			.q_a(charcode),
+			.q_b(q));
 
 wire		invert = charcode[7];
-wire [8:0]	tileaddr = tile_y != (`TILE_H-1)  ? {charcode[6:0], 3'b000} - charcode[6:0] + tile_y : 0; 
+wire [9:0]	tileaddr = tile_y != (`TILE_H-1)  ? {charcode[6:0], 3'b000} - charcode[6:0] + tile_y : 0; 
 wire [`TILE_W-2:0]	tileline;
 
 // character rom is 512x5, 8 quintets per tile, 64 tiles total

@@ -160,11 +160,11 @@ always @(posedge clkk) begin
 							endcase
 							
 							case (ps2q) 
-								8'h75:	key_osd[2] <= 1;
-								8'h72:  key_osd[1] <= 1;
-								8'h6b:	key_osd[4] <= 1;
-								8'h74:  key_osd[3] <= 1;
-								8'h5a:	key_osd[0] <= 1;
+								8'h75:	key_osd[2] <= osd_active;
+								8'h72:  key_osd[1] <= osd_active;
+								8'h6b:	key_osd[4] <= osd_active;
+								8'h74:  key_osd[3] <= osd_active;
+								8'h5a:	key_osd[0] <= osd_active;
 							endcase
 							
 							if (!neo) begin

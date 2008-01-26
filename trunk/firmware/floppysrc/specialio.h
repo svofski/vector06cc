@@ -41,6 +41,8 @@
 
 #define		IOPORT_GLEDS		0x10
 
+#define 	IOPORT_OSDCMD		0x11			/* F11,F12,HOLD */
+
 #define		DISPLAY_BASE		0xE100
 #define		DISPLAY_W			32
 #define		DISPLAY_H			8
@@ -64,6 +66,7 @@
 #define		MASTER_SECTOR	(*((unsigned char *)(IOPORT_BASE+IOPORT_CPUSECTOR)))
 
 #define		GREEN_LEDS	(*((unsigned char *)(IOPORT_BASE+IOPORT_GLEDS)))
+#define		OSD_CMD		(*((unsigned char *)(IOPORT_BASE+IOPORT_OSDCMD)))
 
 
 #define SOCKWP		0x20			/* Write protect switch (PB5) */
