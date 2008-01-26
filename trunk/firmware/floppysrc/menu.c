@@ -320,7 +320,7 @@ void draw_fsel(void) {
 			memset(uptr, 32, 12);
 			if (philes_nextfile(uptr, 0) != FR_OK) {
 				fsel_hasnextpage = 0;
-				break;
+				// keep filling the screen though
 			}
 		}
 	}
