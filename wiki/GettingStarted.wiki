@@ -41,9 +41,9 @@ There are several methods of running software. Here they are in order of ease of
  Есть несколько способов запускать программы. Они приводятся в порядке убывания простоты использования. К плате DE1 прилагается интересный пример под названием Cyclone II Starter Kit Control Panel, он позволяет общаться с памятью установленной на плате. Это очень полезная программа.
 
 === Floppy disk images ===
-vector06cc can load standard Vector-06C floppy disk images in .fdd format. You need to create a folder called "VECTOR06" in the root of a FAT16-formatted SD/MMC card and put a .fdd file in that folder. As of now, there is no possibility to choose what image file to use so don't put more than one .fdd file in that folder. If a floppy you're using is not bootable you can still boot MicroDOS from the RAM disk.
- 
- vector06cc может загружать стандартные эмуляторные образы в формате .fdd. Создайте каталог под названием "VECTOR06" в корне SD или MMC карточки, отформатированной в FAT16. В этот каталог можно положить образ дискетки. Пока нет механизма выбора образа, не имеет смысла класть в этот каталог больше одного файла с расширением .fdd. Если образ дискеты не загрузочный, можно загрузить МикроДОС с квазидиска.
+vector06cc can load standard Vector-06C floppy disk images in .fdd format. You need to create a folder called "VECTOR06" in the root of a FAT16-formatted SD/MMC card and put  .fdd files in that folder. Different images can be selected via the OSD menu, see [HOWTO_Floppy]. If a floppy you need is not bootable you can still boot MicroDOS from the RAM disk, or boot from another floppy image and change disks after that.
+
+ vector06cc может загружать стандартные эмуляторные образы в формате .fdd. Создайте каталог под названием "VECTOR06" в корне отформатированной в FAT16 SD или MMC карточки. В этот каталог можно положить образы дискеток. Если образ нужной дискеты не загрузочный, можно загрузить МикроДОС с квазидиска, или загрузиться с другой дискеты, а затем сменить диск. Смотри также [HOWTO_Floppy].
 
 === RAMdisk image ===
 Use the control panel to upload ramdisk.img (or .edd or whatever, the size should be 256K) starting with address *8000* (this is hex). Make sure that you select SRAM tab, select sequential upload, check "File size" checkbox and chose a file. After you uploaded the image, press RESET (KEY0) again, the screen must fill with full yellow boxes, address "EB" should be held on the hex display and LED9 must be blinking steady. Now you can press F12 on the PS/2 keyboard to boot into MicroDOS. Change disk to C:, "D" is for "Directory". See [MicroDOS_manual] for more on MicroDOS.
@@ -61,9 +61,9 @@ Audio input works and you can load from .wav file, .mp3 file (96kbps seems to be
  Можно загружать программы из wav- или mp3- файлов, как было принято во времена моноклей и высоких цилиндров. В этом проекте реализован адаптивный уровень чтения, поэтому никакой настройки плеера не понадобится. См. также [HOWTO_rom2wav ROM->WAV howto (ru)].
 
 = Other pages of interest =
+ * [license Licensing information (en)]
  * [HOWTO_Floppy Floppy howto | Как пользоваться дисководом]
  * [HOWTO_rom2wav ROM->WAV howto (ru) | Как из .ROM сделать .WAV]
- * [license Licensing information (en)]
  * [Technical_Description Technical Description of Vector-06C by Alexander Timoshenko (ru) | Техническое описание Вектора-06Ц]
  * [MicroDOS_manual MicroDOS manual (ru) | Руководство пользователя МикроДОС]
  * [ramdisk RAM disk documentation, various sources (ru) | Описание квазидиска]
