@@ -36,6 +36,7 @@
 #define TXT_MENU_HALP	 	"  Select with Arrows and Enter  "
 #define TXT_MENU_ABOOTHALP 	"         Press something        "
 #define TXT_MENU_BUSY	 	"             [BUSY]             "
+#define TXT_MENU_INSERT 	"          INSERT CARD           "
 #define ALIGN_RIGHT		0
 #define ALIGN_MIDDLE 	1
 #define ALIGN_LEFT 		2

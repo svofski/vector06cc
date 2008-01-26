@@ -66,29 +66,32 @@ uint8_t thrall(char *imagefile, uint8_t *buffer) {
 	menu_init();
 	
 	for(;;) {
-		philes_mount();
-		philes_opendir();
-		if (!first) {
-			philes_nextfile(imagefile+10, 1);
-			first++;
-		}
-		
-		ser_nl();
-		if ((result = f_open(&file1, imagefile, FA_READ)) != FR_OK) {
-			ser_puts("Error: ");
-		} else {
-			ser_puts("=> ");
-		}
-		ser_puts(imagefile); ser_putc('$');ser_nl();
+		do {
+			philes_mount();
+			result = philes_opendir();
+			if (result != FR_OK) break;
+			
+			if (!first) {
+				philes_nextfile(imagefile+10, 1);
+				first++;
+			}
+			
+			ser_nl();
+			if ((result = f_open(&file1, imagefile, FA_READ)) != FR_OK) {
+				ser_puts("Error: ");
+			} else {
+				ser_puts("=> ");
+			}
+			ser_puts(imagefile); ser_putc('$');ser_nl();
 
-		if (result == FR_OK) {
+			if (result != FR_OK) break;
+			
 			fdd_load(&file1, &fddimage, buffer);
 			slave(buffer);
-		} else {
-			menu_busy(0);
-			while(!menu_dispatch(0));
-		}
-		delay2(100);
+		} while(0);
+		menu_busy(2);
+		menu_dispatch(0);
+		delay2(10);
 	}
 }
 

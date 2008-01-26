@@ -45,7 +45,7 @@ static uint8_t joy_status;
 #define STATE_ABOOT2 12
 #define STATE_ABOOT		2
 
-static uint8_t state;
+static uint8_t state = 0377;
 
 static char* menu_item[] = {	NULL, 			TXT_MENU_UP, 		NULL,
 								TXT_MENU_LEFT,	TXT_MENU_MIDDLE,	TXT_MENU_RIGHT,
@@ -81,9 +81,19 @@ static void fsel_getselected(char *file);
 void aboot_anim();
 void aboot_show();
 
-uint8_t menu_busy(uint8_t yes) {
+uint8_t menu_busy(uint8_t status) {
+	char *text;
+	switch (status) {
+		case 0:	text = state == STATE_ABOOT2 ? TXT_MENU_ABOOTHALP : TXT_MENU_HALP;
+				break;
+		case 1: text = TXT_MENU_BUSY;
+				break;
+		case 2: text = TXT_MENU_INSERT;
+				menu_init();
+				break;
+	}
 	osd_gotoxy(0, 7);
-	osd_puts(yes ? TXT_MENU_BUSY : state == STATE_ABOOT2 ? TXT_MENU_ABOOTHALP : TXT_MENU_HALP);
+	osd_puts(text);
 }
 
 uint8_t menu_dispatch(uint8_t tick) {
@@ -198,10 +208,12 @@ uint8_t menu_dispatch(uint8_t tick) {
 }
 
 void menu_init() {
-	state = STATE_MENU;
-	joy_status = 0377;
-	
-	osd_cls(1);
+	if (state != STATE_MENU) {
+		state = STATE_MENU;
+		joy_status = 0377;
+		
+		osd_cls(1);
+	}
 	
 	menu_x = 1;
 	menu_y = 1;
