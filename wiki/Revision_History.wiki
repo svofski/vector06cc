@@ -1,11 +1,21 @@
 #summary Here be the manually updated log of significant changes
 #labels Featured,Phase-Implementation
+
+=== Rev.234 ===
+ * OSD! Toggled by ScrollLock, allows changing floppy images, reset, restart, bus hold
+ * converted retrace interrupt into a latch, reset by !INTE, hoping for better compat
+ 
+*Revision Notes:*
+
+ScollLock now toggles the menu, it thus doesn't hold the bus anymore -- the main CPU keeps on crunching as the OSD is displayed. Instead, the bus can still be held by SW7 or by selecting HOLD menu item.
+
 === Rev.222 ===
  * Reviewed all 8080 instructions regarding TStates. Everything but HLT must be matching now
  * Changed vga_refresh a little bit: made borders even according to the docs, simplified yborder and framebuffer line counter logic. It looks much more clear now.
  * Retrace interrupt: still unclear about that, currently it holds for 192 cycles and resets on INTA or after the period of time is over.
 
 *Revision Notes:*
+
 It seems that there's some compromise between the shaky bits now. Black Ice shows the TV almost in place (some 8 pixels closer to the TV border), m@color still works as before and SkyNet passes to the end, even though not without some sparks in the cursed photo part.
 
 === Rev.212 ===
