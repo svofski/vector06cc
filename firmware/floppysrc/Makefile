@@ -8,8 +8,8 @@ L65=ld65
 
 #OBJS=mmc.o tff.o serial.o main.o
 #ASSS=mmc.s tff.s serial.s main.s
-OBJS=menu.o osd.o slave.o fddimage.o tff.o mmc.o timer.o serial.o main.o
-ASSS=menu.s osd.s slave.s fddimage.s tff.s mmc.s timer.s serial.s main.s
+OBJS=philes.o menu.o osd.o slave.o fddimage.o tff.o mmc.o timer.o serial.o main.o
+ASSS=philes.s menu.s osd.s slave.s fddimage.s tff.s mmc.s timer.s serial.s main.s
 
 # snapshot version of cc65 has a patch regarding -Os
 # release version will only work with -Oirs

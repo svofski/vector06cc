@@ -24,6 +24,7 @@
 #include "integer.h"
 #include "timer.h"
 #include "menu.h"
+#include "philes.h"
 
 #include "serial.h"
 
@@ -53,25 +54,46 @@
 FDDImage fddimage;
 FIL	file1;
 
-#define DELAY_RELOAD 4096
+#define DELAY_RELOAD 128
 
-void blink(void);
+uint8_t blink(void);
+uint8_t slave();;
 
-
-uint8_t useimage(const char *imagefile, uint8_t *buffer) {
+uint8_t thrall(char *imagefile, uint8_t *buffer) {
+	uint8_t first = 0;
+	uint8_t result;
+	
 	menu_init();
 	
-	if (f_open(&file1, imagefile, FA_READ) != FR_OK) return SR_OPENERR;
+	for(;;) {
+		philes_mount();
+		philes_opendir();
+		if (!first) {
+			philes_nextfile(imagefile+10, 1);
+			first++;
+		}
+		
+		ser_nl();
+		if ((result = f_open(&file1, imagefile, FA_READ)) != FR_OK) {
+			ser_puts("Error: ");
+		} else {
+			ser_puts("=> ");
+		}
+		ser_puts(imagefile); ser_putc('$');ser_nl();
 
-	fdd_load(&file1, &fddimage, buffer);
-	fdd_seek(&fddimage, 1, 4, 1);
-	if (fdd_readsector(&fddimage) != FR_OK) return SR_READERR;
-	// tests passed, clear to slave forever
-	slave(buffer);
+		if (result == FR_OK) {
+			fdd_load(&file1, &fddimage, buffer);
+			slave(buffer);
+		} else {
+			menu_busy(0);
+			while(!menu_dispatch(0));
+		}
+		delay2(100);
+	}
 }
 
 // thrall forever
-uint8_t slave(uint8_t *buffer) {
+uint8_t slave() {
 	uint8_t result;
 	uint8_t t1;
 
@@ -83,7 +105,7 @@ uint8_t slave(uint8_t *buffer) {
 		switch (MASTER_COMMAND & 0xf0) {
 		case CPU_REQUEST_READ:
 			SLAVE_STATUS = 0;
-
+			menu_busy(1);
 			vnl();
 			vputs("rHST:");
 			t1 = MASTER_COMMAND & 0x02; // side
@@ -114,6 +136,7 @@ uint8_t slave(uint8_t *buffer) {
 			// 6 bytes: track, side, sector, sectorsize code, crc1, crc2
 			SLAVE_STATUS = 0;
 
+			menu_busy(1);
 			vnl();
 			vputc('Q');
 			t1 = MASTER_COMMAND & 0x02; // side
@@ -133,12 +156,15 @@ uint8_t slave(uint8_t *buffer) {
 			break;
 		case CPU_REQUEST_WRITE:
 			SLAVE_STATUS = 0;
+			menu_busy(1);
 			vputc('W');
 			SLAVE_STATUS = CPU_STATUS_COMPLETE; // no success
 			break;
 		case CPU_REQUEST_ACK:
 			SLAVE_STATUS = 0;
-			blink();
+			if ((result = blink()) != MENURESULT_NOTHING) {
+				return result;
+			}
 			break;
 		case CPU_REQUEST_NOP:
 			SLAVE_STATUS = 0;
@@ -162,17 +188,23 @@ uint8_t slave(uint8_t *buffer) {
 	return result;
 }
 
-void blink(void) {
-	static uint8_t leds = 0x01;
-	static uint16_t delay = 1;
 
-	menu_dispatch();
+uint8_t blink(void) {
+	static uint8_t leds = 0x01;
+	static uint8_t delay = 1;
+	static uint8_t tick;
+	
+	tick = --delay == 0;
+
+	menu_busy(0);
 	
 	//GREEN_LEDS = JOYSTICK;
-	if (--delay == 0) {
+	if (tick) {
 		delay = DELAY_RELOAD;
 		GREEN_LEDS = leds;
 		leds <<= 1;
 		if (leds == 0) leds = 0x01;
 	}
+	
+	return menu_dispatch(tick);
 }

@@ -260,7 +260,7 @@ assign GPIO_0[8:0] = {clk24, ce12, ce6, ce3, ce3v, video_slice, pipe_ab, vi53_ti
 /////////////////
 wire RESET_n = mreset_n & !blksbr_reset_pulse;
 reg READY;
-wire HOLD = jHOLD | SW[7];// | scrollock_hold;
+wire HOLD = jHOLD | SW[7] | osd_command_bushold;
 wire INT = int_request;
 wire INTE;
 wire DBIN;
@@ -470,7 +470,7 @@ oneshot #(33) retrace_delay(clk24, cpu_ce, retrace, int_delay);
 oneshot #(192) retrace_irq(clk24, cpu_ce, ~int_delay, int_rq);
 
 always @(posedge clk24) begin
-	if (int_rq & !interrupt_ack)
+	if (INTE & int_rq)// & !interrupt_ack)
 		int_request <= 1;
 	else
 		int_request <= 0;
@@ -489,8 +489,9 @@ wire 		kbd_key_shift;
 wire		kbd_key_ctrl;
 wire		kbd_key_rus;
 wire		kbd_key_blksbr;
-wire		kbd_key_blkvvod;
-wire		kbd_key_bushold;
+wire		kbd_key_blkvvod = kbd_key_blkvvod_phy | osd_command_f11;
+wire		kbd_key_blkvvod_phy;
+wire		kbd_key_scrolllock;
 wire [5:0]	kbd_keys_osd;
 
 `ifdef WITH_KEYBOARD
@@ -506,10 +507,10 @@ wire [5:0]	kbd_keys_osd;
 		.key_ctrl(kbd_key_ctrl), 
 		.key_rus(kbd_key_rus), 
 		.key_blksbr(kbd_key_blksbr), 
-		.key_blkvvod(kbd_key_blkvvod),
-		.key_bushold(kbd_key_bushold),
+		.key_blkvvod(kbd_key_blkvvod_phy),
+		.key_bushold(kbd_key_scrolllock),
 		.key_osd(kbd_keys_osd),
-		.osd_active(scrollock_hold)
+		.osd_active(scrollock_osd)
 		);
 `else
 	assign kbd_rowbits = 8'hff;
@@ -518,7 +519,7 @@ wire [5:0]	kbd_keys_osd;
 	assign kbd_key_rus = 0;
 	assign kbd_key_blksbr = 0;
 	assign kbd_key_blkvvod = 0;
-	assign kbd_key_bushold = 0;
+	assign kbd_key_scrolllock = 0;
 `endif
 
 ///////////////
@@ -698,11 +699,16 @@ wire		floppy_rden  = io_read & floppy_sel;
 wire [7:0]	floppy_odata;
 wire [7:0]	floppy_leds;
 wire [7:0]	floppy_status;
+wire [7:0]	osd_command;
+
+wire		osd_command_bushold = osd_command[0];
+wire		osd_command_f12		= osd_command[1];
+wire		osd_command_f11		= osd_command[2];
 
 floppy flappy(
 	.clk(clk24), 
 	.ce(ce3v),  
-	.reset_n(mreset_n), 
+	.reset_n(KEY[0]), 		// to make it possible to change a floppy image, then press F11
 	
 	// sd card signals
 	.sd_dat(SD_DAT), 
@@ -723,8 +729,11 @@ floppy flappy(
 	.display_addr(osd_address),
 	.display_data(osd_data),
 	.display_wren(osd_wren),
+	.display_idata(osd_q),
 	
 	.keyboard_keys(kbd_keys_osd),
+	
+	.osd_command(osd_command),
 	
 	// debug 
 	.green_leds(floppy_leds),
@@ -736,7 +745,8 @@ floppy flappy(
 `else 
 wire		floppy_rden = 0;
 wire [7:0]	floppy_odata = 7'hff;
-wire [7:0]	floppy_status = 7'h00;
+wire [7:0]	floppy_status = 7'hff;
+wire [7:0]  osd_command = 7'h00;
 `endif
 
 ///////////////////////
@@ -746,7 +756,7 @@ wire			osd_hsync, osd_vsync; 	// provided by video.v
 reg				osd_active;
 reg	[7:0]		osd_colour;
 always @(posedge clk24)
-	if (scrollock_hold & osd_bg) begin
+	if (scrollock_osd & osd_bg) begin
 		osd_active <= 1;
 		osd_colour <= osd_fg ? 8'b11111110 : 8'b01011001;	// slightly greenish tint hopefully
 	end else 
@@ -756,7 +766,10 @@ wire			osd_fg;
 wire			osd_bg;
 wire			osd_wren;
 wire[7:0]		osd_data;
+wire[7:0]		osd_rq;
 wire[7:0]		osd_address;
+
+wire[7:0]		osd_q = osd_rq + 32;
 
 `ifdef WITH_OSD
 textmode osd(
@@ -768,11 +781,13 @@ textmode osd(
 	.background(osd_bg),
 	.address(osd_address),
 	.data(osd_data - 32),		// OSD encoding has 00 == 32
-	.wren(osd_wren)
+	.wren(osd_wren),
+	.q(osd_rq)
 	);
 `else
 assign osd_fg = 0;
 assign osd_bg = 0;
+assign osd_rq  = 0;
 `endif
 
 
@@ -803,7 +818,7 @@ wire		ay_rden = 1'b0;
 // Special keys //
 //////////////////
 
-wire	scrollock_hold;
+wire	scrollock_osd;
 wire	blksbr_reset_pulse;
 wire	disable_rom;
 
@@ -811,11 +826,11 @@ specialkeys skeys(
 				.clk(clk24), 
 				.cpu_ce(cpu_ce),
 				.reset_n(mreset_n), 
-				.key_blksbr(KEY[3] == 1'b0 || kbd_key_blksbr == 1'b1), 
-				.key_bushold(kbd_key_bushold),
+				.key_blksbr(KEY[3] == 1'b0 || kbd_key_blksbr == 1'b1 || osd_command_f12), 
+				.key_osd(kbd_key_scrolllock),
 				.o_disable_rom(disable_rom),
 				.o_blksbr_reset(blksbr_reset_pulse),
-				.o_bushold(scrollock_hold)
+				.o_osd(scrollock_osd)
 				);
 				
 always gledreg[8] <= disable_rom;				
