@@ -33,12 +33,12 @@ The matrix itself is simulated rather physically, see `rowbits` assignment in `v
 Special keys on the keyboard:
 ||*F11*||БЛК+ВВОД||сброс ПК с подключением ПЗУ загрузчика. Программа в загрузчике отслеживает состояние клавиш при старте и удерживая F1, F2, F1+F2 можно принудительно выбирать загрузку с кассеты, квазидиска или дискеты||
 ||*F12*||БЛК+СБР||запуск загруженной программы. При нажатии на эту клавишу, отключается ПЗУ загрузчика и осуществляется сброс процессора, который начинает исполнять программу в ОЗУ с адреса $0000||
-||*ScrollLock*||Forced Bus Hold||нажатие на эту клавишу переключает уровень сигнала HOLD. Первое нажатие останавливает процессор и отдает шину целиком в распоряжение JTAG интерфейса, повторное нажатие возобновляет работу процессора. JTAG и так своего не упустит, но можно пользоваться этой клавишей для приостановки работы программ||
+||*ScrollLock*||OSD Menu||нажатие на эту клавишу вызывает экранное меню из которого можно выбрать образ дискеты (DISK), сбросить ПК (RESET), перезапустить программу (RESTART), захватить шину для JTAG интерфейса/приостановить работу (HOLD).||
 ||*CapsLock*||РУС/ЛАТ||Переключение языка ввода в некоторых программах; см. красный светодиод #9||
 ||*Control*||УC||Ввод управляющих символов||
 ||*Shift*||CC||Смена регистра||
 ||*Alt*||ПС||Перевод строки||
-||??||СТР||Не знаю||
+||*Del*||СТР||Не знаю||
 
 See also: [http://www.quadibloc.com/comp/scan.htm Scan Codes Demystified]
 
@@ -86,17 +86,15 @@ Also see Technical_Description for Vector-06C port map, [VectorSecrets_by_Lebede
 
 == Practice ==
 
-=== CPU Requests ===
-||`CPU_REQUEST_READ` || 8'h10 || Request to read one sector at `oTRACK`, `oSECTOR`, bit1=drive,bit0=side (head #) ||
-||`CPU_REQUEST_WRITE`||8'h20 ||  Request to write one sector at `oTRACK`, `oSECTOR`; bit1=drive,bit0=side (head #) ||
-||`CPU_REQUEST_READADDR` || 8'h30|| Request to read sector address (return 6 byte header),bit 1=drive,bit0=side ||
-||`CPU_REQUEST_NOP`||8'h40|| A time waster ||
-||`CPU_REQUEST_ACK`|| 8'h80|| Acknowledge: clear CPU status bits ||
+-
+=== FDC Memory Map ===
+||0000-01FF||512||`lowmem_en`||Zeropage and 6502 stack||
+||0200-05FF||1024||`bufmem_en`||Disk exchange buffer||
+||0800-(8000)||18K||`rammem_en`||General purpose RAM||
+||E000-E0FF|| ||`ioports_en`||I/O area||
+||E100-E1FF||256||`osd_en`||Display RAM||
 
-After CPU has done with processing any request other than `CPU_REQUEST_ACK`, it sets two bits in `iCPU_STATUS`:
- * bit 0 == 1: operation complete
- * bit 1 == 1: operation was successful
-
+-
 === CPU I/O Ports ===
 Ports start at memory location $E000:
 ||E000||MMC_A: bit0 = SD_DAT3/CS||
@@ -112,7 +110,21 @@ Ports start at memory location $E000:
 ||E00A||CPU_STATUS (write-only) return status here||
 ||E00B||TRACK (read-only) track index from the hardware||
 ||EOOC||SECTOR (read-only) sector index from the hardware||
-||E010||GLEDS green leds||
+||E010||GLEDS green leds (wo)||
+||E011||OSD control (wo): {0,0,0,0,0,F11,F12,bus hold}||
+
+-
+=== CPU Requests ===
+||`CPU_REQUEST_READ` || 8'h10 || Request to read one sector at `oTRACK`, `oSECTOR`, bit1=drive,bit0=side (head #) ||
+||`CPU_REQUEST_WRITE`||8'h20 ||  Request to write one sector at `oTRACK`, `oSECTOR`; bit1=drive,bit0=side (head #) ||
+||`CPU_REQUEST_READADDR` || 8'h30|| Request to read sector address (return 6 byte header),bit 1=drive,bit0=side ||
+||`CPU_REQUEST_NOP`||8'h40|| A time waster ||
+||`CPU_REQUEST_ACK`|| 8'h80|| Acknowledge: clear CPU status bits ||
+
+After CPU has done with processing any request other than `CPU_REQUEST_ACK`, it sets two bits in `iCPU_STATUS`:
+ * bit 0 == 1: operation complete
+ * bit 1 == 1: operation was successful
+
 
 --
 
