@@ -1,3 +1,22 @@
+// ====================================================================
+//                         VECTOR-06C FPGA REPLICA
+//
+//                  Copyright (C) 2007,2008 Viacheslav Slavinsky
+//
+// This code is distributed under modified BSD license. 
+// For complete licensing information see LICENSE.TXT.
+// -------------------------------------------------------------------- 
+//
+// An open implementation of Vector-06C home computer
+//
+// Author: Viacheslav Slavinsky, http://sensi.org/~svo
+// 
+// Source file: philes.c
+//
+// FAT FS toplevel interface
+//
+// --------------------------------------------------------------------
+
 #include "integer.h"
 #include "philes.h"
 #include "diskio.h"
