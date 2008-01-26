@@ -67,17 +67,14 @@ _This section describes work in progress_
 
 == Theory (Fantasy) ==
 === Overview ===
-The floppy drive system is being implemented as a separate entity based on a 6502 CPU. M4K blocks are used for memory, namely 24576 bytes of main ram + 256 bytes of zero page and stack ram. According to Quartus report, 201984 memory bits are used, which is 84% of the device on DE1 and which is most likely unacceptable. 
+The floppy drive system is implemented as a separate entity based on a 6502 CPU. All used memory (see breakdown below) fits within existing M4K blocks of a Cyclone II. According to Quartus reports, total of 86% of memory bits are used.
 
 The code that lives in the 6502 unit is written in C and compiled by [http://www.cc65.org cc65] compiler. C language library, crt0.s and linker configuration file, vector.lc, are provided. Architecture is mostly defined by vector.lc file which contains memory map and specialio.h, which defines I/O locations. It seems that for succesful operation, memory size 1 byte smaller than real should be specified -- ~~must~~ could be investigated. 
 
-=== Code size concerns ===
 FAT support is based on Elm-Chan's awesome [http://elm-chan.org/fsw/ff/00index_e.html Generic FAT Filesystem module]. This module is the best one can ever wish for, providing most everything out of the box. However, being exceptionally robust, it's also not tiny.
 
-cc65 produces some fat code, although knowing the 6502, cc65 is probably not to be blamed. On a positive note, it's a fully functional _real_ C and not some fake paw mockup. Complete code probably will NOT fit in 16K and that would change the design dramatically, requiring access to SRAM and a fetch of full-fledged ROM-image from the SD card by a smaller ROM-image.
-
 === WD1793 ===
-Vector used a Russki clone of WD1793 floppy drive controller. It is called so because the design originates from Marie Antoinette, for which she was guillotined in 1793.
+Some information about WD1793:
  * [http://www.hansotten.com/msxwd1793.html MSX Info Pages of WD1793]
  * [http://svn.akop.org/psp/trunk/fms/EMULib/ EMULib has C-source of the WD1793 emulator]
  * [http://elm-chan.org/docs/mmc/mmc_e.html ELM: How to MMC/SD]
