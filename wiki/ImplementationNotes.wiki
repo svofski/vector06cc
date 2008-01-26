@@ -63,7 +63,7 @@ Important signals in the toplevel:
 See also: [ramdisk Описание функционирования квазидиска], [JTAG_Implementation].
 
 = Floppy Drive =
-_This section describes work in progress_
+_This section describes work in progress. See also [HOWTO_Floppy]._
 
 == Theory (Fantasy) ==
 === Overview ===
