@@ -691,19 +691,21 @@ end
 //////////////////////////////////
 // Floppy Disk Controller ports //
 //////////////////////////////////
-`ifdef WITH_FLOPPY
 
-wire		floppy_sel = portmap_device[2:1] == 2'b11; // both 110 and 111
-wire		floppy_wren = ~WR_n & io_write & floppy_sel;
-wire		floppy_rden  = io_read & floppy_sel;
-wire [7:0]	floppy_odata;
-wire [7:0]	floppy_leds;
-wire [7:0]	floppy_status;
 wire [7:0]	osd_command;
 
 wire		osd_command_bushold = osd_command[0];
 wire		osd_command_f12		= osd_command[1];
 wire		osd_command_f11		= osd_command[2];
+
+wire [7:0]	floppy_leds;
+
+`ifdef WITH_FLOPPY
+wire		floppy_sel = portmap_device[2:1] == 2'b11; // both 110 and 111
+wire		floppy_wren = ~WR_n & io_write & floppy_sel;
+wire		floppy_rden  = io_read & floppy_sel;
+wire [7:0]	floppy_odata;
+wire [7:0]	floppy_status;
 
 floppy flappy(
 	.clk(clk24), 
@@ -746,7 +748,6 @@ floppy flappy(
 wire		floppy_rden = 0;
 wire [7:0]	floppy_odata = 7'hff;
 wire [7:0]	floppy_status = 7'hff;
-wire [7:0]  osd_command = 7'h00;
 `endif
 
 ///////////////////////
