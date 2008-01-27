@@ -13,8 +13,10 @@
 `soundcodec.v` has very simple interface. 
 ||`clk18`||in||1||18MHz master clock for the codec||
 ||`pulses`||in||4||1-bit sound streams, they're sampled into clk18 clock domain||
+||`pcm`||in||8||8-bit mono PCM stream from AY||
 ||`tapein`||out||1||1-bit tape input, passed through adaptive threshold||
 ||`reset_n`||in||1||reset||
+||`oAUD_XCK`||out||1||connect to AUD_XCK||
 ||`oAUD_BCK`||out||1||audio bit clock||
 ||`oAUD_DATA`||out||1||audio data||
 ||`oAUD_LRCK`||out||1||audio L/R clock||
@@ -32,4 +34,4 @@ The other module that has to be explicitly instantiated is `I2C_AV_Config`. It c
 After reset is reasserted high, I2C_AV_Config sends configuration to the codec chip and soundcodec.v starts data exchange through audio_io.v. Line input is passed through an adaptive threshold to make loading from "tape" easier. "Music" outputs are filtered through a very simple moving averager. Parameters of adaptive thresholder and averager are found experimentally.
 
 = 8253 Programmable Interrupt Timer =
-Original Vector-06C used a 8253 chip to generate 3-channel audio. 8253.v is a pretty ineffective behavioral description of 8253 PIT based on Intel datasheet. I didn't bother myself with redesigning the whole thing, this module just mimics what's enough for fair sound reproduction. Modes that can be useful for sound are faithful to the original though. Modes 1 and 5 are not implemented at all, GATE inputs are not used.
+Original Vector-06C used a 8253 chip to generate 3-channel audio. 8253.v is (an ineffective) behavioral description of 8253 PIT based on Intel datasheet. I didn't bother myself with redesigning the whole thing, this module just mimics what's enough for fair sound reproduction. Modes that can be useful for sound are faithful to the original though. Modes 1 and 5 are not implemented at all, GATE inputs are not used.
