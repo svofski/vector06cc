@@ -10,7 +10,7 @@ Floppies are good (only) when emulated.
 
 Если что-то не так, можно посмотреть в консоль на RS-232:115200-8-N-1. Правда, вряд ли там можно увидеть чего-нибудь полезное.
 
-Образы дискет годятся традиционные .fdd 1024x5x2xNN, .mst вроде бы то же самое, но .mst нужно сначала переименовать в .fdd. Если диск не загрузочный, можно загрузить образ квазидиска -- тамошний МикроДОС будет видеть и дискету. Обмениваться файлами между диском и образом дискеты можно с помощью плагина MI_V004 к Far-у. Для запуска игры в формате .rom с диска, проще всего предаврительно переименовать файл в .com, тогда он будет запускаться как обычная дисковая программа.
+Образы дискет годятся традиционные .fdd 1024x5x2xNN, .mst вроде бы то же самое, но .mst нужно сначала переименовать в .fdd. Если диск не загрузочный, можно загрузить образ квазидиска -- тамошний МикроДОС будет видеть и дискету. Обмениваться файлами между диском и образом дискеты можно с помощью плагина MI_V004 к Far-у. Для запуска игры в формате .rom с диска, проще всего предаврительно переименовать файл в .com, тогда он будет запускаться как обычная дисковая программа [_последнее верно для большинства, но не для всех программ_].
 
 Для загрузки с дискеты при загруженном квазидиске нужно крепко удерживать F1+F2 при сбросе через F11 или KEY0.
 
@@ -21,7 +21,7 @@ If something doesn't work as expected, you can check out debug output on the ser
 
 If ramdisk is loaded with a bootable image, but you need to reboot from a floppy, hold F1+F2 keys while resetting by F11 or KEY0.
 
-Files can be transferred to and fro floppies with the help of file exchange plugin for Far Manager. The (freeware) plugin can be found in the downloads section. To run a .rom file from disk, it must be renamed into .com before it is transferred to the .fdd image.
+Files can be transferred to and fro floppies with the help of file exchange plugin for Far Manager. The (freeware) plugin can be found in the downloads section. To run a .rom file from disk, it must be renamed into .com before it is transferred to the .fdd image [_the latter is true for most, but not all programs_].
 
 = See also =
 [GettingStarted Getting Started]
