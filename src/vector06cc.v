@@ -535,8 +535,8 @@ reg [7:0] peripheral_data_in;
 //							floppy_rden ? floppy_odata : 
 //							~vv55pu_oe_n ? vv55pu_odata : 8'hFF;
 always
-	case ({ay_rden, ~vv55int_oe_n, vi53_rden, floppy_rden, ~vv55pu_oe_n}) 
-		5'b10000: peripheral_data_in <= ay_rden;
+	case ({ay_rden, ~vv55int_oe_n, vi53_rden, floppy_rden, vv55pu_rden}) 
+		5'b10000: peripheral_data_in <= ay_odata;
 		5'b01000: peripheral_data_in <= vv55int_odata;
 		5'b00100: peripheral_data_in <= vi53_odata;
 		5'b00010: peripheral_data_in <= floppy_odata;
@@ -641,9 +641,19 @@ wire		vv55pu_sel = portmap_device == 3'b001;
 
 wire [1:0] 	vv55pu_addr = 	~address_bus_r[1:0];
 wire [7:0] 	vv55pu_idata = DO;	
-wire [7:0] 	vv55pu_odata = 8'h00;
-wire		vv55pu_oe_n = ~(io_read & vv55pu_sel);
+wire [7:0] 	vv55pu_odata;
 
+wire 		vv55pu_rden = io_read & vv55pu_sel;
+wire 		vv55pu_wren = ~WR_n & io_write & vv55pu_sel;
+
+fake8255 fakepaw0(
+	.clk(clk24),
+	.ce(cpu_ce),
+	.addr(vv55pu_addr),
+	.idata(DO),
+	.odata(vv55pu_odata),
+	.wren(vv55pu_wren),
+	.rden(vv55pu_rden));
 
 ////////////////////////////////
 // 580VI53 timer: ports 08-0B //
@@ -797,7 +807,7 @@ assign osd_rq  = 0;
 // AY //
 ////////
 `ifdef WITH_AY
-wire		ay_sel = portmap_device == 3'b101; 
+wire		ay_sel = portmap_device == 3'b101 && address_bus_r[1] == 0; // only ports $14 and $15
 wire		ay_wren = ~WR_n & io_write & ay_sel;
 wire		ay_rden = io_read & ay_sel;
 wire [7:0]	ay_odata;
@@ -805,7 +815,7 @@ wire [7:0]	ay_sound;
 ayglue shrieker(.clk(clk24), 
 				.ce(cpu_ce),
 				.reset_n(mreset_n), 
-				.address(address_bus_r[1:0]),
+				.address(address_bus_r[0]),
 				.data(DO), 
 				.q(ay_odata),
 				.wren(ay_wren),
@@ -867,5 +877,31 @@ jtag_top	tigertiger(
 				);
 
 endmodule
+
+///////////////////////
+// Fake 8255 for PPI //
+///////////////////////
+module fake8255(clk, ce, addr, idata, odata, wren, rden);
+input 		clk;
+input 		ce;
+input [1:0]	addr;
+input [7:0]	idata;
+output[7:0] odata;
+input		wren;
+input		rden;
+
+assign odata = 8'h00;
+
+/*
+assign odata = fakepu_regs[addr];
+reg [7:0] fakepu_regs[3:0];
+always @(posedge clk24) if (ce) begin: _fake_pu
+	if (vv55pu_wren) begin
+		fakepu_regs[addr] = idata;
+	end
+end
+*/
+endmodule
+
 
 // $Id$
