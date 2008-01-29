@@ -31,7 +31,9 @@
 //						 0:	CPU address bus
 //						 1: TState counter
 //
-//	SW6-5			not used
+//	SW6				disable tape in
+//
+//  SW5				not used
 //
 //	SW7				manual bus hold, recommended for SRAM <-> JTAG exchange operations
 //
@@ -54,6 +56,7 @@
 `define WITH_FLOPPY
 `define WITH_OSD
 `define JTAG_AUTOHOLD
+//`define TWO_PLL_OK // use second PLL to generate clean 14.0MHz for the AY, use 13.93MHz otherwise
 
 module vector06cc(CLOCK_27, KEY[3:0], LEDr[9:0], LEDg[7:0], SW[9:0], HEX0, HEX1, HEX2, HEX3, 
 		////////////////////	SRAM Interface		////////////////
@@ -168,13 +171,14 @@ output [12:0] 	GPIO_0;
 // CLOCK SETUP
 wire mreset_n = KEY[0] & ~kbd_key_blkvvod;
 wire mreset = !mreset_n;
-wire clk24, clk18;
+wire clk24, clk18, clk14;
 wire ce12, ce6, ce3, ce3v, vi53_timer_ce, video_slice, pipe_ab;
 
 clockster clockmaker(
-	.clk(CLOCK_27[0]), 
+	.clk(CLOCK_27), 
 	.clk24(clk24), 
 	.clk18(clk18), 
+	.clk14(clk14),
 	.ce12(ce12), 
 	.ce6(ce6),
 	.ce3(ce3), 
@@ -632,7 +636,7 @@ always @(kbd_key_shift or kbd_key_ctrl or kbd_key_rus) begin
 	vv55int_pc_in[6] <= ~kbd_key_ctrl;
 	vv55int_pc_in[7] <= ~kbd_key_rus;
 end
-always @(tape_input) vv55int_pc_in[4] <= tape_input;
+always @(tape_input) vv55int_pc_in[4] <= ~SW[6] & tape_input;
 
 //////////////////////
 // vv55 #1, fake PU //
@@ -812,8 +816,12 @@ wire		ay_wren = ~WR_n & io_write & ay_sel;
 wire		ay_rden = io_read & ay_sel;
 wire [7:0]	ay_odata;
 wire [7:0]	ay_sound;
-ayglue shrieker(.clk(clk24), 
-				.ce(cpu_ce),
+
+reg [2:0] aycectr;
+always @(posedge clk14) aycectr <= aycectr + 1;
+
+ayglue shrieker(.clk(clk14), 
+				.ce(aycectr == 0),
 				.reset_n(mreset_n), 
 				.address(address_bus_r[0]),
 				.data(DO), 

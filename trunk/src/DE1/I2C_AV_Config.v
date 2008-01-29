@@ -130,7 +130,7 @@ begin
 		A_PATH_CTRL	:	LUT_DATA	<=	16'h08F2; //16'h08F8;
 		D_PATH_CTRL	:	LUT_DATA	<=	16'h0A06;
 		POWER_ON	:	LUT_DATA	<=	16'h0C00;
-		SET_FORMAT	:	LUT_DATA	<=	16'h0E01;
+		SET_FORMAT	:	LUT_DATA	<=	16'h0E01;		// MSB first left-justified, 16-bit
 		SAMPLE_CTRL	:	LUT_DATA	<=	16'h1002;
 		SET_ACTIVE	:	LUT_DATA	<=	16'h1201;
 		default		:	LUT_DATA	<=	16'h0000;

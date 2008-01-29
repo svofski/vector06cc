@@ -251,6 +251,7 @@ set_global_assignment -name VERILOG_FILE src/keyboard/scan2matrix.v
 set_global_assignment -name VERILOG_FILE src/keyboard/ps2k.v
 set_global_assignment -name VERILOG_FILE src/keyboard/vectorkeys.v
 set_global_assignment -name VERILOG_FILE src/altmodules/mclk24mhz.v
+set_global_assignment -name VERILOG_FILE src/altmodules/mclk14mhz.v
 set_global_assignment -name VERILOG_FILE src/altmodules/palette_ram.v
 set_global_assignment -name VERILOG_FILE src/DE1/I2C_AV_Config.v
 set_global_assignment -name VERILOG_FILE src/DE1/USB_JTAG.v

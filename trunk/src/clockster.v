@@ -19,10 +19,11 @@
 
 `default_nettype none
 
-module clockster(clk, clk24, clk18, ce12, ce6, ce3, ce3v, video_slice, pipe_ab, ce1m5);
-input clk;
+module clockster(clk, clk24, clk18, clk14, ce12, ce6, ce3, ce3v, video_slice, pipe_ab, ce1m5);
+input  [1:0] clk;
 output clk24;
 output clk18;
+output clk14;
 output ce12 = qce12;
 output ce6 = qce6;
 output ce3 = qce3;
@@ -38,7 +39,18 @@ reg[4:0] initctr;
 reg qce12, qce6, qce3, qce3v, qvideo_slice, qpipe_ab, qce1m5;
 
 wire lock;
-mclk24mhz vector_quartz(clk, clk24, clk18, lock);
+wire clk13_93;
+wire clk14_00;
+
+mclk24mhz vector_quartz(clk[0], clk24, clk18, clk13_93, lock);
+
+
+`ifdef TWO_PLL_OK
+assign clk14 = clk14_00;
+mclk14mhz ay_quartz(.inclk0(clk[1]), .c0(clk14_00));
+`else
+assign clk14 = clk13_93;
+`endif
 
 always @(posedge clk24) begin
 	if (initctr != 3) begin
