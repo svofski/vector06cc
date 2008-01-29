@@ -215,10 +215,11 @@ begin
             when "11" => if (I_DATA(7) = '0') then -- set/clr
                            r_portc <= r_portc_masked or r_portc_setclr;
                          else
-                           --mode_clear <= '1';
-                           --r_porta    <= x"00";
-                           --r_portb    <= x"00"; -- clear port b input reg
-                           --r_portc    <= x"00"; -- clear control sigs
+                           --svo: uncommented
+                           mode_clear <= '1';
+                           r_porta    <= x"00";
+                           r_portb    <= x"00"; -- clear port b input reg
+                           r_portc    <= x"00"; -- clear control sigs
                            r_control  <= I_DATA; -- load new mode
                          end if;
             when others => null;
