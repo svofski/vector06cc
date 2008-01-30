@@ -1,6 +1,11 @@
 #summary Here be the manually updated log of significant changes
 #labels Featured,Phase-Implementation
 
+=== SVN ===
+ * Video scroll reg is cleared on 8255 mode set, fixes screen jumping in MUSICIAN.ROM;
+ * YM2149 is now clocked by 1.75MHz, as appropriate, uses separate PLL when `TWO_PLL_OK` is defined; otherwise, primary PLL is used and resulting clock frequency is 1.8MHz, which is not bad at all either (36 cents difference);
+ * Tape input can be disabled by setting SW6 up ("1") (ZAS viewer skips otherwise);
+
 === Rev.234 ===
  * OSD! Toggled by ScrollLock, allows changing floppy images, reset, restart, bus hold
  * converted retrace interrupt into a latch, reset by !INTE, hoping for better compat
