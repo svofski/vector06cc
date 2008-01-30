@@ -19,8 +19,9 @@
 
 `default_nettype none
 
-module clockster(clk, clk24, clk18, clk14, ce12, ce6, ce3, ce3v, video_slice, pipe_ab, ce1m5);
-input  [1:0] clk;
+module clockster(clk, clk50, clk24, clk18, clk14, ce12, ce6, ce3, ce3v, video_slice, pipe_ab, ce1m5);
+input  [1:0] 	clk;
+input			clk50;
 output clk24;
 output clk18;
 output clk14;
@@ -47,7 +48,7 @@ mclk24mhz vector_quartz(clk[0], clk24, clk18, clk13_93, lock);
 
 `ifdef TWO_PLL_OK
 assign clk14 = clk14_00;
-mclk14mhz ay_quartz(.inclk0(clk[1]), .c0(clk14_00));
+mclk14mhz ay_quartz(.inclk0(clk50), .c0(clk14_00));
 `else
 assign clk14 = clk13_93;
 `endif
