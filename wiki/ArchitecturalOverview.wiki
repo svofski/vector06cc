@@ -1,0 +1,6 @@
+#summary A birds eye view of what's inside
+#labels Phase-Implementation
+
+[http://vector06cc.googlecode.com/svn/trunk/doc/computer.png]
+
+And that's it.
