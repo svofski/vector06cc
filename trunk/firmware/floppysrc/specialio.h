@@ -39,9 +39,13 @@
 #define 	IOPORT_CPUTRACK		0x0B
 #define		IOPORT_CPUSECTOR	0x0C
 
+#define		IOPORT_DMAMSB		0x0E
+#define		IOPORT_DMALSB		0x0F
+
 #define		IOPORT_GLEDS		0x10
 
 #define 	IOPORT_OSDCMD		0x11			/* F11,F12,HOLD */
+
 
 #define		DISPLAY_BASE		0xE100
 #define		DISPLAY_W			32
@@ -64,6 +68,10 @@
 #define		SLAVE_STATUS	(*((unsigned char *)(IOPORT_BASE+IOPORT_CPUSTAT)))
 #define  	MASTER_TRACK	(*((unsigned char *)(IOPORT_BASE+IOPORT_CPUTRACK)))	
 #define		MASTER_SECTOR	(*((unsigned char *)(IOPORT_BASE+IOPORT_CPUSECTOR)))
+
+#define  	DMAMSB		(*((unsigned char *)(IOPORT_BASE+IOPORT_DMAMSB)))	
+#define  	DMALSB		(*((unsigned char *)(IOPORT_BASE+IOPORT_DMALSB)))	
+
 
 #define		GREEN_LEDS	(*((unsigned char *)(IOPORT_BASE+IOPORT_GLEDS)))
 #define		OSD_CMD		(*((unsigned char *)(IOPORT_BASE+IOPORT_OSDCMD)))

@@ -1,7 +1,7 @@
 // ====================================================================
 //                         VECTOR-06C FPGA REPLICA
 //
-// 				  Copyright (C) 2007,2008 Viacheslav Slavinsky
+//               Copyright (C) 2007,2008 Viacheslav Slavinsky
 //
 // This core is distributed under modified BSD license. 
 // For complete licensing information see LICENSE.TXT.
@@ -755,6 +755,7 @@ floppy flappy(
 	
 	// debug 
 	.green_leds(floppy_leds),
+	//.red_leds(floppy_leds),
 	.debug(floppy_status),
 	
 	);
@@ -812,11 +813,12 @@ assign osd_rq  = 0;
 ////////
 // AY //
 ////////
+wire [7:0]	ay_odata;
+
 `ifdef WITH_AY
 wire		ay_sel = portmap_device == 3'b101 && address_bus_r[1] == 0; // only ports $14 and $15
 wire		ay_wren = ~WR_n & io_write & ay_sel;
 wire		ay_rden = io_read & ay_sel;
-wire [7:0]	ay_odata;
 wire [7:0]	ay_sound;
 
 reg [2:0] aycectr;

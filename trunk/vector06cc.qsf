@@ -222,6 +222,7 @@ set_global_assignment -name CYCLONEII_OPTIMIZATION_TECHNIQUE BALANCED
 set_global_assignment -name CYCLONEII_RESERVE_NCEO_AFTER_CONFIGURATION "USE AS REGULAR IO"
 set_global_assignment -name RESERVE_ASDO_AFTER_CONFIGURATION "AS INPUT TRI-STATED"
 set_global_assignment -name VECTOR_WAVEFORM_FILE clk50mhz.vwf
+set_global_assignment -name AUTO_MERGE_PLLS ON
 set_global_assignment -name VERILOG_FILE src/floppy/floppy.v
 set_global_assignment -name VERILOG_FILE src/floppy/floppyram.v
 set_global_assignment -name VHDL_FILE src/floppy/uart/txd.vhd
@@ -230,6 +231,7 @@ set_global_assignment -name VERILOG_FILE src/floppy/floppyrom.v
 set_global_assignment -name VERILOG_FILE src/floppy/ram512x8a.v
 set_global_assignment -name VERILOG_FILE src/floppy/ram1024x8a.v
 set_global_assignment -name VERILOG_FILE src/floppy/spi.v
+set_global_assignment -name VERILOG_FILE src/floppy/dma_read.v
 set_global_assignment -name VERILOG_FILE src/floppy/timer100hz.v
 set_global_assignment -name VHDL_FILE src/floppy/65c02/cpu65xx_en.vhd
 set_global_assignment -name VERILOG_FILE src/vector06cc.v
@@ -274,4 +276,3 @@ set_global_assignment -name VHDL_FILE src/ay/YM2149_linmix.vhd
 set_global_assignment -name VERILOG_FILE src/osd/textmode.v
 set_global_assignment -name VERILOG_FILE src/osd/chargen.v
 set_global_assignment -name VERILOG_FILE src/osd/screenbuffer.v
-set_global_assignment -name AUTO_MERGE_PLLS ON

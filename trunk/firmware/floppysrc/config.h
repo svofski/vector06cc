@@ -1,6 +1,8 @@
 #ifndef _CONFIG_H
 #define _CONFIG_H
 
+#define WITH_DMA
+
 #define WITH_SERIAL
 
 #define VERBOSE 1	// 1: mostly quiet

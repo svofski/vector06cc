@@ -8,7 +8,7 @@
 //#include "vector/io.h"
 #include "specialio.h"
 #include "diskio.h"
-
+#include "serial.h"
 
 /* Definitions for MMC/SDC command */
 #define CMD0	(0x40+0)	/* GO_IDLE_STATE */
@@ -193,6 +193,7 @@ BYTE chk_power(void)		/* Socket power state: 0=off, 1=on */
 /* Receive a data packet from MMC                                        */
 /*-----------------------------------------------------------------------*/
 
+#ifdef WITH_DMA
 static
 BOOL rcvr_datablock (
 	BYTE *buff,			/* Data buffer to store received data */
@@ -201,6 +202,30 @@ BOOL rcvr_datablock (
 {
 	BYTE token;
 
+	Timer1 = 10;
+	do {							/* Wait for data packet in timeout of 100ms */
+		token = rcvr_spi();
+	} while ((token == 0xFF) && Timer1);
+	if(token != 0xFE) return FALSE;	/* If not valid data token, retutn with error */
+
+	DMAMSB = ((WORD)buff) >> 8;
+	DMALSB = ((WORD)buff) & 0x00FF;
+	SPSR   = (btr/512) << 4;		// enable transfer
+	
+	rcvr_spi();						/* Discard CRC */
+	rcvr_spi();
+
+	return TRUE;					/* Return with success */
+}
+
+#else
+static
+BOOL rcvr_datablock (
+	BYTE *buff,			/* Data buffer to store received data */
+	UINT btr			/* Byte count (must be even number) */
+)
+{
+	BYTE token;
 
 	Timer1 = 10;
 	do {							/* Wait for data packet in timeout of 100ms */
@@ -217,8 +242,7 @@ BOOL rcvr_datablock (
 
 	return TRUE;					/* Return with success */
 }
-
-
+#endif
 
 /*-----------------------------------------------------------------------*/
 /* Send a data packet to MMC                                             */
