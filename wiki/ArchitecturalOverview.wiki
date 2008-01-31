@@ -4,3 +4,5 @@
 [http://vector06cc.googlecode.com/svn/trunk/doc/computer.png]
 
 And that's it.
+
+See [ImplementationNotes]
