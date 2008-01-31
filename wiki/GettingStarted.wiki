@@ -8,7 +8,7 @@ The original Vector-06C computer uses a KR580 CPU, which is a clone of Intel 808
 
  Это хардверный проект. Для того чтобы увидеть что это такое, необходима специальная плата с соответствующей FPGA и периферией. На момент написания этого документа, такая плата только одна и называется она Altera Cyclone II Starter Kit, или Altera DE1. 
 
- Настоящий Вектор-06Ц был построен на процессоре КР580. Этот проект использует softcore процессор T80 Даниеля Валнера. T80 разрабатывался прежде всего как Z80 и, хотя у него есть режим 8080, пришлось внести некоторое количество изменений в оригинальный код. В частности, были исправлены времена исполнения некоторых команд и был добавлен сигнал STACK к слову состояния процессора. Так же исправлены сигналы HOLD/HLDA.
+ Настоящий Вектор-06Ц был построен на процессоре КР580. Этот проект использует softcore процессор T80 Даниеля Валнера. T80 разрабатывался прежде всего как Z80 и, хотя у него был предусмотрен режим 8080, мне пришлось внести некоторое количество изменений в оригинальный код. В частности, были исправлены времена исполнения многих инструкций, к слову состояния был добавлен сигнал STACK, добавлены "недокументированные" инструкции, "испорчена" инструкция DAA.. Так же исправлены сигналы HOLD/HLDA.
 
 == Requirements ==
 Basically you only need one thing: [http://www.altera.com/products/devkits/altera/kit-cyc2-2C20N.html Cyclone II Starter Kit or Altera DE1]. If you don't have one and have a different board, you're *intensely* welcome to port this project to that board. It is of course a good idea to keep the portage stuff clean and separate, so that different hardware adaptations would use a single source base.
