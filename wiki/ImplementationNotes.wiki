@@ -7,6 +7,7 @@
  * Mock Disk
  * Floppy Drive
  * On-Screen Display
+ * Sound 
 
 = Clock distribution =
 
@@ -143,3 +144,6 @@ When OSD is active, its display is overlaid on top of the primary display. High 
 
 == Input ==
 When ScrollLock key is pressed, "not in matrix" bit is forced for all keys in the keyboard driver. Instead, Arrow keys and the Enter key start toggling corresponding bits in the OSD joystick ($E003) register.
+
+= Sound =
+See [SoundCodec]
