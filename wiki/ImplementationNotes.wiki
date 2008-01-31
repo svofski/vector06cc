@@ -1,6 +1,8 @@
 #summary FPGA implementation notes
 #labels Phase-Design,Featured
 
+This page contains constantly updated project notes. Also see ArchitecturalOverview.
+
 = Contents =
  * Clock distribution
  * Keyboard
