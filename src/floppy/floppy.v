@@ -3,7 +3,7 @@
 // ====================================================================
 //                         VECTOR-06C FPGA REPLICA
 //
-// 					Copyright (C) 2007, Viacheslav Slavinsky
+//                Copyright (C) 2007,2008 Viacheslav Slavinsky
 //
 // This core is distributed under modified BSD license. 
 // For complete licensing information see LICENSE.TXT.
@@ -67,6 +67,9 @@ parameter PORT_CPU_STATUS	= 10;
 parameter PORT_TRACK		= 11;
 parameter PORT_SECTOR		= 12;
 
+parameter PORT_DMA_MSB = 14;	// spi dma target address msb
+parameter PORT_DMA_LSB = 15;	// spi dma target address lsb
+
 parameter PORT_LED = 16;
 parameter PORT_OSD_COMMAND = 17;		// {F11,F12,HOLD}
 
@@ -102,24 +105,29 @@ input   [7:0]	display_idata;
 output reg[7:0] osd_command;
 output reg[7:0]	green_leds;
 
-output  [7:0]	red_leds = cpu_di;
+output  [7:0]	red_leds = {spi_wren,dma_debug[6:0]};
 output	[7:0]	debug = {ce & bufmem_en, ce, hostio_rd, wd_ram_rd};//wdport_status;
 output	[7:0]	debugidata = {timer1q};
 
-wire [15:0] cpu_a;
+wire [15:0] cpu_ax;
+wire		memwrx;
+wire [7:0]	cpu_dox;
+
+wire [15:0] cpu_a = dma_ready ? cpu_ax  : dma_oaddr;
+assign		memwr = dma_ready ? memwrx  : dma_memwr;
+wire [7:0]	cpu_do = dma_ready ? cpu_dox: dma_odata;
 reg  [7:0]	cpu_di;
-wire [7:0]	cpu_do;
 
 cpu65xx_en cpu(
 		.clk(clk),
 		.reset(~reset_n),
-		.enable(ce & ~(wd_ram_rd|wd_ram_wr)),
+		.enable(ce & ~(wd_ram_rd|wd_ram_wr|~dma_ready)),
 		.nmi_n(1'b1),
 		.irq_n(1'b1),
 		.di(cpu_di),
-		.do(cpu_do),
-		.addr(cpu_a),
-		.we(memwr)
+		.do(cpu_dox),
+		.addr(cpu_ax),
+		.we(memwrx)
 	);
 
 
@@ -128,13 +136,6 @@ wire [7:0] 	lowmem_do;
 wire [7:0]	bufmem_do;
 reg  [7:0]	ioports_do;
 
-/*
-assign cpu_di = &cpu_a[15:4] ? (cpu_a[0] ? 8'h08:8'h00) // boot addr
-							: lowmem_en ? lowmem_do :
-							  bufmem_en ? bufmem_do :
-							  rammem_en ? ram_do : 
-							  osd_en    ? display_idata :  ioports_do;
-*/							
 always begin: _cpu_datain
 	case({&cpu_a[15:4], lowmem_en, bufmem_en, rammem_en, osd_en}) 
 	5'b10000:	cpu_di <= (cpu_a[0] ? 8'h08:8'h00);
@@ -148,7 +149,6 @@ end
 
 wire lowmem_en = |cpu_a[15:9] == 0;
 wire bufmem_en = (wd_ram_rd|wd_ram_wr) || (cpu_a >= 16'h200 && cpu_a < 16'h600);
-//wire rammem_en = cpu_a >= 16'h0800 && cpu_a < 16'h0800 + 32768;
 wire rammem_en = cpu_a >= 16'h0800 && cpu_a < 16'h8000;
 wire ioports_en= cpu_a >= IOBASE && cpu_a < IOBASE + 256;
 wire osd_en = cpu_a >= IOBASE + 256 && cpu_a < IOBASE + 512;
@@ -174,6 +174,10 @@ ram512x8a zeropa(
 	.wren(memwr),
 	.data(cpu_do),
 	.q(lowmem_do));
+
+//wire	[15:0]	dma_oaddr;
+//wire	[7:0]	dma_odata;
+//wire			dma_owren;
 
 
 wire [9:0]	bufmem_addr = (wd_ram_rd|wd_ram_wr) ? wd_ram_addr : cpu_a - 16'h200;
@@ -219,29 +223,40 @@ always @(posedge clk or negedge reset_n) begin
 		sd_dat3 <= 1;
 	end else begin
 		if (ce) begin
-			if (memwr && cpu_a == 16'hE010) begin
-				green_leds <= cpu_do;
+			if (memwr && cpu_a[15:8] == 8'hE0) begin
+				if (cpu_a[7:0] == 8'h10) begin
+					green_leds <= cpu_do;
+				end
+				
+				// E004: send data
+				if (cpu_a[7:0] == PORT_TXD) begin
+					uart_data <= cpu_do;
+					uart_state <= 0;
+				end
+				
+				// MMCA: SD/MMC card chip select
+				if (cpu_a[7:0] == PORT_MMCA) begin
+					sd_dat3 <= cpu_do[0];
+				end
+				
+				// CPU status return
+				if (cpu_a[7:0] == PORT_CPU_STATUS) begin
+					wdport_cpu_status <= cpu_do;
+				end
+				
+				if (cpu_a[7:0] == PORT_OSD_COMMAND) begin
+					osd_command <= cpu_do;
+				end
+				
+				// DMA
+				if (cpu_a[7:0] == PORT_DMA_MSB) dma_msb <= cpu_do;
+				if (cpu_a[7:0] == PORT_DMA_LSB) dma_lsb <= cpu_do;
+				
+				if (cpu_a[7:0] == PORT_SPSR) begin
+					dma_blocks <= cpu_do[7:4];
+				end 
 			end
-			
-			// E004: send data
-			if (memwr && cpu_a == IOBASE+PORT_TXD) begin
-				uart_data <= cpu_do;
-				uart_state <= 0;
-			end
-			
-			// MMCA: SD/MMC card chip select
-			if (memwr && cpu_a == IOBASE+PORT_MMCA) begin
-				sd_dat3 <= cpu_do[0];
-			end
-			
-			// CPU status return
-			if (memwr && cpu_a == IOBASE+PORT_CPU_STATUS) begin
-				wdport_cpu_status <= cpu_do;
-			end
-			
-			if (memwr && cpu_a == IOBASE+PORT_OSD_COMMAND) begin
-				osd_command <= cpu_do;
-			end
+			else dma_blocks <= 4'h0;
 			
 			// uart state machine
 			case (uart_state) 
@@ -301,19 +316,44 @@ timer100hz timer2(.clk(clk), .di(cpu_do), .wren(ce && cpu_a==(IOBASE+PORT_TMR2) 
 
 wire [7:0] 	spdr_do;
 wire		spdr_dsr;
-
+wire		spi_wren = (ce && (cpu_a == (IOBASE+PORT_SPDR) && memwr)) || dma_spiwr;
 spi sd0(.clk(clk),
 		.ce(1'b1),
 		.reset_n(reset_n),
 		.mosi(sd_cmd),
 		.miso(sd_dat),
 		.sck(sd_clk),
-		.di(cpu_do), 
-		.wr(ce && cpu_a == (IOBASE+PORT_SPDR) && memwr), 
+		.di(dma_ready ? cpu_do : dma_spido), 
+		.wr(spi_wren), 
 		.do(spdr_do), 
 		.dsr(spdr_dsr)
 		);
 
+reg 	[7:0] 	dma_lsb, dma_msb;
+wire	[15:0]	dma_oaddr;
+wire	[7:0]	dma_odata;
+wire			dma_memwr;
+reg		[3:0]	dma_blocks;
+wire			dma_ready;
+wire	[7:0]	dma_spido;
+wire			dma_spiwr;
+wire	[7:0]	dma_debug;
+
+dma_read dmar0(
+		.clk(clk), 
+		.ce(ce), 
+		.reset_n(reset_n), 
+		.iaddr({dma_msb,dma_lsb}),
+		.oaddr(dma_oaddr), 
+		.odata(dma_odata), 
+		.owren(dma_memwr), 
+		.nblocks(dma_blocks), 
+		.ready(dma_ready), 
+		.ospi_data(dma_spido), 
+		.ispi_data(spdr_do), 
+		.ospi_wr(dma_spiwr), 
+		.ispi_dsr(spdr_dsr),
+		.debug(dma_debug));
 
 ////////////
 // WD1793 //
@@ -365,56 +405,6 @@ wd1793 vg93(
 				.oCPU_REQUEST(wdport_cpu_request),
 				.iCPU_STATUS(wdport_cpu_status)
 				);
-endmodule
-
-
-module ram512x8_a(clk, ce, addr, wren, di, q);
-input clk, ce;
-input [8:0] addr;
-input 		wren;
-input [7:0]	di;
-output[7:0]	q;
-
-	altsyncram	altsyncram_component (
-				.wren_a (wren),
-				.clock0 (clk),
-				.address_a(addr),
-				.data_a (di),
-				.q_a (q),
-				.aclr0 (1'b0),
-				.aclr1 (1'b0),
-				.address_b (1'b1),
-				.addressstall_a (1'b0),
-				.addressstall_b (1'b0),
-				.byteena_a (1'b1),
-				.byteena_b (1'b1),
-				.clock1 (1'b1),
-				.clocken0 (1'b1),
-				.clocken1 (1'b1),
-				.clocken2 (1'b1),
-				.clocken3 (1'b1),
-				.data_b (1'b1),
-				.eccstatus (),
-				.q_b (),
-				.rden_a (1'b1),
-				.rden_b (1'b1),
-				.wren_b (1'b0));
-	defparam
-		altsyncram_component.clock_enable_input_a = "BYPASS",
-		altsyncram_component.clock_enable_output_a = "BYPASS",
-		altsyncram_component.intended_device_family = "Cyclone II",
-		altsyncram_component.lpm_hint = "ENABLE_RUNTIME_MOD=NO",
-		altsyncram_component.lpm_type = "altsyncram",
-		altsyncram_component.numwords_a = 512,
-		altsyncram_component.operation_mode = "SINGLE_PORT",
-		altsyncram_component.outdata_aclr_a = "NONE",
-		altsyncram_component.outdata_reg_a = "UNREGISTERED",
-		altsyncram_component.power_up_uninitialized = "TRUE",
-		altsyncram_component.widthad_a = 9,
-		altsyncram_component.width_a = 8,
-		altsyncram_component.width_byteena_a = 1;
-
-
 endmodule
 
 // lower memory:
