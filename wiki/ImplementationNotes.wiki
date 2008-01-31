@@ -100,7 +100,7 @@ Also see Technical_Description for Vector-06C port map, [VectorSecrets_by_Lebede
 Ports start at memory location $E000:
 ||E000||MMC_A: bit0 = SD_DAT3/CS||
 ||E001||SPDR: SPI data register, same as in AVR||
-||E002||SPSR: SPI status register, only SPIF (bit 0) is implemented||
+||E002||SPSR: read: SPI status register: bit 0=SPIF; write: bits [7:4] number of 512-byte blocks to read||
 ||E003||OSD Joystick: {0,0,0,Right,Left,Up,Down,Fire}||
 ||E004||TxD||
 ||E005||RxD (not implemented)||
@@ -111,6 +111,8 @@ Ports start at memory location $E000:
 ||E00A||CPU_STATUS (write-only) return status here||
 ||E00B||TRACK (read-only) track index from the hardware||
 ||EOOC||SECTOR (read-only) sector index from the hardware||
+||EOOE||DMA buffer start MSB||
+||EOOF||DMA buffer start LSB||
 ||E010||GLEDS green leds (wo)||
 ||E011||OSD control (wo): {0,0,0,0,0,F11,F12,bus hold}||
 
