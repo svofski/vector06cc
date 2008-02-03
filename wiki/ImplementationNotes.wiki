@@ -4,7 +4,7 @@
 This page contains constantly updated project notes. Also see ArchitecturalOverview.
 
 = Contents =
- * Clock distribution
+ * [Clock_distribution Clock distribution]
  * Keyboard
  * Mock Disk
  * Floppy Drive
