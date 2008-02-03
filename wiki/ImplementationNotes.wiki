@@ -5,11 +5,11 @@ This page contains constantly updated project notes. Also see ArchitecturalOverv
 
 = Contents =
  * [ImplementationNotes#Clock_Distribution Clock distribution]
- * Keyboard
- * Mock Disk
- * Floppy Drive
- * On-Screen Display
- * Sound 
+ * [ImplementationNotes#Keyboard]
+ * [ImplementationNotes#Mock_Disk]
+ * [ImplementationNotes#Floppy_Drive]
+ * [ImplementationNotes#On-Screen_Display]
+ * [ImplementationNotes#Sound]
 
 = Clock Distribution =
 
@@ -50,7 +50,8 @@ See also: [http://www.quadibloc.com/comp/scan.htm Scan Codes Demystified]
 See also: [Technical_Description Техническое описание] 
 
 ----
-= Mock Disk (kvaz, квазидиск) =
+= Mock Disk =
+_Aka kvaz, квазидиск_.
 
 Same SRAM chip is used for main memory and for the RAM disk. The complete memory map can be laid out approximately like this (addresses given in byte mode, divide by 2 for physical figures):
 ||00000||Main RAM||
