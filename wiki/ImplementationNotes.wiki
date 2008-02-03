@@ -8,6 +8,9 @@ This page contains constantly updated project notes. Also see ArchitecturalOverv
  * [ImplementationNotes#Keyboard Keyboard]
  * [ImplementationNotes#Mock_Disk Mock Disk (RAM disk)]
  * [ImplementationNotes#Floppy_Drive Floppy Drive]
+   * [ImplementationNotes#Theory Theory]
+     * [ImplementationNotes#Theory#Overview Overview]
+     * [ImplementationNotes#Theory#WD1793 WD1793]
  * [ImplementationNotes#OSD_Menu On-Screen Display]
  * [ImplementationNotes#Sound Sound Interface]
 
@@ -73,7 +76,7 @@ See also: [ramdisk Описание функционирования квази�
 = Floppy Drive =
 _This section describes work in progress. See also [HOWTO_Floppy]._
 
-== Theory (Fantasy) ==
+== Theory ==
 === Overview ===
 The floppy drive system is implemented as a separate entity based on a 6502 CPU. All used memory (see breakdown below) fits within existing M4K blocks of a Cyclone II. According to Quartus reports, total of 86% of memory bits are used.
 
