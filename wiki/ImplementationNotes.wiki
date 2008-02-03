@@ -4,14 +4,14 @@
 This page contains constantly updated project notes. Also see ArchitecturalOverview.
 
 = Contents =
- * [Clock_distribution Clock distribution]
+ * [Clock_Distribution Clock distribution]
  * Keyboard
  * Mock Disk
  * Floppy Drive
  * On-Screen Display
  * Sound 
 
-= Clock distribution =
+= Clock Distribution =
 
 [http://vector06cc.googlecode.com/svn/trunk/doc/clocks.png]
 
