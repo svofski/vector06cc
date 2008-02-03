@@ -5,11 +5,11 @@ This page contains constantly updated project notes. Also see ArchitecturalOverv
 
 = Contents =
  * [ImplementationNotes#Clock_Distribution Clock distribution]
- * [ImplementationNotes#Keyboard]
- * [ImplementationNotes#Mock_Disk]
- * [ImplementationNotes#Floppy_Drive]
- * [ImplementationNotes#On-Screen_Display]
- * [ImplementationNotes#Sound]
+ * [ImplementationNotes#Keyboard Keyboard]
+ * [ImplementationNotes#Mock_Disk Mock Disk (RAM disk)]
+ * [ImplementationNotes#Floppy_Drive Floppy Drive]
+ * [ImplementationNotes#OSD_Menu On-Screen Display]
+ * [ImplementationNotes#Sound Sound Interface]
 
 = Clock Distribution =
 
