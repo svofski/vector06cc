@@ -1,7 +1,7 @@
 #summary Here be the manually updated log of significant changes
 #labels Featured,Phase-Implementation
 
-=== SVN ===
+=== Rev.267 ===
  * Video scroll reg is cleared on 8255 mode set, fixes screen jumping in MUSICIAN.ROM; [http://code.google.com/p/vector06cc/issues/detail?id=29 Issue]
  * YM2149 is now clocked by 1.75MHz, as appropriate, uses separate PLL when `TWO_PLL_OK` is defined; otherwise, primary PLL is used and resulting clock frequency is 1.8MHz, which is not bad at all either (36 cents difference); [http://code.google.com/p/vector06cc/issues/detail?id=30 Issue]
  * Tape input can be disabled by setting SW6 up ("1") (ZAS viewer skips otherwise); [http://code.google.com/p/vector06cc/issues/detail?id=25 Issue]
