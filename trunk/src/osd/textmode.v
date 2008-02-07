@@ -20,10 +20,10 @@
 
 `default_nettype none
 
-`define TILE_W 6		// can only be <= 7
-`define TILE_H 8		// can only be 8 (probably 16, but then register widths must be adjusted)
-`define WINDOW_W 32
-`define WINDOW_H 8
+`define TILE_W 8'd6		// can only be <= 7
+`define TILE_H 8'd8		// can only be 8 (probably 16, but then register widths must be adjusted)
+`define WINDOW_W 8'd32
+`define WINDOW_H 8'd8
 `define WINDOW_PIXELW (`TILE_W*`WINDOW_W)
 `define WINDOW_PIXELH (`TILE_H*`WINDOW_H)
 `define LOG2TXT 8		// this many bits for text buffer addressing
@@ -85,7 +85,7 @@ screenbuffer ram0(
 			.q_b(q));
 
 wire		invert = charcode[7];
-wire [9:0]	tileaddr = tile_y != (`TILE_H-1)  ? {charcode[6:0], 3'b000} - charcode[6:0] + tile_y : 0; 
+wire [9:0]	tileaddr = tile_y != (`TILE_H-1)  ? {charcode[6:0], 3'b000} - charcode[6:0] + tile_y : 10'b0; 
 wire [`TILE_W-2:0]	tileline;
 
 // character rom is 512x5, 8 quintets per tile, 64 tiles total
@@ -107,21 +107,18 @@ end
 endmodule
 
 
-module textmode_counter(clk, ce, linebegin, framebegin, pixel, textaddr, video_enable, text_x, text_y, loadchar, tile_y, tileaddr);
+module textmode_counter(clk, ce, linebegin, framebegin, textaddr, video_enable, text_x, text_y, loadchar, tile_y);
 
 input 		clk;
 input		ce;
 input		linebegin;
 input		framebegin;
 
-output	reg	pixel;
-
 output[`LOG2TXT-1:0]textaddr;	// address of current character in text buffer
 output [4:0] 		text_y;
 output[7:0]			text_x;
 output 				loadchar = tile_x == 0;
 output[2:0]			tile_y;
-output[9:0]			tileaddr;
 output	reg			video_enable;
 
 reg [4:0] 			text_y;
@@ -187,7 +184,7 @@ always @(posedge clk) begin
 				
 				tile_y <= tile_y + linediv;
 				if (tile_y == `TILE_H-1) begin
-					text_base <= text_base + (linediv ? 0 : `WINDOW_W);
+					text_base <= text_base + (linediv ? 8'h0 : `WINDOW_W);
 					line_counter <= line_counter - linediv; 
 					state <= {2{(line_counter - linediv == 0)}}; // 3 or 0
 				end 

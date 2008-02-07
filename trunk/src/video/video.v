@@ -149,7 +149,7 @@ end
 assign testpin = {reset_line, wren_line1, reset_line, mode512};
 
 rambuffer line1(.clk(clk24),
-				.cerd(1),
+				.cerd(1'b1),
 				.cewr(ce12),
 				.wren(wren_line1),
 				.resetrd(!hsync),
@@ -159,7 +159,7 @@ rambuffer line1(.clk(clk24),
 				);
 				
 rambuffer line2(.clk(clk24),
-				.cerd(1),
+				.cerd(1'b1),
 				.cewr(ce12),
 				.wren(wren_line2),
 				.resetrd(!hsync),
@@ -173,7 +173,7 @@ reg	osd_vsync, osd_hsync;
 
 reg 		osd_xdelaybuf;
 wire		osd_xdelay;
-oneshot	#(128) lineos0(.clk(clk24), .ce(1), .trigger(hsync), .q(osd_xdelay));
+oneshot	#(10'd128) lineos0(.clk(clk24), .ce(1'b1), .trigger(hsync), .q(osd_xdelay));
 always @(posedge clk24) begin
 	osd_vsync = ~(fb_row_count == 128);
 
