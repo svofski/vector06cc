@@ -43,7 +43,7 @@ YM2149 digeridoo(
 
   .ENA(ce),
   .RESET_L(reset_n),
-  .CLK(clk),
+  .CLK(clk)
   );
 
 

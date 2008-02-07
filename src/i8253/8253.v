@@ -81,7 +81,7 @@ wire [9:0] testpin1;
 assign testpin = tpsel ? testpin0 : testpin1;
 
 //assign dout = rden[0] ? q0 : rden[1] ? q1 : rden[2] ? q2 : 0;
-always @(rden) 
+always @(rden,q0,q1,q2) 
 	case (rden) 
 		3'b001:	dout <= q0;
 		3'b010:	dout <= q1;
@@ -157,7 +157,7 @@ reg counter_loaded;
 reg counter_loading;
 
 reg loading_stopper;
-always @(counter_loading) loading_stopper <= (cw_mode == M0 || cw_mode == M4) & counter_loading;
+always @(counter_loading,cw_mode) loading_stopper <= (cw_mode == M0 || cw_mode == M4) & counter_loading;
 
 always @(posedge clk) begin
 	if (cwset) begin

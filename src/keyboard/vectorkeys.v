@@ -239,14 +239,14 @@ end
 reg  [7:0] 	rowbits;
 always @(posedge clkk) begin
 	rowbits <= 
-		  (rowselect[0] ? keymatrix[0] : 0)
-		| (rowselect[1] ? keymatrix[1] : 0)
-		| (rowselect[2] ? keymatrix[2] : 0)
-		| (rowselect[3] ? keymatrix[3] : 0)
-		| (rowselect[4] ? keymatrix[4] : 0)
-		| (rowselect[5] ? keymatrix[5] : 0)
-		| (rowselect[6] ? keymatrix[6] : 0)
-		| (rowselect[7] ? keymatrix[7] : 0);
+		  (rowselect[0] ? keymatrix[0] : 8'h0)
+		| (rowselect[1] ? keymatrix[1] : 8'h0)
+		| (rowselect[2] ? keymatrix[2] : 8'h0)
+		| (rowselect[3] ? keymatrix[3] : 8'h0)
+		| (rowselect[4] ? keymatrix[4] : 8'h0)
+		| (rowselect[5] ? keymatrix[5] : 8'h0)
+		| (rowselect[6] ? keymatrix[6] : 8'h0)
+		| (rowselect[7] ? keymatrix[7] : 8'h0);
 end
 
 endmodule

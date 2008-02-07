@@ -75,24 +75,24 @@ always @(posedge clk24) begin
 			case (scanyy_state)
 			state0:
 					begin
-						scanyy <= 16 + 5;
+						scanyy <= 10'd21;
 						scanyy_state <= state1;
 						bordery <= 0;
 						videoActiveY <= 0;
 					end
 			state1: // VSYNC
 					begin
-						scanyy <= 5;
+						scanyy <= 10'd5;
 						scanyy_state <= state2;
 					end
 			state2: // BACK PORCH + TOP BORDER
 					begin
-						scanyy <= 16 + 6;
+						scanyy <= 10'd22;
 						scanyy_state <= state3;
 					end
 			state3:
 					begin
-						scanyy <= 16 * 2;
+						scanyy <= 10'd32; // 16 * 2: top and bottom borders
 						videoActiveY <= 1;
 						realy <= 0;
 						bordery <= 1;

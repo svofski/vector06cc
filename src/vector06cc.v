@@ -54,9 +54,10 @@
 `define WITH_DE1_JTAG
 `define WITH_AY
 `define WITH_FLOPPY
+`define FLOPPYLESS_HAX	// set FDC odata to $00 when compiling without floppy
 `define WITH_OSD
 `define JTAG_AUTOHOLD
-`define TWO_PLL_OK // use second PLL to generate clean 14.0MHz for the AY, use 14.4MHz otherwise
+`define TWO_PLL_OK 		// use second PLL to generate clean 14.0MHz for the AY, use 14.4MHz otherwise
 
 module vector06cc(CLOCK_27, clk50mhz, KEY[3:0], LEDr[9:0], LEDg[7:0], SW[9:0], HEX0, HEX1, HEX2, HEX3, 
 		////////////////////	SRAM Interface		////////////////
@@ -472,8 +473,8 @@ wire int_rq;
 // 31: trrrr between skynet parts, but passes with pentium bug
 // 30: no visible changes in m@color, tv in b-ice as in 32, skynet passes with the usual pentium bug -- breaks
 // 29: is the absolute limit, b-ice breaks
-oneshot #(33) retrace_delay(clk24, cpu_ce, retrace, int_delay);
-oneshot #(192) retrace_irq(clk24, cpu_ce, ~int_delay, int_rq);
+oneshot #(10'd33) retrace_delay(clk24, cpu_ce, retrace, int_delay);
+oneshot #(10'd191) retrace_irq(clk24, cpu_ce, ~int_delay, int_rq);
 
 always @(posedge clk24) begin
 	if (INTE & int_rq)// & !interrupt_ack)
@@ -528,6 +529,8 @@ wire [5:0]	kbd_keys_osd;
 	assign kbd_key_scrolllock = 0;
 `endif
 
+
+
 ///////////////
 // I/O PORTS //
 ///////////////
@@ -564,6 +567,8 @@ always
 
 reg [5:0] portmap_device;				
 always portmap_device = address_bus_r[7:2];
+
+
 
 ///////////////////////
 // vv55 #1, internal //
@@ -640,6 +645,7 @@ always @(kbd_key_shift or kbd_key_ctrl or kbd_key_rus) begin
 end
 always @(tape_input) vv55int_pc_in[4] <= ~SW[6] & tape_input;
 
+
 //////////////////////
 // vv55 #1, fake PU //
 //////////////////////
@@ -660,6 +666,8 @@ fake8255 fakepaw0(
 	.odata(vv55pu_odata),
 	.wren(vv55pu_wren),
 	.rden(vv55pu_rden));
+
+
 
 ////////////////////////////////
 // 580VI53 timer: ports 08-0B //
@@ -686,6 +694,8 @@ pit8253 vi53(
 			vi53_testpin);
 `endif
 
+
+
 ////////////////////////////
 // Internal ports, $0C -- //
 ////////////////////////////
@@ -704,6 +714,8 @@ always @(posedge clk24) begin
 		video_palette_wren <= 1'b0;
 end
 
+
+
 //////////////////////////////////
 // Floppy Disk Controller ports //
 //////////////////////////////////
@@ -716,10 +728,11 @@ wire		osd_command_f11		= osd_command[2];
 
 wire [7:0]	floppy_leds;
 
-`ifdef WITH_FLOPPY
 wire		floppy_sel = portmap_device[2:1] == 2'b11; // both 110 and 111
 wire		floppy_wren = ~WR_n & io_write & floppy_sel;
 wire		floppy_rden  = io_read & floppy_sel;
+
+`ifdef WITH_FLOPPY
 wire [7:0]	floppy_odata;
 wire [7:0]	floppy_status;
 
@@ -733,6 +746,7 @@ floppy flappy(
 	.sd_dat3(SD_DAT3), 
 	.sd_cmd(SD_CMD), 
 	.sd_clk(SD_CLK), 
+	
 	// uart comms
 	.uart_txd(UART_TXD),
 	
@@ -762,10 +776,16 @@ floppy flappy(
 	//green_leds, red_leds, debug, debugidata);
 
 `else 
-wire		floppy_rden = 0;
-wire [7:0]	floppy_odata = 7'hff;
-wire [7:0]	floppy_status = 7'hff;
+wire [7:0]	floppy_odata = 
+`ifdef FLOPPYLESS_HAX
+	8'h00;
+`else
+	8'hFF;
+`endif	
+wire [7:0]	floppy_status = 8'hff;
 `endif
+
+
 
 ///////////////////////
 // On-Screen Display //
@@ -792,7 +812,7 @@ wire[7:0]		osd_q = osd_rq + 32;
 `ifdef WITH_OSD
 textmode osd(
 	.clk(clk24),
-	.ce(1),
+	.ce(1'b1),
 	.vsync(osd_vsync),
 	.hsync(osd_hsync),
 	.pixel(osd_fg),
@@ -836,7 +856,11 @@ ayglue shrieker(.clk(clk14),
 `else
 wire [7:0] 	ay_sound = 8'b0;
 wire		ay_rden = 1'b0;
+assign		ay_odata = 8'hFF;
 `endif
+
+
+
 //////////////////
 // Special keys //
 //////////////////
