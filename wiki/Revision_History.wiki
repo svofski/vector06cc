@@ -4,7 +4,7 @@
 === Rev SVN ===
  * Recover after an attempt to select disk image with SD card removed was made
  * Use bit 7 (NOTREADY) to indicate SD card absence, also set error bits in the status word. 
- * DE1 doesn't have a contact input, so a continuous polling should be implemented to detect card presence [http://code.google.com/p/vector06cc/issues/detail?id=34 Issue]
+ * DE1 doesn't have a contact input, so a continuous polling is implemented to detect card presence [http://code.google.com/p/vector06cc/issues/detail?id=34 Issue]
  * Implemented a workaround for FDC detection, useful when using disk microdos without floppy compiled in, see `FLOPPYLESS_HAX` define [http://code.google.com/p/vector06cc/issues/detail?id=33 Issue]
 
 === Rev.267 ===
