@@ -25,6 +25,7 @@
 #include "timer.h"
 #include "menu.h"
 #include "philes.h"
+#include "diskio.h"
 
 #include "serial.h"
 
@@ -108,6 +109,13 @@ uint8_t slave() {
 
 	for (;result != FR_RW_ERROR;) {
 		result = FR_OK;
+
+		SLAVE_STATUS = 0;
+		if (disk_poll(0) == RES_NOTRDY) {
+			vputs("NOSD");
+			break;
+		}
+		
 		switch (MASTER_COMMAND & 0xf0) {
 		case CPU_REQUEST_READ:
 			SLAVE_STATUS = 0;
@@ -187,7 +195,7 @@ uint8_t slave() {
 			break;
 		default:
 			break;
-		}
+		}		
 	}
 
 	SLAVE_STATUS = 0;
