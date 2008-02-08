@@ -35,6 +35,8 @@
 
 #define CPU_STATUS_COMPLETE	0x01
 #define CPU_STATUS_SUCCESS	0x02
+#define CPU_STATUS_CRC		0x04
+#define CPU_STATUS_DRVNOTRDY	0x08	// drive not ready/door not closed
 
 uint8_t thrall(char *imagefile, uint8_t *buffer);
 

@@ -62,10 +62,13 @@ uint8_t slave();;
 uint8_t thrall(char *imagefile, uint8_t *buffer) {
 	uint8_t first = 0;
 	uint8_t result;
-	
+
+	SLAVE_STATUS = CPU_STATUS_DRVNOTRDY;
+
 	menu_init();
 	
 	for(;;) {
+		SLAVE_STATUS = CPU_STATUS_DRVNOTRDY;
 		do {
 			philes_mount();
 			result = philes_opendir();
@@ -79,6 +82,7 @@ uint8_t thrall(char *imagefile, uint8_t *buffer) {
 			ser_nl();
 			if ((result = f_open(&file1, imagefile, FA_READ)) != FR_OK) {
 				ser_puts("Error: ");
+				first = 0; // try to recover by re-reading the directory
 			} else {
 				ser_puts("=> ");
 			}
@@ -100,8 +104,7 @@ uint8_t slave() {
 	uint8_t result;
 	uint8_t t1;
 
-	
-	SLAVE_STATUS = 0;
+	SLAVE_STATUS = 0;	// clear drive not ready flag
 
 	for (;result != FR_RW_ERROR;) {
 		result = FR_OK;
@@ -130,7 +133,7 @@ uint8_t slave() {
 				vputs("DRVERR");
 			}
 			
-			SLAVE_STATUS = CPU_STATUS_COMPLETE | (result == FR_OK ? CPU_STATUS_SUCCESS : 0);
+			SLAVE_STATUS = CPU_STATUS_COMPLETE | (result == FR_OK ? CPU_STATUS_SUCCESS : 0) | (result == FR_RW_ERROR ? CPU_STATUS_CRC : 0);
 			// touche!
 
 			break;
@@ -148,7 +151,7 @@ uint8_t slave() {
 				fdd_seek(&fddimage, 0x01 & MASTER_COMMAND, MASTER_TRACK, MASTER_SECTOR);
 				result = fdd_readadr(&fddimage);
 				
-				for (t1 = 0; t1 < 6; t1++) vputh(buffer[t1]);
+				//for (t1 = 0; t1 < 6; t1++) vputh(buffer[t1]);
 			} else {
 				result = FR_INVALID_DRIVE;
 				vputs("DRVERR");
