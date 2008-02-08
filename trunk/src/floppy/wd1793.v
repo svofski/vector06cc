@@ -170,7 +170,7 @@ wire	watchdog_bark;
 watchdog	dogbert(.clk(clk), .clken(clken), .cock(watchdog_set), .q(watchdog_bark));
 
 // common status bits
-reg		s_readonly, s_notready, s_crcerr;
+reg		s_readonly, s_ready, s_crcerr;
 reg		s_headloaded, s_seekerr, s_track0, s_index;  // mode 1
 reg		s_lostdata, s_wrfault; 				 // mode 2,3
 
@@ -185,8 +185,8 @@ reg 	cmd_mode;
 reg 	[3:0] read_timer;
 
 assign  wdstat_status = cmd_mode == 0 ? 	
-	{s_notready, s_readonly, s_headloaded, s_seekerr, s_crcerr, s_track0,   s_index, s_busy} :
-	{s_notready, s_readonly, s_wrfault,    s_seekerr, s_crcerr, s_lostdata, s_drq,   s_busy};
+	{~s_ready, s_readonly, s_headloaded, s_seekerr, s_crcerr, s_track0,   s_index, s_busy} :
+	{~s_ready, s_readonly, s_wrfault,    s_seekerr, s_crcerr, s_lostdata, s_drq,   s_busy};
 
 always @(posedge clk or negedge reset_n) begin
 	if (!reset_n) begin
@@ -204,10 +204,11 @@ always @(posedge clk or negedge reset_n) begin
 		wdstat_multisector <= 1'b0;
 		state <= STATE_READY;
 		cmd_mode <= 1'b0;
-		{s_notready, s_readonly, s_headloaded, s_seekerr, s_crcerr, s_index} <= 0;
+		{s_ready, s_readonly, s_headloaded, s_seekerr, s_crcerr, s_index} <= 0;
 		{s_wrfault, s_lostdata} <= 0;
 		s_drq_busy <= 2'b00;
 	end else if (clken) begin
+		s_ready <= ~iCPU_STATUS[3];	// cpu will clear bit 3 only when fdd image is loaded
 		
 		// REGISTER READ ACCESS
 		if (rd) case (addr)
@@ -439,26 +440,24 @@ always @(posedge clk or negedge reset_n) begin
 			
 		STATE_WAIT_WHREAD:
 			begin
-				case (iCPU_STATUS[1:0])
-				2'b01: // complete without success
-					begin
-						oCPU_REQUEST <= CPU_REQUEST_ACK;
-						s_seekerr <= 1'b1;
-						s_drq_busy <= 2'b00;
-						
-						wdstat_irq <= 1;
-						state <= STATE_READY;
-					end
-				2'b11: // complete and succesful
-					begin
-						oCPU_REQUEST <= CPU_REQUEST_ACK;
-						wdstat_irq <= 0;
-						buff_addr <= 0;
-						
-						state <= STATE_BYTEFETCH;
-					end
-				default:; // keep waiting
-				endcase
+				// s_ready == 0 means that in fact SD card was removed or some 
+				// other kind of unrecoverable error has happened
+				if (~s_ready || (iCPU_STATUS[1:0] == 2'b01)) begin
+					// FAIL
+					oCPU_REQUEST <= CPU_REQUEST_ACK;
+					s_seekerr <= 1'b1;
+					s_crcerr <= iCPU_STATUS[2];
+					s_drq_busy <= 2'b00;
+					
+					wdstat_irq <= 1;
+					state <= STATE_READY;
+				end else if (iCPU_STATUS[1:0] == 2'b11) begin
+					oCPU_REQUEST <= CPU_REQUEST_ACK;
+					wdstat_irq <= 0;
+					buff_addr <= 0;
+					
+					state <= STATE_BYTEFETCH;
+				end
 			end
 			
 		STATE_WAIT_WHWRITE:

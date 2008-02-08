@@ -106,8 +106,8 @@ output reg[7:0] osd_command;
 output reg[7:0]	green_leds;
 
 output  [7:0]	red_leds = {spi_wren,dma_debug[6:0]};
-output	[7:0]	debug = {ce & bufmem_en, ce, hostio_rd, wd_ram_rd};//wdport_status;
-output	[7:0]	debugidata = {timer1q};
+output	[7:0]	debug = wdport_status;
+output	[7:0]	debugidata = {ce & bufmem_en, ce, hostio_rd, wd_ram_rd};
 
 wire [15:0] cpu_ax;
 wire		memwrx;

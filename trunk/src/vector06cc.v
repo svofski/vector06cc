@@ -50,9 +50,9 @@
 // Undefine following for smaller/faster builds
 `define WITH_CPU			
 `define WITH_KEYBOARD
-`define WITH_VI53
+//`define WITH_VI53
 `define WITH_DE1_JTAG
-`define WITH_AY
+//`define WITH_AY
 `define WITH_FLOPPY
 `define FLOPPYLESS_HAX	// set FDC odata to $00 when compiling without floppy
 `define WITH_OSD
