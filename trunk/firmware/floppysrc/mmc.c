@@ -333,6 +333,26 @@ BYTE send_cmd (
 
 ---------------------------------------------------------------------------*/
 
+/*-----------------------------------------------------------------------*/
+/* Poll the card                                                         */
+/*-----------------------------------------------------------------------*/
+DSTATUS disk_poll(BYTE drv) {
+	BYTE res, n;
+	if (drv) return STA_NOINIT;			/* Supports only single drive */
+
+	// use Receive OCR as a dummy command: we just need to see if there's any proper response
+	/* Receive OCR as an R3 resp (4 bytes) */
+	if (send_cmd(CMD58, 0) == 0) {	/* READ_OCR */
+		for (n = 4; n; n--) /* *ptr++ = */rcvr_spi();
+		res = RES_OK;
+	} else {
+		res = RES_NOTRDY;
+	}
+
+	release_spi();
+
+	return res;
+}
 
 /*-----------------------------------------------------------------------*/
 /* Initialize Disk Drive                                                 */

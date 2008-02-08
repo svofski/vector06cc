@@ -26,6 +26,9 @@ typedef enum {
 /*---------------------------------------*/
 /* Prototypes for disk control functions */
 
+// return RES_NOTRDY if disk doesn't respond
+DSTATUS disk_poll(BYTE drv);
+
 DSTATUS disk_initialize (BYTE);
 DSTATUS disk_status (BYTE);
 DRESULT disk_read (BYTE, BYTE*, DWORD, BYTE);
