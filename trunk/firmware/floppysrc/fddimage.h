@@ -43,6 +43,7 @@ uint8_t fdd_load(FIL* file, FDDImage *fdd, uint8_t* bufptr);
 uint8_t fdd_seek(FDDImage *fdd, uint8_t side, uint8_t track, uint8_t sector);
 //uint8_t fdd_nextbyte(FDDImage* fdd);
 FRESULT fdd_readsector(FDDImage* fdd);
+FRESULT fdd_writesector(FDDImage* fdd);
 FRESULT fdd_readadr(FDDImage *fdd);
 
 #endif

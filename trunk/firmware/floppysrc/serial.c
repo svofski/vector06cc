@@ -51,15 +51,21 @@ void print_hex(BYTE b) {
 
 void print_buff(BYTE *Buffer) {
   WORD ofs;
+  BYTE add;
+  BYTE c;
   
-  for (ofs = 0; ofs < FDD_SECTOR_SIZE; ofs++) {
-    if (ofs % 16 == 0) {
-      ser_nl();
-    } else if (ofs % 8 == 0) {
-      ser_putc('-');
-    } else ser_putc(' ');
-    print_hex(Buffer[ofs]); 
+  for (ofs = 0; ofs < FDD_SECTOR_SIZE; ofs += 16) {
+	ser_nl();
+	for (add = 0; add < 16; add++) {
+		print_hex(Buffer[ofs+add]);
+		ser_putc(add == 8 ? '-' : ' '); 
+	}
+	for (add = 0; add < 16; add++) {
+		c = Buffer[ofs+add];
+		ser_putc(c > 31 && c < 128 ? c : '.'); 
+	}
   }
+  ser_nl();
 }
 #endif
 
