@@ -102,10 +102,9 @@ parameter STATE_BYTEFETCH   = 4;
 parameter STATE_BYTEFETCX	= 5;
 parameter STATE_WAIT_WHWRITE =6;
 parameter STATE_NEXTADDRFETCH=7;
-
-//parameter STATE_LOAD_RDDATA = 2;
-//parameter STATE_WAIT_WRDATA = 3;
-//parameter STATE_DATARDY		= 4;
+parameter STATE_WRITE_1		= 8;
+parameter STATE_WRITE_2		= 9;
+parameter STATE_WRITESECT	= 10;
 
 parameter SECTOR_SIZE 		= 1024;
 parameter SECTORS_PER_TRACK	= 5;
@@ -124,7 +123,7 @@ output	reg [9:0]	buff_addr;
 output	reg			buff_rd;
 output	reg			buff_wr;
 input 		[7:0]	buff_idata;
-output	reg [7:0]	buff_odata;
+output	    [7:0]	buff_odata = wdstat_datareg;
 
 output 	[7:0]		oTRACK = disk_track;
 output  [7:0]		oSECTOR = wdstat_sector;
@@ -209,6 +208,8 @@ always @(posedge clk or negedge reset_n) begin
 		s_drq_busy <= 2'b00;
 	end else if (clken) begin
 		s_ready <= ~iCPU_STATUS[3];	// cpu will clear bit 3 only when fdd image is loaded
+		
+		buff_wr <= 0; 
 		
 		// REGISTER READ ACCESS
 		if (rd) case (addr)
@@ -352,17 +353,20 @@ always @(posedge clk or negedge reset_n) begin
 											{s_wrfault,s_seekerr,s_crcerr,s_lostdata} <= 0;
 											
 											wdstat_multisector <= idata[4];
-											state <= STATE_WAIT_WHREAD;
 											data_rdlength <= SECTOR_SIZE;
+											state <= STATE_WAIT_WHREAD;
 										end
 									4'hA, 4'hB: // WRITE SECTORS
 										begin
-											state <= STATE_WAIT_WHWRITE;
-											oCPU_REQUEST <= CPU_REQUEST_WRITE | {wdstat_drive,wdstat_side};
-
-											s_drq_busy <= 2'b01;
+											//oCPU_REQUEST <= CPU_REQUEST_WRITE | {wdstat_drive,wdstat_side};
+											s_drq_busy <= 2'b11;
 											{s_wrfault,s_seekerr,s_crcerr,s_lostdata} <= 0;
 											wdstat_multisector <= idata[4];
+											
+											data_rdlength <= SECTOR_SIZE;
+											buff_addr <= 0;
+
+											state <= STATE_WRITESECT;
 										end								
 									4'hC:	// READ ADDRESS
 										begin
@@ -384,7 +388,29 @@ always @(posedge clk or negedge reset_n) begin
 								end
 							end
 				A_DATA:		begin
-								wdstat_datareg <= idata; // for SEEK
+								wdstat_datareg <= idata; 
+
+								if (state == STATE_WRITESECT) begin
+									s_drq_busy <= 2'b01;			// busy, clear drq
+									s_lostdata <= 1'b0;
+									
+									state <= STATE_WRITE_1;
+									/*
+									if (wRdLengthMinus1 == 0) begin
+										if (wdstat_multisector && wdstat_sector <= SECTORS_PER_TRACK) begin
+										end else begin
+											wdstat_irq <= 1'b1;
+											wdstat_multisector <= 1'b0;
+											
+											// flush data
+											oCPU_REQUEST <= CPU_REQUEST_WRITE | wdstat_side;
+											state <= STATE_WAIT_WHWRITE;
+										end
+									end else begin
+										s_drq_busy <= 2'b01;				// request next byte
+									end
+									*/
+								end
 							end
 				default:;
 			endcase
@@ -417,6 +443,30 @@ always @(posedge clk or negedge reset_n) begin
 					wdstat_datareg <= buff_idata;
 					state <= STATE_READY;
 				end
+			end
+			
+		// write
+		STATE_WRITE_1:
+			begin
+				buff_wr <= 1'b1;
+				state <= STATE_WRITE_2;
+			end
+			
+		STATE_WRITE_2:
+			begin
+				buff_wr <= 1'b0;
+				// increment data pointer, decrement byte count
+				buff_addr <= wBuffAddrPlus1;
+				data_rdlength <= wRdLengthMinus1;
+				
+				if (wRdLengthMinus1 == 0) begin
+					// flush data
+					oCPU_REQUEST <= CPU_REQUEST_WRITE | wdstat_side;
+					state <= STATE_WAIT_WHWRITE;
+				end else begin
+					s_drq_busy <= 2'b11;		// request next byte
+					state <= STATE_WRITESECT;
+				end				
 			end
 			
 		STATE_RESET:
@@ -462,12 +512,19 @@ always @(posedge clk or negedge reset_n) begin
 			
 		STATE_WAIT_WHWRITE:
 			begin
-				if (iCPU_STATUS[0]) begin
+				if (~s_ready || (iCPU_STATUS[1:0] == 2'b01)) begin
 					oCPU_REQUEST <= CPU_REQUEST_ACK;
-					
+				
 					s_seekerr <= 1'b1;
+					s_crcerr <= iCPU_STATUS[2];
+					
 					s_drq_busy <= 2'b00;
 					wdstat_irq <= 1;
+					state <= STATE_READY;
+				end else if (iCPU_STATUS[1:0] == 2'b11) begin
+					oCPU_REQUEST <= CPU_REQUEST_ACK;
+					wdstat_irq <= 0;
+					s_drq_busy <= 2'b00;
 					state <= STATE_READY;
 				end
 			end

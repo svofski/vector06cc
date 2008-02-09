@@ -135,7 +135,7 @@ uint8_t slave() {
 				
 				vputc(':');
 				vputh(result);
-				vdump(fddimage.buffer);
+				//vdump(fddimage.buffer);
 			} else {
 				result = FR_INVALID_DRIVE;
 				vputs("DRVERR");
@@ -171,8 +171,27 @@ uint8_t slave() {
 		case CPU_REQUEST_WRITE:
 			SLAVE_STATUS = 0;
 			menu_busy(1);
-			vputc('W');
-			SLAVE_STATUS = CPU_STATUS_COMPLETE; // no success
+			vnl();
+			vputs("wHST:");
+			
+			if (t1 == 0) {
+				fdd_seek(&fddimage, 0x01 & MASTER_COMMAND, MASTER_TRACK, MASTER_SECTOR);
+
+				vputh(fddimage.cur_side);
+				vputh(fddimage.cur_sector);
+				vputh(fddimage.cur_track);
+
+				result = fdd_writesector(&fddimage);
+				
+				vputc(':');
+				vputh(result);
+				//vdump(fddimage.buffer);
+			} else {
+				result = FR_INVALID_DRIVE;
+				vputs("DRVERR");
+			}
+			
+			SLAVE_STATUS = CPU_STATUS_COMPLETE | (result == FR_OK ? CPU_STATUS_SUCCESS : 0) | (result == FR_RW_ERROR ? CPU_STATUS_CRC : 0);
 			break;
 		case CPU_REQUEST_ACK:
 			SLAVE_STATUS = 0;

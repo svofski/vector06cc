@@ -73,18 +73,41 @@ uint8_t fdd_seek(FDDImage *fdd, uint8_t side, uint8_t track, uint8_t sector) {
 	fdd->ready = 0;
 }
 
-FRESULT fdd_readsector(FDDImage* fdd) {
-	FRESULT r;
-	UINT bytesread;
-	
+static uint32_t calc_offset(FDDImage* fdd) {
 	uint32_t offset = FDD_NSIDES*fdd->cur_track + (1-fdd->cur_side);
 	offset *= FDD_NSECTORS; 
 	offset += fdd->cur_sector - 1;
 	offset *= FDD_SECTOR_SIZE;
 	
+	return offset;
+}
+
+FRESULT fdd_readsector(FDDImage* fdd) {
+	FRESULT r;
+	UINT bytesread;
+	
+	uint32_t offset = calc_offset(fdd);
+	
+	//FDD_NSIDES*fdd->cur_track + (1-fdd->cur_side);
+	//offset *= FDD_NSECTORS; 
+	//offset += fdd->cur_sector - 1;
+	//offset *= FDD_SECTOR_SIZE;
+	
 	if ((r = f_lseek(fdd->file, offset)) != FR_OK) return r;
 	
 	r = f_read(fdd->file, fdd->buffer, FDD_SECTOR_SIZE, &bytesread);
+	
+	return r;
+}
+
+FRESULT fdd_writesector(FDDImage* fdd) {
+	FRESULT r;
+	UINT bytesread;
+	
+	uint32_t offset = calc_offset(fdd);
+	if ((r = f_lseek(fdd->file, offset)) != FR_OK) return r;
+	
+	r = f_write_inplace(fdd->file, fdd->buffer, FDD_SECTOR_SIZE, &bytesread);
 	
 	return r;
 }

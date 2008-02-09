@@ -897,17 +897,16 @@ FRESULT f_open (
 }
 
 
-
-
 /*-----------------------------------------------------------------------*/
 /* Read File                                                             */
 /*-----------------------------------------------------------------------*/
 
-FRESULT f_read (
+FRESULT f_read_or_wr (
 	FIL *fp, 		/* Pointer to the file object */
 	void *buff,		/* Pointer to data buffer */
 	UINT btr,		/* Number of bytes to read */
-	UINT *br		/* Pointer to number of bytes read */
+	UINT *br,		/* Pointer to number of bytes read */
+	BYTE mode_wr
 )
 {
 	DWORD sect, remain;
@@ -944,8 +943,13 @@ FRESULT f_read (
 			cc = btr / 512;							/* When left bytes >= 512, */
 			if (cc) {								/* Read maximum contiguous sectors directly */
 				if (cc > fp->sect_clust) cc = fp->sect_clust;
-				if (disk_read(0, rbuff, sect, (BYTE)cc) != RES_OK)
-					goto fr_error;
+				if (mode_wr) {
+					if (disk_write(0, rbuff, sect, (BYTE)cc) != RES_OK)
+						goto fr_error;
+				} else {
+					if (disk_read(0, rbuff, sect, (BYTE)cc) != RES_OK)
+						goto fr_error;
+				}
 				fp->sect_clust -= (BYTE)(cc - 1);
 				fp->curr_sect += cc - 1;
 				rcnt = cc * 512;
@@ -963,6 +967,32 @@ FRESULT f_read (
 fr_error:	/* Abort this function due to an unrecoverable error */
 	fp->flag |= FA__ERROR;
 	return FR_RW_ERROR;
+}
+
+
+/* -- svofski's hax:
+      since we only write within allocated floppy disk images, there's no need for changing
+      fat data structures. Thus, write to floppy image can be by simple substituting read
+      with write in a file read function
+*/
+FRESULT f_write_inplace (
+	FIL *fp, 		/* Pointer to the file object */
+	void *buff,		/* Pointer to data buffer */
+	UINT btr,		/* Number of bytes to read */
+	UINT *br		/* Pointer to number of bytes read */
+)
+{
+	return f_read_or_wr(fp, buff, btr, br, 1);
+}
+
+FRESULT f_read (
+	FIL *fp, 		/* Pointer to the file object */
+	void *buff,		/* Pointer to data buffer */
+	UINT btr,		/* Number of bytes to read */
+	UINT *br		/* Pointer to number of bytes read */
+)
+{
+	return f_read_or_wr(fp, buff, btr, br, 0);
 }
 
 
