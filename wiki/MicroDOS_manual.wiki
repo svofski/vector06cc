@@ -6,8 +6,8 @@ This is a partially salvaged MicroDOS manual. MicroDOS is a CP/M-like system des
 
 == Contents ==
 
-1. [MicroDOS_manual#The_Manual_Verbatim]
-2. [MicroDOS_manual#Control_Sequences]
+ * [MicroDOS_manual#The_Manual_Verbatim]
+ * [MicroDOS_manual#Control_Sequences]
 
 = The Manual Verbatim =
 {{{
