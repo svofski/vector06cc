@@ -185,7 +185,7 @@ uint8_t slave() {
 				
 				vputc(':');
 				vputh(result);
-				//vdump(fddimage.buffer);
+				vdump(fddimage.buffer);
 			} else {
 				result = FR_INVALID_DRIVE;
 				vputs("DRVERR");
@@ -204,6 +204,7 @@ uint8_t slave() {
 			vputc('`');
 			vputh(MASTER_COMMAND);
 			vputh(MASTER_SECTOR);
+			vputh(MASTER_TRACK);
 			SLAVE_STATUS = CPU_STATUS_COMPLETE;
 			break;
 		case CPU_REQUEST_FAIL:

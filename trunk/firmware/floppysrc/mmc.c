@@ -249,6 +249,36 @@ BOOL rcvr_datablock (
 /*-----------------------------------------------------------------------*/
 
 #if _READONLY == 0
+
+#ifdef WITH_DMA
+static
+BOOL xmit_datablock (
+	const BYTE *buff,	/* 512 byte data block to be transmitted */
+	BYTE token			/* Data/Stop token */
+)
+{
+	BYTE resp;
+
+
+	if (wait_ready() != 0xFF) return FALSE;
+
+	xmit_spi(token);					/* Xmit data token */
+	if (token != 0xFD) {	/* Is data token */
+		/* Xmit the 512 byte data block to MMC */
+		DMAMSB = ((WORD)buff) >> 8;
+		DMALSB = ((WORD)buff) & 0x00FF;
+		SPSR   = 0x90; // send 1 data block TO spi
+		
+		xmit_spi(0xFF);					/* CRC (Dummy) */
+		xmit_spi(0xFF);
+		resp = rcvr_spi();				/* Reveive data response */
+		if ((resp & 0x1F) != 0x05)		/* If not accepted, return with error */
+			return FALSE;
+	}
+
+	return TRUE;
+}
+#else
 static
 BOOL xmit_datablock (
 	const BYTE *buff,	/* 512 byte data block to be transmitted */
@@ -276,6 +306,7 @@ BOOL xmit_datablock (
 
 	return TRUE;
 }
+#endif
 #endif /* _READONLY */
 
 
