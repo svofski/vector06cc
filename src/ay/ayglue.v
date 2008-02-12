@@ -32,12 +32,12 @@ YM2149 digeridoo(
   .O_DA(odata),
   .O_DA_OE_L(odataoe),
 
-  .I_A9_L(0),
-  .I_A8(1),
+  .I_A9_L(1'b0),
+  .I_A8(1'b1),
   .I_BDIR(ctl[2]), 
   .I_BC2(ctl[1]),
   .I_BC1(ctl[0]),
-  .I_SEL_L(1), // something /16?
+  .I_SEL_L(1'b1), // something /16?
 
   .O_AUDIO(sound),
 

@@ -20,10 +20,10 @@
 
 `default_nettype none
 
-`define TILE_W 8'd6		// can only be <= 7
+`define TILE_W 3'd6		// can only be <= 7
 `define TILE_H 8'd8		// can only be 8 (probably 16, but then register widths must be adjusted)
 `define WINDOW_W 8'd32
-`define WINDOW_H 8'd8
+`define WINDOW_H 5'd8
 `define WINDOW_PIXELW (`TILE_W*`WINDOW_W)
 `define WINDOW_PIXELH (`TILE_H*`WINDOW_H)
 `define LOG2TXT 8		// this many bits for text buffer addressing

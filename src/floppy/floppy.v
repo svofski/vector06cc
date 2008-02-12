@@ -180,7 +180,7 @@ ram512x8a zeropa(
 //wire			dma_owren;
 
 
-wire [9:0]	bufmem_addr = (wd_ram_rd|wd_ram_wr) ? wd_ram_addr : cpu_a - 16'h200;
+wire [9:0]	bufmem_addr = (wd_ram_rd|wd_ram_wr) ? wd_ram_addr : cpu_a - 10'h200;
 wire 		bufmem_wren = wd_ram_wr | memwr;
 wire [7:0]	bufmem_di = wd_ram_wr ? wd_ram_odata : cpu_do;
 
@@ -275,7 +275,7 @@ always @(posedge clk or negedge reset_n) begin
 			2:	begin
 					if (~uart_busy) begin
 						uart_data <= uart_data + 1;
-						if (uart_data == 65+27) uart_data <= 65;
+						if (uart_data == 65+27) uart_data <= 8'd65;
 						uart_state <= 3;
 					end
 				end
