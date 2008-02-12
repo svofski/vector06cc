@@ -231,7 +231,7 @@ set_global_assignment -name VERILOG_FILE src/floppy/floppyrom.v
 set_global_assignment -name VERILOG_FILE src/floppy/ram512x8a.v
 set_global_assignment -name VERILOG_FILE src/floppy/ram1024x8a.v
 set_global_assignment -name VERILOG_FILE src/floppy/spi.v
-set_global_assignment -name VERILOG_FILE src/floppy/dma_read.v
+set_global_assignment -name VERILOG_FILE src/floppy/dma_rw.v
 set_global_assignment -name VERILOG_FILE src/floppy/timer100hz.v
 set_global_assignment -name VHDL_FILE src/floppy/65c02/cpu65xx_en.vhd
 set_global_assignment -name VERILOG_FILE src/vector06cc.v

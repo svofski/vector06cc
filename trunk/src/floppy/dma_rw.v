@@ -3,7 +3,7 @@
 // ====================================================================
 //                         VECTOR-06C FPGA REPLICA
 //
-// 					Copyright (C) 2007, Viacheslav Slavinsky
+//                Copyright (C) 2007,2008 Viacheslav Slavinsky
 //
 // This core is distributed under modified BSD license. 
 // For complete licensing information see LICENSE.TXT.
@@ -13,15 +13,16 @@
 //
 // Author: Viacheslav Slavinsky, http://sensi.org/~svo
 // 
-// Design File: dma_read.v
+// Design File: dma_rw.v
 //
-// DMA controller that can pump 512-byte blocks of raw SPI data to a buffer.
+// DMA controller that can pump 512-byte blocks between SPI and a RAM buffer.
 // Buffer address is loaded in iaddr when nblocks input is nonzero.
-// A nonzero nblocks value on input initiates transfer (ready == 0). 
+// A nonzero nblocks value on input initiates transfer (ready == 0).
+// Bit 3 of nblocks indicates transfer direction (1 == RAM to SPI).
 // While ready == 0, nothing is allowed to access data and address busses.
 // --------------------------------------------------------------------
 
-module dma_read(clk, ce, reset_n, iaddr, oaddr, odata, idata, owren, nblocks, ready, ospi_data, ispi_data, ospi_wr, ispi_dsr, debug);
+module dma_rw(clk, ce, reset_n, iaddr, oaddr, odata, idata, owren, nblocks, ready, ospi_data, ispi_data, ospi_wr, ispi_dsr, debug);
 
 parameter IDLE=0, BUSY=1, BLOCK=2, OVER=3, NBYTE=4, MBYTE=5;
 
