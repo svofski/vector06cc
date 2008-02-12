@@ -72,3 +72,4 @@ Audio input works and you can load from .wav file, .mp3 file (96kbps seems to be
  * [SoundCodec Audio Codec interface]
  * [SVK1_Floppy Секреты Вектора и Кристы] - глава с описанием контроллера дисковода
  * [VectorSecrets_by_Lebedev Секреты Вектора] от А.З. Лебедева
+ * [Oddities Oddities and observations]
