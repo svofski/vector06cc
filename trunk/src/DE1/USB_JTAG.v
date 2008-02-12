@@ -90,7 +90,7 @@ begin
 	end
 	else
 	begin
-		rCont<=rCont+1;
+		rCont<=rCont+1'd1;
 		rDATA<={TDI,rDATA[7:1]};
 		if(rCont==0)
 		begin
@@ -125,7 +125,7 @@ begin
 	begin
 		if(iTxD_Start)
 		begin
-			rCont<=rCont+1;
+			rCont<=rCont+1'd1;
 			TDO<=iTxD_DATA[rCont];
 		end
 		else

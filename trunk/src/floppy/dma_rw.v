@@ -24,7 +24,8 @@
 
 module dma_rw(clk, ce, reset_n, iaddr, oaddr, odata, idata, owren, nblocks, ready, ospi_data, ispi_data, ospi_wr, ispi_dsr, debug);
 
-parameter IDLE=0, BUSY=1, BLOCK=2, OVER=3, NBYTE=4, MBYTE=5;
+parameter IDLE=4'd0, BUSY=4'd1, BLOCK=4'd2, OVER=4'd3, NBYTE=4'd4;
+parameter BLOCKSIZE=10'd512;
 
 input 				clk;			// clock
 input				ce;				// clock enable
@@ -84,13 +85,9 @@ always @(posedge clk)
 					busy <= 1;
 					addrbase <= iaddr;// - (~nblocks[3]);
 					oaddr <= iaddr;
-					bytectr <= 512;
+					bytectr <= BLOCKSIZE;
 					state <= NBYTE;
 				end
-			end
-		MBYTE:
-			begin
-				state <= NBYTE;
 			end
 		NBYTE:
 			begin
@@ -107,7 +104,7 @@ always @(posedge clk)
 					// when reading: (addr=0), read spi, write to ram, addr increment
 					// when writing: (addr=0), read from ram, write spi, addr increment
 					// hence + dir_tospi for correction
-					oaddr <= addrbase + (512 - bytectr) + dir_tospi; 
+					oaddr <= addrbase + (BLOCKSIZE - bytectr) + dir_tospi; 
 					//oaddr <= oaddr + 1'b1;
 					bytectr <= bytectr - 1'b1;
 					
@@ -121,7 +118,7 @@ always @(posedge clk)
 		BLOCK:
 			begin
 				owren <= 0;
-				bytectr <= 512;
+				bytectr <= BLOCKSIZE;
 				if (rblocks - 1 != 0) begin
 					rblocks <= rblocks - 1;
 					state <= NBYTE;

@@ -243,7 +243,7 @@ begin
     end if;
   end process;
 
-  p_read : process(I_ADDR, porta_read, portb_read, portc_read, control_read)
+  p_read : process(I_ADDR, I_CS_L, I_RD_L, porta_read, portb_read, portc_read, control_read)
   begin
     O_DATA <= x"00"; -- default
     if (I_CS_L = '0') and (I_RD_L = '0') then -- not required
@@ -488,7 +488,7 @@ begin
     end if;
   end process;
 
-  p_porta : process(r_porta, r_control, groupa_mode, r_porta, I_PA, porta_ipreg, a_ack_l)
+  p_porta : process(r_porta, r_control, groupa_mode, I_PA, porta_ipreg, a_ack_l)
   begin
     -- D4    GROUPA porta         1 = input, 0 = output
     O_PA       <= x"FF"; -- if not driven, float high
@@ -517,7 +517,7 @@ begin
 
   end process;
 
-  p_portb : process(r_portb, r_control, groupb_mode, r_portb, I_PB, portb_ipreg)
+  p_portb : process(r_portb, r_control, groupb_mode, I_PB, portb_ipreg)
   begin
     O_PB       <= x"FF"; -- if not driven, float high
     O_PB_OE_L  <= x"FF";

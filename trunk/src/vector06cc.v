@@ -643,7 +643,7 @@ always @(kbd_key_shift or kbd_key_ctrl or kbd_key_rus) begin
 	vv55int_pc_in[6] <= ~kbd_key_ctrl;
 	vv55int_pc_in[7] <= ~kbd_key_rus;
 end
-always @(tape_input) vv55int_pc_in[4] <= ~SW[6] & tape_input;
+always @(tape_input, SW) vv55int_pc_in[4] <= ~SW[6] & tape_input;
 
 
 //////////////////////
@@ -770,8 +770,7 @@ floppy flappy(
 	// debug 
 	.green_leds(floppy_leds),
 	//.red_leds(floppy_leds),
-	.debug(floppy_status),
-	
+	.debug(floppy_status)
 	);
 	//green_leds, red_leds, debug, debugidata);
 
@@ -807,7 +806,7 @@ wire[7:0]		osd_data;
 wire[7:0]		osd_rq;
 wire[7:0]		osd_address;
 
-wire[7:0]		osd_q = osd_rq + 32;
+wire[7:0]		osd_q = osd_rq + 8'd32;
 
 `ifdef WITH_OSD
 textmode osd(
@@ -818,7 +817,7 @@ textmode osd(
 	.pixel(osd_fg),
 	.background(osd_bg),
 	.address(osd_address),
-	.data(osd_data - 32),		// OSD encoding has 00 == 32
+	.data(osd_data - 8'd32),		// OSD encoding has 00 == 32
 	.wren(osd_wren),
 	.q(osd_rq)
 	);
@@ -842,7 +841,7 @@ wire		ay_rden = io_read & ay_sel;
 wire [7:0]	ay_sound;
 
 reg [2:0] aycectr;
-always @(posedge clk14) aycectr <= aycectr + 1;
+always @(posedge clk14) aycectr <= aycectr + 1'd1;
 
 ayglue shrieker(.clk(clk14), 
 				.ce(aycectr == 0),

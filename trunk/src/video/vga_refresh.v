@@ -103,14 +103,14 @@ always @(posedge clk24) begin
 						fb_row <= {video_scroll_reg, 1'b1};
 						fb_row_count <= 511;
 					
-						scanyy <= SCREENHEIGHT - 16*2*2;
+						scanyy <= SCREENHEIGHT - 2*2*(8'd16);
 						bordery <= 0;
 						scanyy_state <= state5;
 					end
 			state5:
 					begin
 						//fb_row <= 1;
-						scanyy <= 16 * 2;
+						scanyy <= 2 * (8'd16);
 						bordery <= 1;
 						scanyy_state <= state0;
 					end
