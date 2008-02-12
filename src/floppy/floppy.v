@@ -339,7 +339,7 @@ wire	[7:0]	dma_spido;
 wire			dma_spiwr;
 wire	[7:0]	dma_debug;
 
-dma_read dmar0(
+dma_rw pump0(
 		.clk(clk), 
 		.ce(ce), 
 		.reset_n(reset_n), 

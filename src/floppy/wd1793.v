@@ -395,21 +395,6 @@ always @(posedge clk or negedge reset_n) begin
 									s_lostdata <= 1'b0;
 									
 									state <= STATE_WRITE_1;
-									/*
-									if (wRdLengthMinus1 == 0) begin
-										if (wdstat_multisector && wdstat_sector <= SECTORS_PER_TRACK) begin
-										end else begin
-											wdstat_irq <= 1'b1;
-											wdstat_multisector <= 1'b0;
-											
-											// flush data
-											oCPU_REQUEST <= CPU_REQUEST_WRITE | wdstat_side;
-											state <= STATE_WAIT_WHWRITE;
-										end
-									end else begin
-										s_drq_busy <= 2'b01;				// request next byte
-									end
-									*/
 								end
 							end
 				default:;
@@ -458,7 +443,7 @@ always @(posedge clk or negedge reset_n) begin
 				// increment data pointer, decrement byte count
 				buff_addr <= wBuffAddrPlus1;
 				data_rdlength <= wRdLengthMinus1;
-				
+								
 				if (wRdLengthMinus1 == 0) begin
 					// flush data
 					oCPU_REQUEST <= CPU_REQUEST_WRITE | wdstat_side;
@@ -524,8 +509,18 @@ always @(posedge clk or negedge reset_n) begin
 				end else if (iCPU_STATUS[1:0] == 2'b11) begin
 					oCPU_REQUEST <= CPU_REQUEST_ACK;
 					wdstat_irq <= 0;
-					s_drq_busy <= 2'b00;
-					state <= STATE_READY;
+					
+					if (wdstat_multisector && wdstat_sector <= SECTORS_PER_TRACK) begin
+						wdstat_sector <= wdstat_sector + 1'b1;
+						wdstat_irq <= 1'b0;
+						s_drq_busy <= 2'b11;
+						data_rdlength <= SECTOR_SIZE;
+						buff_addr <= 0;
+						state <= STATE_WRITESECT;
+					end else begin
+						s_drq_busy <= 2'b00;
+						state <= STATE_READY;
+					end
 				end
 			end
 			
