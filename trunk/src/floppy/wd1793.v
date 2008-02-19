@@ -82,6 +82,11 @@ parameter STATE_READ_1		= 7;	/* Buffer-to-host: increment data pointer, decremen
 parameter STATE_WRITE_1		= 8;	/* Host-to-buffer: wr = 1 -> STATE_WRITE_2 */
 parameter STATE_WRITE_2		= 9;	/* Host-to-buffer: wr = 0, next addr -> STATE_WRITESECT/STATE_WAIT_CPUWRITE */
 parameter STATE_WRITESECT	= 10;	/* Host-to-buffer: wait data from host -> STATE_WRITE_1 */
+parameter STATE_READSECT	= 11;	/* Buffer-to-host */
+
+parameter STATE_ENDCOMMAND2 = 13;
+parameter STATE_ENDCOMMAND	= 14;
+parameter STATE_DEAD		= 15;
 
 parameter SECTOR_SIZE 		= 11'd1024;
 parameter SECTORS_PER_TRACK	= 8'd5;
@@ -118,11 +123,17 @@ reg [7:0] 	wdstat_track;
 reg [7:0]	wdstat_sector;
 wire [7:0]	wdstat_status;
 reg	[7:0]	wdstat_datareg;
+reg [7:0]	wdstat_command;			// command register
+reg			wdstat_pending;			// command loaded, pending execution
 reg 		wdstat_stepdirection;
 reg			wdstat_multisector;
 reg			wdstat_irq;
 reg			wdstat_side;
 reg			wdstat_drive;
+
+reg [7:0]	ctl2reg;
+reg			ctl2reg_pending;
+reg [3:0]	boo;
 
 reg	[7:0]	disk_track;		// "real" heads position
 
@@ -161,8 +172,8 @@ wire		wReadAByte = (state == STATE_READY) & rd & (addr == A_DATA) & (data_rdleng
 
 // Status register
 assign  wdstat_status = cmd_mode == 0 ? 	
-	{~s_ready, s_readonly, s_headloaded, s_seekerr, s_crcerr, s_track0,   s_index, s_busy} :
-	{~s_ready, s_readonly, s_wrfault,    s_seekerr, s_crcerr, s_lostdata, s_drq,   s_busy};
+	{~s_ready, s_readonly, s_headloaded, s_seekerr, s_crcerr, s_track0,   s_index, s_busy | wdstat_pending} :
+	{~s_ready, s_readonly, s_wrfault,    s_seekerr, s_crcerr, s_lostdata, s_drq,   s_busy | wdstat_pending};
 	
 // Watchdog	
 wire		watchdog_set = wReadSuccess | wReadAByte;
@@ -188,6 +199,16 @@ always @(posedge clk or negedge reset_n) begin: _wdmain
 		{s_ready, s_readonly, s_headloaded, s_seekerr, s_crcerr, s_index} <= 0;
 		{s_wrfault, s_lostdata} <= 0;
 		s_drq_busy <= 2'b00;
+		wdstat_pending <= 0;
+		ctl2reg_pending <= 0;
+	end else if (state == STATE_DEAD) begin
+		s_drq_busy <= 2'b11;
+		s_seekerr <= 1;
+		s_wrfault <= 1;
+		s_readonly <= 1;
+		s_crcerr <= 1;
+		oCPU_REQUEST <= CPU_REQUEST_FAIL;
+		wdstat_sector <= odata;		// sector == last command
 	end else if (clken) begin
 		s_ready <= ~iCPU_STATUS[3];	// cpu will clear bit 3 only when fdd image is loaded
 		
@@ -204,7 +225,7 @@ always @(posedge clk or negedge reset_n) begin: _wdmain
 				A_CTL2:		odata <= {5'b11111,wdstat_side,1'b0,wdstat_drive};
 				A_DATA:		begin
 								odata <= wdstat_datareg;
-								if (state == STATE_READY) begin
+								if (state == STATE_READSECT) begin
 									if (s_drq) begin
 										// reset drq until next byte is read, nothing is lost
 										s_drq_busy <= 2'b01;
@@ -223,9 +244,12 @@ always @(posedge clk or negedge reset_n) begin: _wdmain
 
 												state <= STATE_WAIT_CPUREAD;
 											end else begin
+												// end
 												wdstat_irq <= 1'b1;
 												wdstat_multisector <= 1'b0;
 												s_drq_busy <= 2'b00;
+												boo <= 1;
+												state <= STATE_ENDCOMMAND;
 											end
 										end else begin
 											// everything is okay, fetch next byte
@@ -251,120 +275,26 @@ always @(posedge clk or negedge reset_n) begin: _wdmain
 								end 
 							end
 				A_CTL2:		begin
-								wdstat_side <= idata[2];
-								wdstat_drive <= idata[0];
+								//this doesn't work: apparently a write to A_CTL2 is ought to be queued or smth?
+								//if (state == STATE_READY) begin
+								ctl2reg <= idata;
+								ctl2reg_pending <= 1;
+									//wdstat_side <= idata[2];
+									//wdstat_drive <= idata[0];
+								//end
 							end
 				A_COMMAND:	begin
 								if (idata[7:4] == 4'hD) begin
 									// interrupt
-									state <= STATE_ABORT;
-								end
-								else
-								if (state == STATE_READY) begin
-									// keep cmd_mode for wdstat_status
-									cmd_mode <= idata[7];	
-									
-									case (idata[7:4]) 
-									4'h0: 	// RESTORE
-										begin
-											// head load as specified, index, track0
-											s_headloaded <= idata[3];
-											s_index <= 1'b1;
-											wdstat_track <= 0;
-											disk_track <= 0;
-
-											// some programs like it when FDC gets busy for a while
-											s_drq_busy <= 2'b01;
-											oCPU_REQUEST <= CPU_REQUEST_NOP | idata[7:4];
-											state <= STATE_WAIT_CPU;
-										end
-									4'h1:	// SEEK
-										begin
-											// rdlength/wrlength?  -- no idea so far
-											// set real track to datareg
-											disk_track <= wdstat_datareg; //wdstat_track;
-											s_headloaded <= idata[3];
-											s_index <= 1'b1;
-											
-											// some programs like it when FDC gets busy for a while
-											s_drq_busy <= 2'b01;
-											oCPU_REQUEST <= CPU_REQUEST_NOP | idata[7:4];
-											state <= STATE_WAIT_CPU;
-										end
-									4'h2,	// STEP
-									4'h3,	// STEP & UPDATE
-									4'h4,	// STEP-IN
-									4'h5,	// STEP-IN & UPDATE
-									4'h6,	// STEP-OUT
-									4'h7:	// STEP-OUT & UPDATE
-										begin
-											// if direction is specified, store it for the next time
-											if (idata[6] == 1) begin 
-												wdstat_stepdirection <= idata[5]; // 0: forward/in
-											end 
-											
-											// perform step 
-											disk_track <= wNextTrack;
-													
-											// update TRACK register too if asked to
-											if (idata[4]) begin
-												wdstat_track <= wNextTrack;
-											end
-												
-											s_headloaded <= idata[3];
-											s_index <= 1'b1;
-
-											// some programs like it when FDC gets busy for a while
-											s_drq_busy <= 2'b01;
-											oCPU_REQUEST <= CPU_REQUEST_NOP | idata[7:4];
-											state <= STATE_WAIT_CPU;
-										end
-									4'h8, 4'h9: // READ SECTORS
-										// seek data
-										// 4: m:	0: one sector, 1: until the track ends
-										// 3: S: 	SIDE
-										// 2: E:	some 15ms delay
-										// 1: C:	check side matching?
-										// 0: 0
-										begin
-											// side is specified in the secondary control register ($1C)
-											oCPU_REQUEST <= CPU_REQUEST_READ | {wdstat_drive,wdstat_side};
-
-											s_drq_busy <= 2'b01;
-											{s_wrfault,s_seekerr,s_crcerr,s_lostdata} <= 0;
-											
-											wdstat_multisector <= idata[4];
-											data_rdlength <= SECTOR_SIZE;
-											state <= STATE_WAIT_CPUREAD;
-										end
-									4'hA, 4'hB: // WRITE SECTORS
-										begin
-											s_drq_busy <= 2'b11;
-											{s_wrfault,s_seekerr,s_crcerr,s_lostdata} <= 0;
-											wdstat_multisector <= idata[4];
-											
-											data_rdlength <= SECTOR_SIZE;
-											buff_addr <= 0;
-
-											state <= STATE_WRITESECT;
-										end								
-									4'hC:	// READ ADDRESS
-										begin
-											// track, side, sector, sector size code, 2-byte checksum (crc?)
-											oCPU_REQUEST <= CPU_REQUEST_READADDR | {wdstat_drive,wdstat_side};
-											
-											s_drq_busy <= 2'b01;
-											{s_wrfault,s_seekerr,s_crcerr,s_lostdata} <= 0;
-											
-											wdstat_multisector <= 1'b0;
-											state <= STATE_WAIT_CPUREAD;
-											data_rdlength <= 6;
-										end
-									4'hE,	// READ TRACK
-									4'hF:	// WRITE TRACK
-										;
-									default:;
-									endcase
+									if (state != STATE_READY) state <= STATE_ABORT;
+								end else begin
+									if (wdstat_pending) begin
+										odata <= idata;
+										state <= STATE_DEAD;
+									end else begin
+										wdstat_command <= idata;
+										wdstat_pending <= 1;
+									end
 								end
 							end
 				A_DATA:		begin
@@ -411,7 +341,7 @@ always @(posedge clk or negedge reset_n) begin: _wdmain
 					s_lostdata <= 1'b0;
 					s_drq_busy <= 2'b11;
 					wdstat_datareg <= buff_idata;
-					state <= STATE_READY;
+					state <= STATE_READSECT;
 				end
 			end
 			
@@ -450,20 +380,143 @@ always @(posedge clk or negedge reset_n) begin: _wdmain
 		/* Abort current operation ($D0) */
 		STATE_ABORT:
 			begin
+				//if (state == STATE_WAIT_CPUWRITE || state == STATE_WAIT_CPUREAD || state == STATE_WAIT_CPU) state <= STATE_DEAD;
+				//else begin
+				data_rdlength <= 0;
+				wdstat_pending <= 0;
 				s_drq_busy <= 2'b00;
 				{s_wrfault,s_seekerr,s_crcerr,s_lostdata} <= 0;
-				oCPU_REQUEST <= CPU_REQUEST_ACK;
-				state <= STATE_READY;
+				boo <= 2;
+				state <= STATE_ENDCOMMAND;
+				//end
 			end
 		
 		/* Idle state or buffer to host transfer */
 		STATE_READY:
 			begin
 				// lose data if not requested in time
-				if (s_drq && watchdog_bark) begin
-					s_lostdata <= 1'b1;
-					s_drq_busy <= 2'b01;
-					state <= data_rdlength != 0 ? STATE_READ_1 : STATE_ABORT;
+				//if (s_drq && watchdog_bark) begin
+				//	s_lostdata <= 1'b1;
+				//	s_drq_busy <= 2'b01;
+				//	state <= data_rdlength != 0 ? STATE_READ_1 : STATE_ABORT;
+				//end
+
+				// handle ctl2 first
+				if (ctl2reg_pending) begin
+					ctl2reg_pending <= 0;
+					wdstat_side <= 	ctl2reg[2];
+					wdstat_drive <= ctl2reg[0];
+				end 
+				else 
+				// handle command
+				if (wdstat_pending) begin
+					wdstat_pending <= 0;
+					cmd_mode <= wdstat_command[7];		// keep cmd_mode for wdstat_status
+					
+					case (wdstat_command[7:4]) 
+					4'h0: 	// RESTORE
+						begin
+							// head load as specified, index, track0
+							s_headloaded <= wdstat_command[3];
+							s_index <= 1'b1;
+							wdstat_track <= 0;
+							disk_track <= 0;
+
+							// some programs like it when FDC gets busy for a while
+							s_drq_busy <= 2'b01;
+							oCPU_REQUEST <= CPU_REQUEST_NOP | wdstat_command[7:4];
+			//if (iCPU_STATUS != 0) state <= STATE_DEAD; else 
+							state <= STATE_WAIT_CPU;
+						end
+					4'h1:	// SEEK
+						begin
+							// rdlength/wrlength?  -- no idea so far
+							// set real track to datareg
+							disk_track <= wdstat_datareg; //wdstat_track;
+							s_headloaded <= wdstat_command[3];
+							s_index <= 1'b1;
+							
+							// some programs like it when FDC gets busy for a while
+							s_drq_busy <= 2'b01;
+							oCPU_REQUEST <= CPU_REQUEST_NOP | wdstat_command[7:4];
+			//if (iCPU_STATUS != 0) state <= STATE_DEAD; else 
+							state <= STATE_WAIT_CPU;
+						end
+					4'h2,	// STEP
+					4'h3,	// STEP & UPDATE
+					4'h4,	// STEP-IN
+					4'h5,	// STEP-IN & UPDATE
+					4'h6,	// STEP-OUT
+					4'h7:	// STEP-OUT & UPDATE
+						begin
+							// if direction is specified, store it for the next time
+							if (wdstat_command[6] == 1) begin 
+								wdstat_stepdirection <= wdstat_command[5]; // 0: forward/in
+							end 
+							
+							// perform step 
+							disk_track <= wNextTrack;
+									
+							// update TRACK register too if asked to
+							if (wdstat_command[4]) begin
+								wdstat_track <= wNextTrack;
+							end
+								
+							s_headloaded <= wdstat_command[3];
+							s_index <= 1'b1;
+
+							// some programs like it when FDC gets busy for a while
+							s_drq_busy <= 2'b01;
+							oCPU_REQUEST <= CPU_REQUEST_NOP | wdstat_command[7:4];
+			//if (iCPU_STATUS != 0) state <= STATE_DEAD; else 
+							state <= STATE_WAIT_CPU;
+						end
+					4'h8, 4'h9: // READ SECTORS
+						// seek data
+						// 4: m:	0: one sector, 1: until the track ends
+						// 3: S: 	SIDE
+						// 2: E:	some 15ms delay
+						// 1: C:	check side matching?
+						// 0: 0
+						begin
+							// side is specified in the secondary control register ($1C)
+							oCPU_REQUEST <= CPU_REQUEST_READ | {wdstat_drive,wdstat_side};
+
+							s_drq_busy <= 2'b01;
+							{s_wrfault,s_seekerr,s_crcerr,s_lostdata} <= 0;
+							
+							wdstat_multisector <= wdstat_command[4];
+							data_rdlength <= SECTOR_SIZE;
+							state <= STATE_WAIT_CPUREAD;
+						end
+					4'hA, 4'hB: // WRITE SECTORS
+						begin
+							s_drq_busy <= 2'b11;
+							{s_wrfault,s_seekerr,s_crcerr,s_lostdata} <= 0;
+							wdstat_multisector <= wdstat_command[4];
+							
+							data_rdlength <= SECTOR_SIZE;
+							buff_addr <= 0;
+
+							state <= STATE_WRITESECT;
+						end								
+					4'hC:	// READ ADDRESS
+						begin
+							// track, side, sector, sector size code, 2-byte checksum (crc?)
+							oCPU_REQUEST <= CPU_REQUEST_READADDR | {wdstat_drive,wdstat_side};
+							
+							s_drq_busy <= 2'b01;
+							{s_wrfault,s_seekerr,s_crcerr,s_lostdata} <= 0;
+							
+							wdstat_multisector <= 1'b0;
+							state <= STATE_WAIT_CPUREAD;
+							data_rdlength <= 6;
+						end
+					4'hE,	// READ TRACK
+					4'hF:	// WRITE TRACK
+							s_drq_busy <= 2'b00;
+					default:s_drq_busy <= 2'b00;
+					endcase
 				end
 			end
 			
@@ -474,15 +527,15 @@ always @(posedge clk or negedge reset_n) begin: _wdmain
 				// other kind of unrecoverable error has happened
 				if (iCPU_STATUS[3] || (iCPU_STATUS[1:0] == 2'b01)) begin
 					// FAIL
-					oCPU_REQUEST <= CPU_REQUEST_ACK;
 					s_seekerr <= 1'b1;
 					s_crcerr <= iCPU_STATUS[2];
 					s_drq_busy <= 2'b00;
 					
 					wdstat_irq <= 1;
-					state <= STATE_READY;
+					boo <= 3;
+					state <= STATE_ENDCOMMAND;
 				end else if (iCPU_STATUS[1:0] == 2'b11) begin
-					oCPU_REQUEST <= CPU_REQUEST_ACK;
+					//oCPU_REQUEST <= CPU_REQUEST_ACK;
 					wdstat_irq <= 0;
 					buff_addr <= 0;
 					
@@ -494,15 +547,13 @@ always @(posedge clk or negedge reset_n) begin: _wdmain
 		STATE_WAIT_CPUWRITE:
 			begin
 				if (iCPU_STATUS[3] || (iCPU_STATUS[1:0] == 2'b01)) begin
-					oCPU_REQUEST <= CPU_REQUEST_ACK;
-				
 					s_wrfault <= iCPU_STATUS[2];
 					
 					s_drq_busy <= 2'b00;
 					wdstat_irq <= 1;
-					state <= STATE_READY;
+					boo <= 4;
+					state <= STATE_ENDCOMMAND;
 				end else if (iCPU_STATUS[1:0] == 2'b11) begin
-					oCPU_REQUEST <= CPU_REQUEST_ACK;
 					wdstat_irq <= 0;
 					
 `ifdef WITH_MULTISECTOR					
@@ -516,10 +567,13 @@ always @(posedge clk or negedge reset_n) begin: _wdmain
 					end else begin
 `endif					
 						s_drq_busy <= 2'b00;
-						state <= STATE_READY;
+						boo <= 5;
+						state <= STATE_ENDCOMMAND;
 `ifdef WITH_MULTISECTOR					
 					end
 `endif					
+				end else begin
+					s_drq_busy <= 2'b00; 
 				end
 			end
 
@@ -527,10 +581,23 @@ always @(posedge clk or negedge reset_n) begin: _wdmain
 		STATE_WAIT_CPU:
 			begin
 				if (iCPU_STATUS[0]) begin
-					oCPU_REQUEST <= CPU_REQUEST_ACK;
-					
 					s_drq_busy <= 2'b00;
 					wdstat_irq <= 1;
+					boo <= 6;
+					state <= STATE_ENDCOMMAND;
+				end
+			end			
+			
+		STATE_ENDCOMMAND:
+			begin
+				oCPU_REQUEST <= {CPU_REQUEST_ACK[7:4], boo};
+				state <= STATE_ENDCOMMAND2;
+			end
+			
+		STATE_ENDCOMMAND2:
+			begin
+				if (iCPU_STATUS == 0) begin
+					oCPU_REQUEST <= 0;
 					state <= STATE_READY;
 				end
 			end

@@ -5,7 +5,7 @@
 
 #define WITH_SERIAL
 
-#define VERBOSE 2	// 1: mostly quiet
+#define VERBOSE 1	// 1: mostly quiet
 			// 2: log all requests
 			// 3: obsessive, print sector dumps
 

@@ -104,28 +104,29 @@ uint8_t thrall(char *imagefile, uint8_t *buffer) {
 uint8_t slave() {
 	uint8_t result;
 	uint8_t t1;
+	uint8_t cmd;
 
 	SLAVE_STATUS = 0;	// clear drive not ready flag
 
 	for (;result != FR_RW_ERROR;) {
+		//SLAVE_STATUS = 0;
 		result = FR_OK;
-
-		SLAVE_STATUS = 0;
 		if (disk_poll(0) == RES_NOTRDY) {
 			vputs("NOSD");
 			break;
 		}
 		
-		switch (MASTER_COMMAND & 0xf0) {
+		cmd = MASTER_COMMAND;
+		switch (cmd & 0xf0) {
 		case CPU_REQUEST_READ:
-			SLAVE_STATUS = 0;
+			SLAVE_STATUS = CPU_STATUS_BUSY;
 			menu_busy(1);
 			vnl();
 			vputs("rHST:");
-			t1 = MASTER_COMMAND & 0x02; // side
+			t1 = cmd & 0x02; // side
 			
 			if (t1 == 0) {
-				fdd_seek(&fddimage, 0x01 & MASTER_COMMAND, MASTER_TRACK, MASTER_SECTOR);
+				fdd_seek(&fddimage, 0x01 & cmd, MASTER_TRACK, MASTER_SECTOR);
 
 				vputh(fddimage.cur_side);
 				vputh(fddimage.cur_sector);
@@ -148,15 +149,15 @@ uint8_t slave() {
 		case CPU_REQUEST_READADDR:
 			// fill the beginning of buffer with position info
 			// 6 bytes: track, side, sector, sectorsize code, crc1, crc2
-			SLAVE_STATUS = 0;
+			SLAVE_STATUS = CPU_STATUS_BUSY;
 
 			menu_busy(1);
 			vnl();
 			vputc('Q');
-			t1 = MASTER_COMMAND & 0x02; // side
+			t1 = cmd & 0x02; // side
 			
 			if (t1 == 0) {
-				fdd_seek(&fddimage, 0x01 & MASTER_COMMAND, MASTER_TRACK, MASTER_SECTOR);
+				fdd_seek(&fddimage, 0x01 & cmd, MASTER_TRACK, MASTER_SECTOR);
 				result = fdd_readadr(&fddimage);
 				
 				//for (t1 = 0; t1 < 6; t1++) vputh(buffer[t1]);
@@ -169,17 +170,20 @@ uint8_t slave() {
 			// touche!
 			break;
 		case CPU_REQUEST_WRITE:
-			SLAVE_STATUS = 0;
+			SLAVE_STATUS = CPU_STATUS_BUSY;
 			menu_busy(1);
 			vnl();
+			vputh(cmd);
+			vputh(MASTER_TRACK);
 			vputs("wHST:");
 			
 			if (t1 == 0) {
-				fdd_seek(&fddimage, 0x01 & MASTER_COMMAND, MASTER_TRACK, MASTER_SECTOR);
+				fdd_seek(&fddimage, 0x01 & cmd, MASTER_TRACK, MASTER_SECTOR);
 
 				vputh(fddimage.cur_side);
 				vputh(fddimage.cur_sector);
 				vputh(fddimage.cur_track);
+				vputh(MASTER_TRACK);
 
 				result = fdd_writesector(&fddimage);
 				
@@ -195,25 +199,29 @@ uint8_t slave() {
 			break;
 		case CPU_REQUEST_ACK:
 			SLAVE_STATUS = 0;
-			if ((result = blink()) != MENURESULT_NOTHING) {
-				return result;
-			}
+			vputc('+');
 			break;
 		case CPU_REQUEST_NOP:
-			SLAVE_STATUS = 0;
+			SLAVE_STATUS = CPU_STATUS_BUSY;
 			vputc('`');
-			vputh(MASTER_COMMAND);
+			vputh(cmd);
 			vputh(MASTER_SECTOR);
 			vputh(MASTER_TRACK);
 			SLAVE_STATUS = CPU_STATUS_COMPLETE;
 			break;
 		case CPU_REQUEST_FAIL:
+			SLAVE_STATUS = 0;
 			vputc('[');
-			vputh(MASTER_COMMAND);
+			vputh(cmd);
+			vputc(':');
 			vputh(MASTER_SECTOR);
 			vputc(']');
 			break;
 		default:
+			SLAVE_STATUS = 0;
+			if ((result = blink()) != MENURESULT_NOTHING) {
+				return result;
+			}
 			break;
 		}		
 	}
