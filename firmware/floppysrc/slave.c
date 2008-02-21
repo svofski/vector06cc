@@ -1,7 +1,7 @@
 // ====================================================================
 //                         VECTOR-06C FPGA REPLICA
 //
-// 					Copyright (C) 2007, Viacheslav Slavinsky
+//               Copyright (C) 2007, 2008 Viacheslav Slavinsky
 //
 // This code is distributed under modified BSD license. 
 // For complete licensing information see LICENSE.TXT.
@@ -136,7 +136,7 @@ uint8_t slave() {
 				
 				vputc(':');
 				vputh(result);
-				//vdump(fddimage.buffer);
+				vdump(fddimage.buffer);
 			} else {
 				result = FR_INVALID_DRIVE;
 				vputs("DRVERR");
@@ -211,11 +211,15 @@ uint8_t slave() {
 			break;
 		case CPU_REQUEST_FAIL:
 			SLAVE_STATUS = 0;
-			vputc('[');
+			vputs("Death by snoo-snoo:");
 			vputh(cmd);
-			vputc(':');
+			vputs("CMD:");
 			vputh(MASTER_SECTOR);
-			vputc(']');
+			vputs(" STATE:");
+			vputh(MASTER_TRACK);
+			vnl();
+			vputs("X_x");
+			for(;;);
 			break;
 		default:
 			SLAVE_STATUS = 0;

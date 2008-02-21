@@ -50,9 +50,9 @@
 // Undefine following for smaller/faster builds
 `define WITH_CPU			
 `define WITH_KEYBOARD
-//`define WITH_VI53
+`define WITH_VI53
 `define WITH_DE1_JTAG
-//`define WITH_AY
+`define WITH_AY
 `define WITH_FLOPPY
 `define FLOPPYLESS_HAX	// set FDC odata to $00 when compiling without floppy
 `define WITH_OSD
@@ -267,7 +267,7 @@ assign GPIO_0[8:0] = {clk24, ce12, ce6, ce3, ce3v, video_slice, pipe_ab, vi53_ti
 /////////////////
 wire RESET_n = mreset_n & !blksbr_reset_pulse;
 reg READY;
-wire HOLD = jHOLD | SW[7] | osd_command_bushold;
+wire HOLD = jHOLD | SW[7] | osd_command_bushold | floppy_death_by_floppy;
 wire INT = int_request;
 wire INTE;
 wire DBIN;
@@ -732,6 +732,8 @@ wire		floppy_sel = portmap_device[2:1] == 2'b11; // both 110 and 111
 wire		floppy_wren = ~WR_n & io_write & floppy_sel;
 wire		floppy_rden  = io_read & floppy_sel;
 
+wire		floppy_death_by_floppy;
+
 `ifdef WITH_FLOPPY
 wire [7:0]	floppy_odata;
 wire [7:0]	floppy_status;
@@ -770,11 +772,13 @@ floppy flappy(
 	// debug 
 	.green_leds(floppy_leds),
 	//.red_leds(floppy_leds),
-	.debug(floppy_status)
+	.debug(floppy_status),
+	.host_hold(floppy_death_by_floppy),
 	);
 	//green_leds, red_leds, debug, debugidata);
 
 `else 
+assign floppy_death_by_floppy = 0;
 wire [7:0]	floppy_odata = 
 `ifdef FLOPPYLESS_HAX
 	8'h00;
