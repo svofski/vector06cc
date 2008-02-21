@@ -48,7 +48,9 @@ module floppy(
 	osd_command,
 	
 	// debug 
-	green_leds, red_leds, debug, debugidata);
+	green_leds, red_leds, debug, debugidata,
+	host_hold
+	);
 	
 parameter IOBASE = 16'hE000;
 parameter PORT_MMCA= 0;
@@ -108,16 +110,18 @@ output reg[7:0]	green_leds;
 output  [7:0]	red_leds = {spi_wren,dma_debug[6:0]};
 output	[7:0]	debug = wdport_status;
 output	[7:0]	debugidata = {ce & bufmem_en, ce, hostio_rd, wd_ram_rd};
+output			host_hold;
 
-wire [15:0] cpu_ax;
-wire		memwrx;
-wire [7:0]	cpu_dox;
+wire 	[15:0] 	cpu_ax;
+wire			memwrx;
+wire 	[7:0]	cpu_dox;
 
-wire [15:0] cpu_a = dma_ready ? cpu_ax  : dma_oaddr;
-assign		memwr = dma_ready ? memwrx  : dma_memwr;
-wire [7:0]	cpu_do = dma_ready ? cpu_dox: dma_odata;
-reg  [7:0]	cpu_di;
+wire 	[15:0]	cpu_a = dma_ready ? cpu_ax  : dma_oaddr;
+assign			memwr = dma_ready ? memwrx  : dma_memwr;
+wire	[7:0]	cpu_do = dma_ready ? cpu_dox: dma_odata;
+reg  	[7:0]	cpu_di;
 
+// Workhorse 6502 CPU
 cpu65xx_en cpu(
 		.clk(clk),
 		.reset(~reset_n),
@@ -130,11 +134,11 @@ cpu65xx_en cpu(
 		.we(memwrx)
 	);
 
-
-wire [7:0]  ram_do;
-wire [7:0] 	lowmem_do;
-wire [7:0]	bufmem_do;
-reg  [7:0]	ioports_do;
+// Main RAM, Low-mem, Buffer-mem, I/O ports to CPU connections
+wire 	[7:0]	ram_do;
+wire 	[7:0]	lowmem_do;
+wire 	[7:0]	bufmem_do;
+reg  	[7:0]	ioports_do;
 
 always begin: _cpu_datain
 	case({&cpu_a[15:4], lowmem_en, bufmem_en, rammem_en, osd_en}) 
@@ -147,6 +151,7 @@ always begin: _cpu_datain
 	endcase
 end							
 
+// memory enables
 wire lowmem_en = |cpu_a[15:9] == 0;
 wire bufmem_en = (wd_ram_rd|wd_ram_wr) || (cpu_a >= 16'h200 && cpu_a < 16'h600);
 wire rammem_en = cpu_a >= 16'h0800 && cpu_a < 16'h8000;
@@ -160,7 +165,6 @@ assign display_wren = osd_en & memwr;
 
 floppyram flopramnik(
 	.address(cpu_a-16'h0800),
-	//.inclocken(ce & rammem_en),
 	.clock(~clk),
 	.data(cpu_do),
 	.wren(memwr),
@@ -174,11 +178,6 @@ ram512x8a zeropa(
 	.wren(memwr),
 	.data(cpu_do),
 	.q(lowmem_do));
-
-//wire	[15:0]	dma_oaddr;
-//wire	[7:0]	dma_odata;
-//wire			dma_owren;
-
 
 wire [9:0]	bufmem_addr = (wd_ram_rd|wd_ram_wr) ? wd_ram_addr : cpu_a - 10'h200;
 wire 		bufmem_wren = wd_ram_wr | memwr;
@@ -286,11 +285,13 @@ always @(posedge clk or negedge reset_n) begin
 	end
 end
 
-
-reg uart_send;
-reg [7:0] uart_data;
-wire uart_busy;
-reg [1:0] uart_state = 3;
+//////////////////
+// UART Console //
+//////////////////
+reg 		uart_send;
+reg  [7:0] 	uart_data;
+wire 		uart_busy;
+reg  [1:0] 	uart_state = 3;
 
 TXD txda( 
 	.clk(clk),
@@ -329,15 +330,15 @@ spi sd0(.clk(clk),
 		.dsr(spdr_dsr)
 		);
 
-reg 	[7:0] 	dma_lsb, dma_msb;
-wire	[15:0]	dma_oaddr;
-wire	[7:0]	dma_odata;
-wire			dma_memwr;
-reg		[3:0]	dma_blocks;
-wire			dma_ready;
-wire	[7:0]	dma_spido;
-wire			dma_spiwr;
-wire	[7:0]	dma_debug;
+reg  [7:0] 	dma_lsb, dma_msb;
+wire [15:0]	dma_oaddr;
+wire [7:0]	dma_odata;
+wire		dma_memwr;
+reg	 [3:0]	dma_blocks;
+wire		dma_ready;
+wire [7:0]	dma_spido;
+wire		dma_spiwr;
+wire [7:0]	dma_debug;
 
 dma_rw pump0(
 		.clk(clk), 
@@ -404,31 +405,8 @@ wd1793 vg93(
 				.oSECTOR(wdport_sector),
 				.oSTATUS(wdport_status),
 				.oCPU_REQUEST(wdport_cpu_request),
-				.iCPU_STATUS(wdport_cpu_status)
+				.iCPU_STATUS(wdport_cpu_status),
+				
+				.wtf(host_hold),
 				);
 endmodule
-
-// lower memory:
-// 	0000 zeropage  
-// 	0100 stack				___ lowmem1
-// 	0200 buffer
-// 	0600 <end of lowmem> 	___ lowmem2
-module ram512x8(clk, ce, addr, wren, di, q);
-input clk, ce;
-input [8:0] addr;
-input 		wren;
-input [7:0]	di;
-output[7:0]	q = ram[addr];
-
-reg [7:0] ram[511:0];
-
-always @(posedge clk) begin
-	if (ce) begin
-		if (wren) begin
-			ram[addr] <= di;
-		end 
-	end
-end
-
-endmodule
-
