@@ -251,7 +251,13 @@ always @(posedge clk or negedge reset_n) begin: _wdmain
 				A_COMMAND:	begin
 								if (idata[7:4] == 4'hD) begin
 									// interrupt
-									if (state != STATE_READY) state <= STATE_ABORT;
+									cmd_mode <= 0;
+									
+									if (state != STATE_READY) 
+										state <= STATE_ABORT;
+									else
+										{s_wrfault,s_seekerr,s_crcerr,s_lostdata} <= 0;
+										
 								end else begin
 									if (wdstat_pending) begin
 										wdstat_sector <= idata;
@@ -428,7 +434,7 @@ always @(posedge clk or negedge reset_n) begin: _wdmain
 				//	state <= data_rdlength != 0 ? STATE_READ_1 : STATE_ABORT;
 				//end
 
-				if ((watchdog_bark | rd) && addr == A_DATA && s_drq) begin
+				if (watchdog_bark || (rd && addr == A_DATA && s_drq)) begin
 					// reset drq until next byte is read, nothing is lost
 					s_drq_busy <= 2'b01;
 					s_lostdata <= watchdog_bark;
@@ -503,8 +509,6 @@ always @(posedge clk or negedge reset_n) begin: _wdmain
 			begin
 				data_rdlength <= 0;
 				wdstat_pending <= 0;
-				//s_drq_busy <= 2'b00;
-				{s_wrfault,s_seekerr,s_crcerr,s_lostdata} <= 0;
 				boo <= 2;
 				state <= STATE_ENDCOMMAND;
 			end
@@ -588,7 +592,7 @@ endmodule
 
 // start ticking when cock goes down
 module watchdog(clk, clken, cock, q);
-parameter TIME = 16'd2048; // 1024 is kinda nice
+parameter TIME = 16'd2048; // 2048 seems to work better than expected 100 (32us).. why?
 input clk, clken;
 input cock;
 output q = timer == 0;
