@@ -1,7 +1,7 @@
 `default_nettype none
 
 // ====================================================================
-//                         VECTOR-06C FPGA REPLICA
+//                        VECTOR-06C FPGA REPLICA
 //
 //             Copyright (C) 2007,2008 Viacheslav Slavinsky
 //
