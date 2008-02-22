@@ -55,7 +55,9 @@ Special keys on the keyboard:
 ||*Alt*||ПС||Перевод строки||
 ||*Del*||СТР||Не знаю||
 
-See also: [http://www.quadibloc.com/comp/scan.htm Scan Codes Demystified]
+See also: [http://www.quadibloc.com/comp/scan.htm Scan Codes Demystified],,external,,
+
+See also: [http://www.beyondlogic.org/keyboard/keybrd.htm Interfacing the AT keyboard],,external,,
 
 See also: [Technical_Description Техническое описание] 
 
@@ -93,10 +95,10 @@ FAT support is based on Elm-Chan's awesome [http://elm-chan.org/fsw/ff/00index_e
 
 === WD1793 ===
 Some information about WD1793:
- * [http://www.hansotten.com/msxwd1793.html MSX Info Pages of WD1793]
- * [http://svn.akop.org/psp/trunk/fms/EMULib/ EMULib has C-source of the WD1793 emulator]
- * [http://elm-chan.org/docs/mmc/mmc_e.html ELM: How to MMC/SD]
- * [http://elm-chan.org/fsw/ff/00index_e.html Generic FAT Filesystem module]
+ * [http://www.hansotten.com/msxwd1793.html MSX Info Pages of WD1793],,external,,
+ * [http://svn.akop.org/psp/trunk/fms/EMULib/ EMULib has C-source of the WD1793 emulator],,external,,
+ * [http://elm-chan.org/docs/mmc/mmc_e.html ELM: How to MMC/SD],,external,,
+ * [http://elm-chan.org/fsw/ff/00index_e.html Generic FAT Filesystem module],,external,,
 Also see Technical_Description for Vector-06C port map, [VectorSecrets_by_Lebedev Секреты Вектора от Лебедева] and [SVK1_Floppy Секреты Вектора и Кристы]
 
 == Practice ==
