@@ -70,15 +70,23 @@ wire		neo_raw;			// not in matrix
 wire		neo = osd_active | neo_raw;
 wire [7:0]	decoded_col;
 
-scan2matrix scan2xy(clkk, ps2q, saved_ps2_shift|qey_shift, mod_rus, matrix_row, matrix_col, matrix_shift, neo_raw);
+scan2matrix scan2xy(
+			.c(clkk), 
+			.scancode(ps2q), 
+			.mod_shift(saved_ps2_shift|qey_shift), 
+			.mod_rus(mod_rus), 
+			.qrow(matrix_row), 
+			.qcol(matrix_col),
+			.qshift(matrix_shift), 
+			.qerror(neo_raw));
 
-assign 	key_shift = qey_shift ^ qmatrix_shift; 
+assign 	key_shift = (qey_shift|saved_ps2_shift) ^ qmatrix_shift; 
 reg		qmatrix_shift;
 reg		saved_ps2_shift;	// when a key requiring shift-play is pressed, shift
 							// flag must be remembered until its release, otherwise
 							// wrong release code is detected
 
-keycolumndecoder column_dc(matrix_col,decoded_col);
+keycolumndecoder column_dc1(matrix_col,decoded_col);
 
 
 wire	saved_shift;			// grey arrow keys send break-shift code and then make shift after release
@@ -202,13 +210,13 @@ always @(posedge clkk) begin
 				case(ps2q)
 					8'h12,8'h59: 
 						begin 
-							qey_shift <= 0; 
+							qey_shift <= 1'b0;//saved_ps2_shift; 
 							saved_shift_trigger <= 1'b1; 
 						end
-					8'h14:	key_ctrl  <= 0;
-					8'h58:	key_rus	  <= 0;
+					8'h14:	key_ctrl  	<= 0;
+					8'h58:	key_rus	  	<= 0;
 					8'h78:	key_blkvvod <= 0;
-					8'h07:	key_blksbr<= 0;
+					8'h07:	key_blksbr	<= 0;
 					8'h7E:	key_bushold <= 0;
 					8'hE0:	;// do nada plz
 					default: 
@@ -234,7 +242,7 @@ always @(posedge clkk) begin
 	end
 end
 
-// This is really dumb, together with the rest of code above 
+// This is really dumb: together with the rest of code above 
 // it unrolls into humongous structure, but it works and it is readable.
 reg  [7:0] 	rowbits;
 always @(posedge clkk) begin
