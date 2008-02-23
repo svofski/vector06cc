@@ -1,7 +1,7 @@
 // ====================================================================
-//                         VECTOR-06C FPGA REPLICA
+//                          VECTOR-06C FPGA REPLICA
 //
-// 					Copyright (C) 2007, Viacheslav Slavinsky
+//                Copyright (C) 2007, 2008 Viacheslav Slavinsky
 //
 // This core is distributed under modified BSD license. 
 // For complete licensing information see LICENSE.TXT.
@@ -120,6 +120,7 @@ always
 	/*RT*/	8'h74: q <= 	8'h06;
 	/*UP*/	8'h75: q <= 	8'h05;
 	/*ESC*/	8'h76: q <= 	8'h12;
+	/*`~*/  8'h0E: q <=		8'h76;
 	endcase
 endmodule
 
@@ -180,7 +181,7 @@ always
 	/*L*/	8'h4B: q <= 	8'h54;
 	/*;:*/	8'h4C: q <= 	8'hB2;	// x-shift
 	/*P*/	8'h4D: q <= 	8'h60;
-	/*-_*/	8'h4E: q <= 	8'hFF;
+	/*-_*/	8'h4E: q <= 	8'h03;	// underscore
 	/*'"*/	8'h52: q <= 	8'h22;	// +
 	/*[*/	8'h54: q <= 	8'h73;
 	/*=+*/	8'h55: q <= 	8'h33;
@@ -195,6 +196,7 @@ always
 	/*RT*/	8'h74: q <= 	8'h06;
 	/*UP*/	8'h75: q <= 	8'h05;
 	/*ESC*/	8'h76: q <= 	8'h12;
+	/*`~*/  8'h0E: q <=		8'h76;
 	endcase
 endmodule
 
