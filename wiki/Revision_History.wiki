@@ -3,7 +3,7 @@
 
 === Rev SVN ===
  * Keyboard stuckness: only keys that are in different positions in shifted/nonshifted mode are prone to get stuck now, but only if pressed in specially designed order. Otherwise, keyboard works very nicely [http://code.google.com/p/vector06cc/issues/detail?id=1 Issue]
- * Characters `~_ mapped to their proper PS/2 keys [http://code.google.com/p/vector06cc/issues/detail?id=36 Issue]
+ * Characters `~{{{_}}} mapped to their proper PS/2 keys [http://code.google.com/p/vector06cc/issues/detail?id=36 Issue]
 
 === Rev.300 ===
  * (r297) FDC: rewrote the state machine: now it uses many more states, but debugging is more linear; D>Q command works in both versions of MicroDOS but BDS C chaining only works sometimes.
