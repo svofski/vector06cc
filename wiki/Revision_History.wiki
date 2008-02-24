@@ -2,7 +2,7 @@
 #labels Featured,Phase-Implementation
 
 === Rev SVN ===
- * Keyboard stuckness: only keys that are in different positions in shifted/nonshifted mode are prone to get stuck now, but only if pressed in specially designed order. Otherwise, keyboard works very nicely [i1]
+ * Keyboard stuckness: only keys that are in different positions in shifted/nonshifted mode are prone to get stuck now, but only if pressed in specially designed order. Otherwise, keyboard works very nicely [Issue1]
  * Characters `~_ mapped to their proper PS/2 keys [i36]
 
 === Rev.300 ===
