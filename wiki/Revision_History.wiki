@@ -1,6 +1,10 @@
 #summary Here be the manually updated log of significant changes
 #labels Featured,Phase-Implementation
 
+=== Rev SVN ===
+ * Keyboard stuckness: only keys that are in different positions in shifted/nonshifted mode are prone to get stuck now, but only if pressed in specially designed order. Otherwise, keyboard works very nicely [i1]
+ * Characters `~_ mapped to their proper PS/2 keys [i36]
+
 === Rev.300 ===
  * (r297) FDC: rewrote the state machine: now it uses many more states, but debugging is more linear; D>Q command works in both versions of MicroDOS but BDS C chaining only works sometimes.
  * FDC write mode implemented, DMA included [http://code.google.com/p/vector06cc/issues/detail?id=35 Issue]
