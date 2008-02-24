@@ -120,7 +120,7 @@ always
 	/*RT*/	8'h74: q <= 	8'h06;
 	/*UP*/	8'h75: q <= 	8'h05;
 	/*ESC*/	8'h76: q <= 	8'h12;
-	/*`~*/  8'h0E: q <=		8'h76;
+	/*`~*/  8'h0E: q <=		8'hC0;		//+
 	endcase
 endmodule
 
