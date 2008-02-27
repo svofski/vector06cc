@@ -1,6 +1,11 @@
 #summary How to start - Как начать
 #labels Phase-Deploy,Featured
 
+[GettingStarted#Intro Introduction - Введение]
+[GettingStarted#Requirements Requirements - Требования]
+[GettingStarted#Making_it_work Making it work - Как заставить проект работать]
+
+
 == Intro ==
 This is a hardware project, which means that you can't e.g. just download, compile and run it on your PC. In order to be useful, it requires a compatible development board with an appropriate FPGA. As of time when this document is written, there's only one such board and it's called Altera Cyclone II Starter Kit, otherwise known as DE1 starter kit.
 
