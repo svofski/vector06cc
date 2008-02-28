@@ -49,8 +49,8 @@ The matrix itself is simulated rather physically, see `rowbits` assignment in `v
 Special keys on the keyboard:
 ||*F11*||БЛК+ВВОД||сброс ПК с подключением ПЗУ загрузчика. Программа в загрузчике отслеживает состояние клавиш при старте и удерживая F1, F2, F1+F2 можно принудительно выбирать загрузку с кассеты, квазидиска или дискеты||
 ||*F12*||БЛК+СБР||запуск загруженной программы. При нажатии на эту клавишу, отключается ПЗУ загрузчика и осуществляется сброс процессора, который начинает исполнять программу в ОЗУ с адреса $0000||
-||*ScrollLock*||OSD Menu||нажатие на эту клавишу вызывает экранное меню из которого можно выбрать образ дискеты (DISK), сбросить ПК (RESET), перезапустить программу (RESTART), захватить шину для JTAG интерфейса/приостановить работу (HOLD).||
-||*CapsLock*||РУС/ЛАТ||Переключение языка ввода в некоторых программах; см. красный светодиод #9||
+||*!ScrollLock*||OSD Menu||нажатие на эту клавишу вызывает экранное меню из которого можно выбрать образ дискеты (DISK), сбросить ПК (RESET), перезапустить программу (RESTART), захватить шину для JTAG интерфейса/приостановить работу (HOLD).||
+||*!CapsLock*||РУС/ЛАТ||Переключение языка ввода в некоторых программах; см. красный светодиод #9||
 ||*Control*||УC||Ввод управляющих символов||
 ||*Shift*||CC||Смена регистра||
 ||*Alt*||ПС||Перевод строки||
@@ -172,7 +172,7 @@ Video RAM is 256x8 dual-port RAM located in M4K. It is mapped into CPU memory sp
 When OSD is active, its display is overlaid on top of the primary display. High bits of the primary display true colour components are shifted to the LSB of RGB signals, thus providing simple transparency effect.
 
 == Input ==
-When ScrollLock key is pressed, "not in matrix" bit is forced for all keys in the keyboard driver. Instead, Arrow keys and the Enter key start toggling corresponding bits in the OSD joystick ($E003) register.
+When !ScrollLock key is pressed, "not in matrix" bit is forced for all keys in the keyboard driver. Instead, Arrow keys and the Enter key start toggling corresponding bits in the OSD joystick ($E003) register.
 
 ----
 = Sound =
