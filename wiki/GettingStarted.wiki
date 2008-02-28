@@ -1,16 +1,16 @@
 #summary How to start - Как начать
 #labels Phase-Deploy,Featured
 
- [GettingStarted#Intro Introduction - Введение]
- [GettingStarted#Requirements Requirements - Требования]
- [GettingStarted#Making_it_work Making it work - Как заставить это работать]
- [GettingStarted#After_the_firmware_is_uploaded After the firmware is uploaded - После того как залита фирмварь]
- [GettingStarted#DE1_Switches DE1 Switches - Тумблеры DE1]
- [GettingStarted#Using_software Using Software - Использование ПО]
-  [GettingStarted#Floppy_disk_images]
-  [GettingStarted#RAMdisk_image]
-  [GettingStarted#ROM_files]
-  [GettingStarted#Load_from_Tape]
+ * [GettingStarted#Intro Introduction - Введение]
+ * [GettingStarted#Requirements Requirements - Требования]
+ * [GettingStarted#Making_it_work Making it work - Как заставить это работать]
+ * [GettingStarted#After_the_firmware_is_uploaded After the firmware is uploaded - После того как залита фирмварь]
+ * [GettingStarted#DE1_Switches DE1 Switches - Тумблеры DE1]
+ * [GettingStarted#Using_software Using Software - Использование ПО]
+  * [GettingStarted#Floppy_disk_images Floppy disk images - Образы дискет]
+  * [GettingStarted#RAMdisk_image RAMdisk image - Образ квазидиска]
+  * [GettingStarted#ROM_files ROM-files - ROM-файлы]
+  * [GettingStarted#Load_from_Tape Loading from tape - Загрузка с кассеты]
 
 
 == Intro ==
