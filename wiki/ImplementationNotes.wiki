@@ -16,7 +16,7 @@ This page contains constantly updated project notes. Also see ArchitecturalOverv
     * FDC Memory Map
     * CPU I/O Ports
     * CPU Requests
-    * [ImplementationNotes#Small_Things]
+    * [ImplementationNotes#Small_Things Small Things]
  * [ImplementationNotes#OSD_Menu On-Screen Display]
   * Display
   * Input
