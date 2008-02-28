@@ -84,7 +84,7 @@ See also: [ramdisk Описание функционирования квази�
 
 ----
 = Floppy Drive =
-_This section describes work in progress. See also [HOWTO_Floppy]._
+_This section describes inner structure of floppy drive emulator. For information about how to use it, see [HOWTO_Floppy]._
 
 == Theory ==
 === Overview ===
