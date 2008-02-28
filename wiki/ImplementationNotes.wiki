@@ -116,7 +116,7 @@ Also see Technical_Description for Vector-06C port map, [VectorSecrets_by_Lebede
 Ports start at memory location $E000:
 ||E000||MMC_A: bit0 = SD_DAT3/CS||
 ||E001||SPDR: SPI data register, same as in AVR||
-||E002||SPSR: read: SPI status register: bit 0=SPIF; write: bits [7:4] number of 512-byte blocks to read, initiate transfer||
+||E002||SPSR: read: SPI status register: bit 0=SPIF; write: bits [6:4] number of 512-byte blocks to read, initiate transfer; bit 7=write/read||
 ||E003||OSD Joystick: {0,0,0,Right,Left,Up,Down,Fire}||
 ||E004||TxD||
 ||E005||RxD (not implemented)||
@@ -143,7 +143,14 @@ Ports start at memory location $E000:
 After CPU has done with processing any request other than `CPU_REQUEST_ACK`, it sets two bits in `iCPU_STATUS`:
  * bit 0 == 1: operation complete
  * bit 1 == 1: operation was successful
+ * bit 3 == 1: drive not ready (SD card pulled out)
 
+The host then enters `CPU_ENDCOMMAND` state, which issues a `CPU_REQUEST_ACK` command, with LSB containing the _boo code_. The CPU must react by clearing its status register. After the CPU has cleared its status, the machine is switched back into `STATE_READY`.
+
+=== Small Things ===
+One serious behavioural difference between the emulator and the real thing: normally in the write sector mode, BUSY flag is cleared almost instantaneously after the last byte is fed to the controller. Here a write op transfers data to the RAM buffer first and some (relatively long) time is required to flush the buffer before the next operation can begin. But software may expect BUSY bit to be cleared on a really short notice. Hence, after DMA transfer is over, the BUSY bit is cleared but the state changes to `STATE_WAIT_CPUWRITE`. The software may send new requests then, but next request will only be processed after the state changes to `STATE_READY` again. This seems to be the only possible compromise that works with both versions of MicroDOS. 
+
+However, if the software sends another command before the first one started to be processed, the machine will enter `STATE_DEAD` with all error bits set, `oCPU_REQUEST` set to `CPU_REQUEST_FAIL`, sector register will contain the last written command, the track will contain 0, 0 DRQ, BUSY in the MSB and the last machine state in LSB. wtf line will be set high, which in turn should lock the host computer CPU forever in the vicinity of the offending instruction. A crude, but useful debugging measure.
 
 ----
 
