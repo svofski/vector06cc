@@ -1,6 +1,12 @@
 #summary Here be the manually updated log of significant changes
 #labels Featured,Phase-Implementation
 
+=== Rev.329 ===
+ * SkyNet now works correctly in the end of the photo part: sunami's face appears without the dash of doom and "home doctor" face is circled correctly
+ * All stack operations now generate STACK status proper
+ * Changed configuration device to EPCS4 for DE1 board
+ * The project is now for Quartus 8.0sp1 (qsf file changed)
+
 === Rev.322 ===
  * Keyboard stuckness: only keys that are in different positions in shifted/nonshifted mode are prone to get stuck now, but only if pressed in specially designed order. Otherwise, keyboard works very nicely [http://code.google.com/p/vector06cc/issues/detail?id=1 Issue]
  * Characters `~{{{_}}} mapped to their proper PS/2 keys [http://code.google.com/p/vector06cc/issues/detail?id=36 Issue]
