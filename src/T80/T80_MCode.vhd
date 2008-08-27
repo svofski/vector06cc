@@ -550,11 +550,11 @@ begin
 					Set_BusB_To(0) <= '1';
 					Set_BusB_To(3) <= '0';
 				end if;
+                STACKRQ <= '1';
 				Write <= '1';
-				STACKRQ <= '1';
 			when 3 =>
+                STACKRQ <= '1';
 				Write <= '1';
-				STACKRQ <= '1';
 			when others => null;
 			end case;
 		when "11000001"|"11010001"|"11100001"|"11110001" =>
@@ -566,6 +566,7 @@ begin
 			when 2 =>
 				IncDec_16 <= "0111";
 				Set_Addr_To <= aSP;
+                STACKRQ <= '1';
 				Read_To_Reg <= '1';
 				if DPAIR = "11" then
 					Set_BusA_To(3 downto 0) <= "1011";
@@ -573,17 +574,16 @@ begin
 					Set_BusA_To(2 downto 1) <= DPAIR;
 					Set_BusA_To(0) <= '1';
 				end if;
-				STACKRQ <= '1';
 			when 3 =>
 				IncDec_16 <= "0111";
 				Read_To_Reg <= '1';
+                STACKRQ <= '1';
 				if DPAIR = "11" then
 					Set_BusA_To(3 downto 0) <= "0111";
 				else
 					Set_BusA_To(2 downto 1) <= DPAIR;
 					Set_BusA_To(0) <= '0';
 				end if;
-				STACKRQ <= '1';
 			when others => null;
 			end case;
 
@@ -644,24 +644,30 @@ begin
 				ExchangeRS <= '1';
 			elsif Mode = 2 then
 				-- svo: 8080: D9 same as RET
-				MCycles <= "011";
-				case to_integer(unsigned(MCycle)) is
-				when 1 =>
-					TStates <= "101";
-					Set_Addr_TO <= aSP;
-				when 2 =>
-					IncDec_16 <= "0111";
-					Set_Addr_To <= aSP;
-					LDZ <= '1';
-				when 3 =>
-					Jump <= '1';
-					IncDec_16 <= "0111";
-				when others => null;
-				end case;
+                -- RET
+                MCycles <= "011";
+                case to_integer(unsigned(MCycle)) is
+                when 1 =>
+                    -- svo: 8080 RET is 10 TStates total, 4+3+3
+                    if Mode /= 2 then
+                        TStates <= "101";
+                    end if;
+                    Set_Addr_TO <= aSP;
+                when 2 =>
+                    IncDec_16 <= "0111";
+                    Set_Addr_To <= aSP;
+                    STACKRQ <= '1';
+                    LDZ <= '1';
+                when 3 =>
+                    Jump <= '1';
+                    IncDec_16 <= "0111";
+                    STACKRQ <= '1';
+                when others => null;
+                end case;
 			end if;
 		when "11100011" =>
 			if Mode /= 3 then
-				-- EX (SP),HL
+				-- EX (SP),HL (XTHL)
 				MCycles <= "101";
 				case to_integer(unsigned(MCycle)) is
 				when 1 =>
@@ -671,6 +677,7 @@ begin
 					Set_BusA_To <= "0101";
 					Set_BusB_To <= "0101";
 					Set_Addr_To <= aSP;
+                    STACKRQ <= '1';
 				when 3 =>
 					IncDec_16 <= "0111";
 					Set_Addr_To <= aSP;
@@ -678,16 +685,19 @@ begin
 					if Mode /= 2 then
 						TStates <= "100";
 					end if;
+                    STACKRQ <= '1';
 					Write <= '1';
 				when 4 =>
 					Read_To_Reg <= '1';
 					Set_BusA_To <= "0100";
 					Set_BusB_To <= "0100";
 					Set_Addr_To <= aSP;
+                    STACKRQ <= '1';
 				when 5 =>
 					IncDec_16 <= "1111";
 					TStates <= "101";
 					Write <= '1';
+                    STACKRQ <= '1';
 				when others => null;
 				end case;
 			end if;
@@ -867,9 +877,11 @@ begin
 					Write <= '1';
 					IncDec_16 <= "1111";
 					Set_Addr_To <= aSP;
+                    STACKRQ <= '1';
 					Set_BusB_To <= "1100";
 				when 3 =>
 					TStates <= "100";
+                    STACKRQ <= '1';
 					Write <= '1';
 				when 4 =>
 					Inc_PC <= '1';
@@ -1204,9 +1216,11 @@ begin
 				IncDec_16 <= "1111";
 				Set_Addr_To <= aSP;
 				Set_BusB_To <= "1100";
+				STACKRQ <= '1';
 			when 5 =>
 				Write <= '1';
 				Call <= '1';
+				STACKRQ <= '1';
 			when others => null;
 			end case;
 		when "11000100"|"11001100"|"11010100"|"11011100"|"11100100"|"11101100"|"11110100"|"11111100" =>
@@ -1237,11 +1251,13 @@ begin
 					end if;
 				when 4 =>
 					Write <= '1';
+                    STACKRQ <= '1';
 					IncDec_16 <= "1111";
 					Set_Addr_To <= aSP;
 					Set_BusB_To <= "1100";
 				when 5 =>
 					Write <= '1';
+                    STACKRQ <= '1';
 					Call <= '1';
 				when others => null;
 				end case;
@@ -1259,8 +1275,10 @@ begin
 			when 2 =>
 				IncDec_16 <= "0111";
 				Set_Addr_To <= aSP;
+				STACKRQ <= '1';
 				LDZ <= '1';
 			when 3 =>
+				STACKRQ <= '1';
 				Jump <= '1';
 				IncDec_16 <= "0111";
 			when others => null;
@@ -1347,10 +1365,12 @@ begin
 				when 2 =>
 					IncDec_16 <= "0111";
 					Set_Addr_To <= aSP;
+                    STACKRQ <= '1';
 					LDZ <= '1';
 				when 3 =>
 					Jump <= '1';
 					IncDec_16 <= "0111";
+                    STACKRQ <= '1';
 				when others => null;
 				end case;
 			end if;
@@ -1365,11 +1385,13 @@ begin
 				Set_BusB_To <= "1101";
 			when 2 =>
 				Write <= '1';
+                STACKRQ <= '1';
 				IncDec_16 <= "1111";
 				Set_Addr_To <= aSP;
 				Set_BusB_To <= "1100";
 			when 3 =>
 				Write <= '1';
+                STACKRQ <= '1';
 				RstP <= '1';
 			when others => null;
 			end case;
@@ -1384,7 +1406,7 @@ begin
 					Inc_PC <= '1';
 					Set_Addr_To <= aIOA;
 				when 3 =>
-					Read_To_Acc <= '1';		-- svo: Z80 should have 4,3,4: this be a bug? the timing is proper for 8080
+					Read_To_Acc <= '1';		-- svo: Z80 should have 4,3,4: this be a bug? the timing 4,3,3 is proper for 8080
 					IORQ <= '1';
 				when others => null;
 				end case;
@@ -1400,7 +1422,7 @@ begin
 					Set_BusB_To <= "0111";
 				when 3 =>
 					Write <= '1';
-					IORQ <= '1';			-- svo: Z80 should have 4,3,4: this be a bug? the timing is proper for 8080
+					IORQ <= '1';			-- svo: Z80 should have 4,3,4: this be a bug? the timing 4,3,3 is proper for 8080
 				when others => null;
 				end case;
 			end if;
@@ -1432,61 +1454,80 @@ begin
 		when "11101101" =>
 			if Mode < 2 then
 				Prefix <= "10";
-			elsif Mode = 2 then
-				-- CALL nn
-				MCycles <= "101";
-				case to_integer(unsigned(MCycle)) is
-				when 2 =>
-					Inc_PC <= '1';
-					LDZ <= '1';
-				when 3 =>
-					IncDec_16 <= "1111";
-					Inc_PC <= '1';
-					TStates <= "100";
-					Set_Addr_To <= aSP;
-					LDW <= '1';
-					Set_BusB_To <= "1101";
-				when 4 =>
-					Write <= '1';
-					IncDec_16 <= "1111";
-					Set_Addr_To <= aSP;
-					Set_BusB_To <= "1100";
-				when 5 =>
-					Write <= '1';
-					Call <= '1';
-				when others => null;
-				end case;
+			elsif Mode = 2 then -- svo: 8080 undocumented ED:CALL
+                -- CALL nn
+                MCycles <= "101";
+                case to_integer(unsigned(MCycle)) is
+                when 1 =>
+                    -- svo: 8080
+                    if (Mode = 2) then
+                        TStates <= "101";
+                    end if;
+                when 2 =>
+                    Inc_PC <= '1';
+                    LDZ <= '1';
+                when 3 =>
+                    IncDec_16 <= "1111";
+                    Inc_PC <= '1';
+                    -- svo: 8080 CALL is 5,3,3,3,3
+                    if Mode /= 2 then
+                        TStates <= "100";
+                    end if;
+                    Set_Addr_To <= aSP;
+                    LDW <= '1';
+                    Set_BusB_To <= "1101";
+                when 4 =>
+                    Write <= '1';
+                    IncDec_16 <= "1111";
+                    Set_Addr_To <= aSP;
+                    Set_BusB_To <= "1100";
+                    STACKRQ <= '1';
+                when 5 =>
+                    Write <= '1';
+                    STACKRQ <= '1';
+                    Call <= '1';
+                when others => null;
+                end case;
 			end if;
 
 		when "11011101"|"11111101" =>
 			if Mode < 2 then
 				Prefix <= "11";
-			elsif Mode = 2 then
-				-- CALL nn
-				MCycles <= "101";
-				case to_integer(unsigned(MCycle)) is
-				when 2 =>
-					Inc_PC <= '1';
-					LDZ <= '1';
-				when 3 =>
-					IncDec_16 <= "1111";
-					Inc_PC <= '1';
-					TStates <= "100";
-					Set_Addr_To <= aSP;
-					LDW <= '1';
-					Set_BusB_To <= "1101";
-				when 4 =>
-					Write <= '1';
-					IncDec_16 <= "1111";
-					Set_Addr_To <= aSP;
-					Set_BusB_To <= "1100";
-				when 5 =>
-					Write <= '1';
-					Call <= '1';
-				when others => null;
-				end case;
-			end if;
-
+			elsif Mode = 2 then -- svo: 8080 undocumented DD:CALL,FD:CALL
+                -- CALL nn
+                MCycles <= "101";
+                case to_integer(unsigned(MCycle)) is
+                when 1 =>
+                    -- svo: 8080
+                    if (Mode = 2) then
+                        TStates <= "101";
+                    end if;
+                when 2 =>
+                    Inc_PC <= '1';
+                    LDZ <= '1';
+                when 3 =>
+                    IncDec_16 <= "1111";
+                    Inc_PC <= '1';
+                    -- svo: 8080 CALL is 5,3,3,3,3
+                    if Mode /= 2 then
+                        TStates <= "100";
+                    end if;
+                    Set_Addr_To <= aSP;
+                    LDW <= '1';
+                    Set_BusB_To <= "1101";
+                when 4 =>
+                    Write <= '1';
+                    IncDec_16 <= "1111";
+                    Set_Addr_To <= aSP;
+                    Set_BusB_To <= "1100";
+                    STACKRQ <= '1';
+                when 5 =>
+                    Write <= '1';
+                    STACKRQ <= '1';
+                    Call <= '1';
+                when others => null;
+                end case;
+            end if;
 		end case;
 
 		when "01" =>

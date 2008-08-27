@@ -209,9 +209,11 @@ soundcodec soundnik(
 reg [15:0] slowclock;
 always @(posedge clk24) if (ce3) slowclock <= slowclock + 1'b1;
 
+reg  breakpoint_condition;
+
 wire slowclock_enabled  =SW[8] == 1'b0;
-wire singleclock_enabled=SW[9] == 1'b0;
-wire regular_clock_enabled = !slowclock_enabled & !singleclock_enabled;
+wire singleclock_enabled=SW[9] == 1'b0 || breakpoint_condition;
+wire regular_clock_enabled = !slowclock_enabled & !singleclock_enabled & !breakpoint_condition;
 wire singleclock;
 
 singleclockster keytapclock(clk24, singleclock_enabled, KEY[1], singleclock);
@@ -246,6 +248,16 @@ always @(posedge clk24) begin
 			if (~ws_req_n & ~ws_cpu_time) begin
 				READY <= 0;
 			end
+`ifdef WITH_BREAKPOINTS			
+			if (singleclock) begin
+                breakpoint_condition <= 0;
+            end
+			else if (A == 16'h0100) begin
+                breakpoint_condition <= 1;
+            end
+`else
+            breakpoint_condition <= 0;
+`endif
 		end 
 	end
 	// reset the latch when it's time
@@ -253,7 +265,6 @@ always @(posedge clk24) begin
 		READY <= 1;
 	end
 end
-
 
 
 
