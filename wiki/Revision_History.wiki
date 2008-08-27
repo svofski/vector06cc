@@ -1,9 +1,10 @@
 #summary Here be the manually updated log of significant changes
 #labels Featured,Phase-Implementation
 
-=== Rev.329 ===
+=== Rev.331 ===
  * SkyNet now works correctly in the end of the photo part: sunami's face appears without the dash of doom and "home doctor" face is circled correctly
  * All stack operations now generate STACK status proper
+ * port 01 (Port C) bits 3:0 read as 1's now, this fixes Kolobiha decoder
  * Changed configuration device to EPCS4 for DE1 board
  * The project is now for Quartus 8.0sp1 (qsf file changed)
 
