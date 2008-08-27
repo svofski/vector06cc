@@ -28,11 +28,11 @@ set_global_assignment -name FAMILY "Cyclone II"
 set_global_assignment -name TOP_LEVEL_ENTITY vector06cc
 set_global_assignment -name ORIGINAL_QUARTUS_VERSION 7.1
 set_global_assignment -name PROJECT_CREATION_TIME_DATE "22:55:30  OCTOBER 17, 2007"
-set_global_assignment -name LAST_QUARTUS_VERSION 7.1
+set_global_assignment -name LAST_QUARTUS_VERSION "8.0 SP1"
 set_global_assignment -name DEVICE_FILTER_PACKAGE FBGA
 set_global_assignment -name DEVICE_FILTER_PIN_COUNT 484
 set_global_assignment -name DEVICE_FILTER_SPEED_GRADE 7
-set_instance_assignment -name PARTITION_HIERARCHY no_file_for_top_partition -to | -section_id Top
+set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
 set_global_assignment -name PARTITION_NETLIST_TYPE SOURCE -section_id Top
 set_location_assignment PIN_R22 -to KEY[0]
 set_location_assignment PIN_R21 -to KEY[1]
@@ -276,3 +276,8 @@ set_global_assignment -name VHDL_FILE src/ay/YM2149_linmix.vhd
 set_global_assignment -name VERILOG_FILE src/osd/textmode.v
 set_global_assignment -name VERILOG_FILE src/osd/chargen.v
 set_global_assignment -name VERILOG_FILE src/osd/screenbuffer.v
+set_global_assignment -name USE_CONFIGURATION_DEVICE ON
+set_global_assignment -name STRATIX_CONFIGURATION_DEVICE EPCS4
+set_global_assignment -name PARTITION_COLOR 14622752 -section_id Top
+set_global_assignment -name LL_ROOT_REGION ON -section_id "Root Region"
+set_global_assignment -name LL_MEMBER_STATE LOCKED -section_id "Root Region"
