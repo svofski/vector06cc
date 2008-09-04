@@ -3,7 +3,7 @@
 
  * [GettingStarted#Intro Introduction - Введение]
  * [GettingStarted#Requirements Requirements - Требования]
- * [GettingStarted#Making_it_work Making it work - Как заставить это работать]
+ * [GettingStarted#Making_it_work Downloading and Making it work - Как скачать и заставить это работать]
  * [GettingStarted#After_the_firmware_is_uploaded After the firmware is uploaded - После того как залита фирмварь]
  * [GettingStarted#DE1_Switches DE1 Switches - Тумблеры DE1]
  * [GettingStarted#Using_software Using Software - Использование ПО]
@@ -33,7 +33,11 @@ Provided you have DE1 board and it's connected to your host PC and Quartus II is
  * Download binary release and upload it directly
 In any occasion you must be absolutely sure that you have DE1 board and nothing else. It WILL NOT work on anything else and it WILL DAMAGE your non-DE1 board. I don't take any responsibility for damaged hardware.
 
+Usually it's a preferred choice to download and compile the source from SVN, because snapshot releases are not prepared regularly and you could miss some recent fixes. Check with [Revision_History], which is kept up to date with SVN commits.
+
  Если у вас есть DE1 и все настроено, можно либо скачать сорцы и откомпилировать их, для этого нужен Quartus II Web Edition, либо же можно скачать bitstream (binary) файл и просто залить его в плату. Не надо пытаться заливать этот файл в другую плату, даже если там стоит такая же FPGA -- все сгорит, из микросхем выйдет весь волшебный дым и они перестанут работать. 
+ 
+ Лучше выкачивать исходники из репозитория SVN, потому что снепшоты и билды, строятся не регулярно, а очень изредка и можно не застать самые свежие исправления. Заглядывайте в [Revision_History] на предмет последних изменений, эта страничка поддерживается в актуальном состоянии.
 
 == After the firmware is uploaded ==
 Provided that your monitor supports 720x576@50Hz mode, which most modern LCD monitors should support, upon startup you will see a blue screen with yellow grid, the top line saying "ВЕКТОР-06Ц" and there would be a tape icon. If you see this picture, everything is perfect! If you don't, start fixing the code and submitting patches.
