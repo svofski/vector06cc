@@ -3,6 +3,11 @@
 
 This page contains constantly updated project notes. Also see ArchitecturalOverview.
 
+= Google calls this a table of contents: =
+{{{
+<wiki:toc/>
+}}}
+
 = Contents =
  * [ImplementationNotes#Clock_Distribution Clock distribution]
  * [ImplementationNotes#Keyboard Keyboard]
