@@ -3,27 +3,8 @@
 
 This page contains constantly updated project notes. Also see ArchitecturalOverview.
 
-= Google calls this a table of contents: =
-<wiki:toc/>
-
 = Contents =
- * [ImplementationNotes#Clock_Distribution Clock distribution]
- * [ImplementationNotes#Keyboard Keyboard]
-  * Special Keys
- * [ImplementationNotes#Mock_Disk Mock Disk (RAM disk)]
- * [ImplementationNotes#Floppy_Drive Floppy Drive]
-  * Theory
-    * Overview
-    * WD1793
-  * Practice
-    * FDC Memory Map
-    * CPU I/O Ports
-    * CPU Requests
-    * [ImplementationNotes#Small_Things Small Things]
- * [ImplementationNotes#OSD_Menu On-Screen Display]
-  * Display
-  * Input
- * [ImplementationNotes#Sound Sound Interface]
+<wiki:toc/>
 
 = Clock Distribution =
 
