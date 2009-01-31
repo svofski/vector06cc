@@ -1,7 +1,8 @@
 #summary Техническое описание ПК Вектор-06Ц - Technical description of Vector-06C
 #labels Phase-Design
+
 = TO.TXT Verbatim =
-{{{
+<pre>
 (с)  Тимошенко Александр Валерьевич (aka TIMSoft)
      URL:     http://vector06c.narod.ru/
 
@@ -520,6 +521,8 @@ OUT PORT, где PORT - номера портов, описание которы
   Вх: HL - адрес начала (сообщение заканчивается нулевым байтом)
  Вых: нет
 
+
+
 781BH(F81BH) - ввод кода нажатой клавиши
   Вх: нет
  Вых: A=FF - не нажата
@@ -766,7 +769,7 @@ OUT PORT, где PORT - номера портов, описание которы
                             стековых операциях - выключение сигнала STEC при
                             обращении к адресу (STEC)
  EDH  Шлюз с IBM PC
-}}}
+</pre>
 
 = Author info =
 http://vector06c.narod.ru/
