@@ -25,7 +25,7 @@ module soundcodec(clk18, pulses, pcm, tapein, reset_n, oAUD_XCK, oAUD_BCK, oAUD_
 input	clk18;
 input	[3:0] pulses;
 input	[7:0] pcm;
-output	tapein;
+output	reg tapein;
 input	reset_n;
 output	oAUD_XCK = clk18;
 output	oAUD_BCK;
@@ -33,6 +33,8 @@ output	oAUD_DATA;
 output	oAUD_LRCK;
 input	iAUD_ADCDAT;
 output	oAUD_ADCLRCK;
+
+parameter HYST = 4;
 
 reg [7:0] decimator;
 always @(posedge clk18) decimator <= decimator + 1'd1;
@@ -74,39 +76,12 @@ reg [7:0] highest;
 reg [7:0] abs_low;
 reg [7:0] abs_high;
 
-wire [7:0] line8in = linein[15:8];
+wire [7:0] line8in = {~linein[15],linein[14:8]};    // shift signed value to be withing 0..255 range, 128 is midpoint
 
-// a really slow counter to adjust min/max envelopes
-reg [15:0] slowcount;
-always @(posedge oAUD_LRCK) begin
-	slowcount <= slowcount + 1'd1;
+always @(posedge clk18) begin
+    if (line8in < 128+HYST) tapein <= 1'b0;
+    if (line8in > 128-HYST) tapein <= 1'b1; 
 end
-
-wire [15:0] acc_plus = level_avg + line8in;
-
-wire [7:0] h_l_diff = abs_high - abs_low;
-
-reg [7:0] the_middle;
-
-always @(negedge oAUD_LRCK or negedge reset_n) begin
-	if (!reset_n) begin
-		abs_low <= 127;
-		abs_high <= 128;
-		level_avg <= 127;
-	end else begin
-		if (line8in < abs_low) 	abs_low <= line8in;
-		if (line8in > abs_high) abs_high <= line8in;
-		
-		if (slowcount == 0 && abs_low < level_avg) abs_low <= abs_low + 1'd1;
-		if (slowcount == 0 && abs_high > level_avg) abs_high <= abs_high - 1'd1;
-		
-		level_avg <= acc_plus[15:1];
-		
-		the_middle <= abs_low + h_l_diff[7:1];
-	end
-end
-
-assign tapein = line8in > the_middle;
 
 endmodule
 
