@@ -189,6 +189,7 @@ clockster clockmaker(
 	.video_slice(video_slice), 
 	.pipe_ab(pipe_ab), 
 	.ce1m5(vi53_timer_ce));
+	
 
 assign AUD_XCK = clk18;
 wire tape_input;
@@ -203,7 +204,7 @@ soundcodec soundnik(
 					.oAUD_DATA(AUD_DACDAT),
 					.oAUD_LRCK(AUD_DACLRCK),
 					.iAUD_ADCDAT(AUD_ADCDAT), 
-					.oAUD_ADCLRCK(AUD_ADCLRCK)
+					.oAUD_ADCLRCK(AUD_ADCLRCK),
 				   );
 
 reg [15:0] slowclock;
@@ -307,7 +308,7 @@ wire [7:0] kbd_keystatus = {kbd_mod_rus, kbd_key_shift, kbd_key_ctrl, kbd_key_ru
 assign LEDg = sw23 == 0 ? status_word 
 			: sw23 == 1 ? floppy_leds//{floppy_rden,floppy_odata[6:0]}//{kbd_keystatus} 
 			: sw23 == 2 ? floppy_status 
-			: {HLDA, mJTAG_SELECT, mJTAG_SRAM_WR_N, SRAM_ADDR[17:15]};
+			: {vi53_timer_ce, INT, interrupt_ack, mJTAG_SELECT, mJTAG_SRAM_WR_N, SRAM_ADDR[17:15]};
 			
 SEG7_LUT_4 seg7display(HEX0, HEX1, HEX2, HEX3, SW[4] ? clock_counter : A);
 
@@ -476,7 +477,10 @@ end
 // Now the real problem is: nobody knows how it's ought to look!
 wire int_delay;
 reg int_request;
-wire int_rq;
+wire int_rq_tick;
+//wire int_rq_tick_inte;
+reg  int_rq_hist;
+
 // 36: sssshhh in the evolution pic, skynet does not pass (?)
 // 34: no visible changes in m@color or b-ice, skynet passes, trr in evolution pic, pentium bug
 // 33: trrr in skynet (evolution pic)
@@ -485,13 +489,18 @@ wire int_rq;
 // 30: no visible changes in m@color, tv in b-ice as in 32, skynet passes with the usual pentium bug -- breaks
 // 29: is the absolute limit, b-ice breaks
 oneshot #(10'd33) retrace_delay(clk24, cpu_ce, retrace, int_delay);
-oneshot #(10'd191) retrace_irq(clk24, cpu_ce, ~int_delay, int_rq);
+oneshot #(10'd191) retrace_irq(clk24, cpu_ce, ~int_delay, int_rq_tick);
+
+//assign int_rq_tick_inte = ~interrupt_ack & INTE & int_rq_tick;
 
 always @(posedge clk24) begin
-	if (INTE & int_rq)// & !interrupt_ack)
-		int_request <= 1;
-	else
-		int_request <= 0;
+    int_rq_hist <= int_rq_tick;
+    
+    if (~int_rq_hist & int_rq_tick & INTE) 
+        int_request <= 1;
+    
+    if (interrupt_ack)
+        int_request <= 0;
 end
 
 //oneshot #(144) retrace_irq(clk24, 1, retrace, int_request);
