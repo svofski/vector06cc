@@ -287,7 +287,7 @@ always @(posedge clk) begin
 	if (tce) begin
 		case (cw_mode) 
 			M0:	begin
-					if (counter_q == 16'd0) begin
+					if (counter_q == 16'd1) begin	// 1 locks the counter so the terminal count is 0
 						counter_loaded <= 0;
 						outreg <= 1;
 					end
