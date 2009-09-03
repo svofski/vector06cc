@@ -51,11 +51,11 @@
 `define WITH_CPU			
 `define WITH_KEYBOARD
 `define WITH_VI53
-`define WITH_DE1_JTAG
 `define WITH_AY
 `define WITH_FLOPPY
 `define FLOPPYLESS_HAX	// set FDC odata to $00 when compiling without floppy
 `define WITH_OSD
+`define WITH_DE1_JTAG
 `define JTAG_AUTOHOLD
 `define TWO_PLL_OK 		// use second PLL to generate clean 14.0MHz for the AY, use 14.4MHz otherwise
 
@@ -426,10 +426,20 @@ reg			video_mode512;
 wire [3:0] coloridx;
 wire retrace;			// 1 == retrace in progress
 
+wire vga_vs;
+wire vga_hs;
+
+
+wire 		tv_mode = SW[5];
+
+wire 		tv_sync;
+wire [7:0] 	tv_luma;
+wire [7:0]	tv_chroma;
+
 video vidi(.clk24(clk24), .ce12(ce12), .ce6(ce6), .video_slice(video_slice), .pipe_ab(pipe_ab),
 		   .mode512(video_mode512), 
 		   .SRAM_DQ(sram_data_in), .SRAM_ADDR(VIDEO_A), 
-		   .hsync(VGA_HS), .vsync(VGA_VS), 
+		   .hsync(vga_hs), .vsync(vga_vs), 
 		   .osd_hsync(osd_hsync), .osd_vsync(osd_vsync),
 		   .coloridx(coloridx),
 		   .realcolor_in(realcolor2buf),
@@ -437,7 +447,9 @@ video vidi(.clk24(clk24), .ce12(ce12), .ce6(ce6), .video_slice(video_slice), .pi
 		   .retrace(retrace),
 		   .video_scroll_reg(video_scroll_reg),
 		   .border_idx(video_border_index),
-		   .testpin(GPIO_0[12:9]));
+		   .testpin(GPIO_0[12:9]),
+		   .tv_sync(tv_sync),
+		   .tv_luma(tv_luma));
 		
 wire [7:0] realcolor;		// this truecolour value fetched from buffer directly to display
 wire [7:0] realcolor2buf;	// this truecolour value goes into the scan doubler buffer
@@ -450,9 +462,11 @@ reg [3:0] video_r;
 reg [3:0] video_g;
 reg [3:0] video_b;
 
-assign VGA_R = video_r;
-assign VGA_G = video_g;
-assign VGA_B = video_b;
+assign VGA_R = tv_mode ? tv_luma : video_r;
+assign VGA_G = tv_mode ? 0       : video_g;
+assign VGA_B = tv_mode ? 0       : video_b;
+assign VGA_VS= tv_mode ? 0 		 : vga_vs;
+assign VGA_HS= tv_mode ? tv_sync : vga_hs;
 
 wire [1:0] 	lowcolor_b = {2{osd_active}} & {realcolor[7],1'b0};
 wire 		lowcolor_g = osd_active & realcolor[5];

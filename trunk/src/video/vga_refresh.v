@@ -25,7 +25,7 @@
 
 `default_nettype none
 
-module vga_refresh(clk24, hsync, vsync, videoActive, bordery, retrace, video_scroll_reg, fb_row, fb_row_count);
+module vga_refresh(clk24, hsync, vsync, videoActive, bordery, retrace, video_scroll_reg, fb_row, fb_row_count, tvhs, tvvs);
 input			clk24;
 output			hsync;
 output			vsync;
@@ -35,6 +35,7 @@ output 			retrace;
 input	[7:0]	video_scroll_reg;
 output	[8:0]	fb_row;
 output  [8:0]	fb_row_count;
+output			tvhs, tvvs;
 
 // total = 624
 // visible = (16 + 256 + 16)*2 = 288*2 = 576
@@ -51,6 +52,12 @@ assign retrace = !videoActiveY;
 assign hsync = !(scanxx_state == state2);
 assign vsync = !(scanyy_state == state2);
 
+//assign tvhs = !((tvx > (0)) && (tvx < (96)));
+assign tvhs = !(tvx > 800-96);
+assign tvvs = !(tvy < 6);
+
+reg[9:0] tvx;
+reg[9:0] tvy;
 
 reg[9:0] realx;  
 reg[9:0] realy;
@@ -78,6 +85,7 @@ always @(posedge clk24) begin
 						scanyy <= 10'd21;
 						scanyy_state <= state1;
 						bordery <= 0;
+						tvy <= 0;
 						videoActiveY <= 0;
 					end
 			state1: // VSYNC
@@ -137,6 +145,8 @@ always @(posedge clk24) begin
 						if (fb_row_count != 0) begin
 							fb_row_count <= fb_row_count - 1'b1;
 						end 
+						
+						tvx <= 0;
 					end
 			state1: // enter HSYNC PULSE
 					begin 
@@ -169,6 +179,15 @@ always @(posedge clk24) begin
 		
 		if (videoActiveX) begin
 			realx <= realx + 1'b1;
+		end
+		
+		if (scanxx_state == state0) 
+			tvx <= 0;
+		else 
+			tvx <= tvx + 1;
+			
+		if (scanxx_state == state0) begin
+			tvy <= tvy + 1;
 		end
 		
 end

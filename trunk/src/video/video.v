@@ -50,7 +50,10 @@ module video(
 	retrace,			// output: 	out of scan area, for interrupt request
     video_scroll_reg,	// input: 	line where display starts
 	border_idx,			// input: 	border colour index
-	testpin
+	testpin,
+	
+	tv_sync,
+	tv_luma,
 );
 
 // input clocks
@@ -79,6 +82,10 @@ output 			retrace;
 input  [7:0]	video_scroll_reg;
 input  [3:0]	border_idx;
 
+// tv
+output 			tv_sync;
+output [7:0]    tv_luma;
+
 // test pins
 output [3:0] 	testpin;
 
@@ -90,6 +97,8 @@ wire videoActive;
 wire	[8:0]	fb_row;
 wire	[8:0]	fb_row_count;
 
+wire 			tvhs, tvvs;
+
 vga_refresh 	refresher(
 							.clk24(clk24),
 							.hsync(hsync),
@@ -99,7 +108,9 @@ vga_refresh 	refresher(
 							.retrace(retrace),
 							.video_scroll_reg(video_scroll_reg),
 							.fb_row(fb_row),
-							.fb_row_count(fb_row_count)
+							.fb_row_count(fb_row_count),
+							.tvhs(tvhs),
+							.tvvs(tvvs),
 						);
 
 
@@ -181,6 +192,22 @@ always @(posedge clk24) begin
 	osd_hsync <= ~(osd_xdelaybuf & ~osd_xdelay);
 end
 
+
+// tv
+
+//oneshot #(10'd10) tvos0(.clk(clk24), .ce(1'b1), .trigger(hsync), .q(tv_hsync));
+//oneshot #(10'd10) tvos1(.clk(clk24), .ce(1'b1), .trigger(vsync), .q(tv_vsync));
+
+reg [9:0] tvdelay;
+reg 	  tvhreg;
+always @(posedge clk24) begin
+	tvhreg <= hsync;
+	if (!vsync) tvdelay <= 0;
+	else if (~tvhreg & hsync) tvdelay <= tvdelay + 1'b1;
+end
+
+assign tv_luma = realcolor_in;
+assign tv_sync  = (tvhs | fb_row[0]) & tvvs;
 				
 endmodule
 
