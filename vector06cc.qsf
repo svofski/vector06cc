@@ -28,7 +28,7 @@ set_global_assignment -name FAMILY "Cyclone II"
 set_global_assignment -name TOP_LEVEL_ENTITY vector06cc
 set_global_assignment -name ORIGINAL_QUARTUS_VERSION 7.1
 set_global_assignment -name PROJECT_CREATION_TIME_DATE "22:55:30  OCTOBER 17, 2007"
-set_global_assignment -name LAST_QUARTUS_VERSION "8.0 SP1"
+set_global_assignment -name LAST_QUARTUS_VERSION 9.0
 set_global_assignment -name DEVICE_FILTER_PACKAGE FBGA
 set_global_assignment -name DEVICE_FILTER_PIN_COUNT 484
 set_global_assignment -name DEVICE_FILTER_SPEED_GRADE 7
@@ -221,8 +221,14 @@ set_location_assignment PIN_E8 -to TDI
 set_global_assignment -name CYCLONEII_OPTIMIZATION_TECHNIQUE BALANCED
 set_global_assignment -name CYCLONEII_RESERVE_NCEO_AFTER_CONFIGURATION "USE AS REGULAR IO"
 set_global_assignment -name RESERVE_ASDO_AFTER_CONFIGURATION "AS INPUT TRI-STATED"
-set_global_assignment -name VECTOR_WAVEFORM_FILE clk50mhz.vwf
 set_global_assignment -name AUTO_MERGE_PLLS ON
+set_global_assignment -name USE_CONFIGURATION_DEVICE ON
+set_global_assignment -name STRATIX_CONFIGURATION_DEVICE EPCS4
+set_global_assignment -name PARTITION_COLOR 14622752 -section_id Top
+set_global_assignment -name LL_ROOT_REGION ON -section_id "Root Region"
+set_global_assignment -name LL_MEMBER_STATE LOCKED -section_id "Root Region"
+set_global_assignment -name VECTOR_WAVEFORM_FILE clk50mhz.vwf
+set_global_assignment -name VERILOG_FILE src/vector06cc.v
 set_global_assignment -name VERILOG_FILE src/floppy/floppy.v
 set_global_assignment -name VERILOG_FILE src/floppy/floppyram.v
 set_global_assignment -name VHDL_FILE src/floppy/uart/txd.vhd
@@ -234,7 +240,6 @@ set_global_assignment -name VERILOG_FILE src/floppy/spi.v
 set_global_assignment -name VERILOG_FILE src/floppy/dma_rw.v
 set_global_assignment -name VERILOG_FILE src/floppy/timer100hz.v
 set_global_assignment -name VHDL_FILE src/floppy/65c02/cpu65xx_en.vhd
-set_global_assignment -name VERILOG_FILE src/vector06cc.v
 set_global_assignment -name VERILOG_FILE src/ramdisk/kvaz.v
 set_global_assignment -name VERILOG_FILE src/lpm_rom0.v
 set_global_assignment -name VERILOG_FILE src/clockster.v
@@ -276,8 +281,3 @@ set_global_assignment -name VHDL_FILE src/ay/YM2149_linmix.vhd
 set_global_assignment -name VERILOG_FILE src/osd/textmode.v
 set_global_assignment -name VERILOG_FILE src/osd/chargen.v
 set_global_assignment -name VERILOG_FILE src/osd/screenbuffer.v
-set_global_assignment -name USE_CONFIGURATION_DEVICE ON
-set_global_assignment -name STRATIX_CONFIGURATION_DEVICE EPCS4
-set_global_assignment -name PARTITION_COLOR 14622752 -section_id Top
-set_global_assignment -name LL_ROOT_REGION ON -section_id "Root Region"
-set_global_assignment -name LL_MEMBER_STATE LOCKED -section_id "Root Region"
