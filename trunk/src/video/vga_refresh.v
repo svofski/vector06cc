@@ -25,7 +25,7 @@
 
 `default_nettype none
 
-module vga_refresh(clk24, hsync, vsync, videoActive, bordery, retrace, video_scroll_reg, fb_row, fb_row_count, tvhs, tvvs);
+module vga_refresh(clk24, hsync, vsync, videoActive, bordery, retrace, video_scroll_reg, fb_row, fb_row_count, tvhs, tvvs, tvx, tvy);
 input			clk24;
 output			hsync;
 output			vsync;
@@ -36,6 +36,7 @@ input	[7:0]	video_scroll_reg;
 output	[8:0]	fb_row;
 output  [8:0]	fb_row_count;
 output			tvhs, tvvs;
+output  [9:0]	tvx,tvy;
 
 // total = 624
 // visible = (16 + 256 + 16)*2 = 288*2 = 576
@@ -54,7 +55,8 @@ assign vsync = !(scanyy_state == state2);
 
 //assign tvhs = !((tvx > (0)) && (tvx < (96)));
 assign tvhs = !(tvx > 800-96);
-assign tvvs = !(tvy < 6);
+//assign tvvs = !(tvy < 6);
+assign tvvs = !(tvy == 623 && tvx == 800-96);
 
 reg[9:0] tvx;
 reg[9:0] tvy;

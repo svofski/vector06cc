@@ -57,7 +57,7 @@
 `define WITH_OSD
 `define WITH_DE1_JTAG
 `define JTAG_AUTOHOLD
-`define TWO_PLL_OK 		// use second PLL to generate clean 14.0MHz for the AY, use 14.4MHz otherwise
+//`define TWO_PLL_OK 		// use second PLL to generate clean 14.0MHz for the AY, use 14.4MHz otherwise
 
 module vector06cc(CLOCK_27, clk50mhz, KEY[3:0], LEDr[9:0], LEDg[7:0], SW[9:0], HEX0, HEX1, HEX2, HEX3, 
 		////////////////////	SRAM Interface		////////////////
@@ -106,7 +106,8 @@ module vector06cc(CLOCK_27, clk50mhz, KEY[3:0], LEDr[9:0], LEDg[7:0], SW[9:0], H
 		UART_RXD,
 
 		// TEST PIN
-		GPIO_0
+		GPIO_0,
+		GPIO_1,
 );
 input [1:0]		CLOCK_27;
 input			clk50mhz;
@@ -168,12 +169,13 @@ output			UART_TXD;
 input			UART_RXD;
 
 output [12:0] 	GPIO_0;
+output [35:0]	GPIO_1;
 
 
 // CLOCK SETUP
 wire mreset_n = KEY[0] & ~kbd_key_blkvvod;
 wire mreset = !mreset_n;
-wire clk24, clk18, clk14;
+wire clk24, clk18, clk14, clkpal4FSC;
 wire ce12, ce6, ce3, ce3v, vi53_timer_ce, video_slice, pipe_ab;
 
 clockster clockmaker(
@@ -188,7 +190,8 @@ clockster clockmaker(
 	.ce3v(ce3v), 
 	.video_slice(video_slice), 
 	.pipe_ab(pipe_ab), 
-	.ce1m5(vi53_timer_ce));
+	.ce1m5(vi53_timer_ce),
+	.clkpalFSC(clkpal4FSC));
 	
 
 assign AUD_XCK = clk18;
@@ -272,7 +275,7 @@ end
 /////////////////
 // DEBUG PINS  //
 /////////////////
-assign GPIO_0[8:0] = {clk24, ce12, ce6, ce3, ce3v, video_slice, pipe_ab, vi53_timer_ce, pipe_ab};
+assign GPIO_0[8:0] = {clk24, ce12, ce6, ce3, ce3v, video_slice, clkpal4FSC, vi53_timer_ce, tv_test[0]};
 
 /////////////////
 // CPU SECTION //
@@ -435,8 +438,9 @@ wire 		tv_mode = SW[5];
 wire 		tv_sync;
 wire [7:0] 	tv_luma;
 wire [7:0]	tv_chroma;
+wire [7:0]  tv_test;
 
-video vidi(.clk24(clk24), .ce12(ce12), .ce6(ce6), .video_slice(video_slice), .pipe_ab(pipe_ab),
+video vidi(.clk24(clk24), .ce12(ce12), .ce6(ce6), .clk4fsc(clkpal4FSC), .video_slice(video_slice), .pipe_ab(pipe_ab),
 		   .mode512(video_mode512), 
 		   .SRAM_DQ(sram_data_in), .SRAM_ADDR(VIDEO_A), 
 		   .hsync(vga_hs), .vsync(vga_vs), 
@@ -449,7 +453,9 @@ video vidi(.clk24(clk24), .ce12(ce12), .ce6(ce6), .video_slice(video_slice), .pi
 		   .border_idx(video_border_index),
 		   .testpin(GPIO_0[12:9]),
 		   .tv_sync(tv_sync),
-		   .tv_luma(tv_luma));
+		   .tv_luma(tv_luma),
+		   .tv_chroma(tv_chroma),
+		   .tv_test(tv_test));
 		
 wire [7:0] realcolor;		// this truecolour value fetched from buffer directly to display
 wire [7:0] realcolor2buf;	// this truecolour value goes into the scan doubler buffer
@@ -462,11 +468,13 @@ reg [3:0] video_r;
 reg [3:0] video_g;
 reg [3:0] video_b;
 
-assign VGA_R = tv_mode ? tv_luma : video_r;
-assign VGA_G = tv_mode ? 0       : video_g;
-assign VGA_B = tv_mode ? 0       : video_b;
-assign VGA_VS= tv_mode ? 0 		 : vga_vs;
-assign VGA_HS= tv_mode ? tv_sync : vga_hs;
+assign GPIO_1[29:26] = tv_luma[3:0];
+
+assign VGA_R = tv_mode ? tv_luma[3:0] : video_r;
+assign VGA_G = tv_mode ? {4{tv_luma[4]}} : video_g;
+assign VGA_B = tv_mode ? {4{tv_luma[5]}} : video_b;
+assign VGA_VS= vga_vs;
+assign VGA_HS= vga_hs;
 
 wire [1:0] 	lowcolor_b = {2{osd_active}} & {realcolor[7],1'b0};
 wire 		lowcolor_g = osd_active & realcolor[5];

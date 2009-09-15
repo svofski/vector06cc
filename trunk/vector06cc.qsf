@@ -85,6 +85,45 @@ set_location_assignment PIN_B17 -to GPIO_0[9]
 set_location_assignment PIN_A18 -to GPIO_0[10]
 set_location_assignment PIN_B18 -to GPIO_0[11]
 set_location_assignment PIN_A19 -to GPIO_0[12]
+
+set_location_assignment PIN_H12 -to GPIO_1[0]
+set_location_assignment PIN_H13 -to GPIO_1[1]
+set_location_assignment PIN_H14 -to GPIO_1[2]
+set_location_assignment PIN_G15 -to GPIO_1[3]
+set_location_assignment PIN_E14 -to GPIO_1[4]
+set_location_assignment PIN_E15 -to GPIO_1[5]
+set_location_assignment PIN_F15 -to GPIO_1[6]
+set_location_assignment PIN_G16 -to GPIO_1[7]
+set_location_assignment PIN_F12 -to GPIO_1[8]
+set_location_assignment PIN_F13 -to GPIO_1[9]
+set_location_assignment PIN_C14 -to GPIO_1[10]
+set_location_assignment PIN_D14 -to GPIO_1[11]
+set_location_assignment PIN_D15 -to GPIO_1[12]
+set_location_assignment PIN_D16 -to GPIO_1[13]
+set_location_assignment PIN_C17 -to GPIO_1[14]
+set_location_assignment PIN_C18 -to GPIO_1[15]
+set_location_assignment PIN_C19 -to GPIO_1[16]
+set_location_assignment PIN_C20 -to GPIO_1[17]
+set_location_assignment PIN_D19 -to GPIO_1[18]
+set_location_assignment PIN_D20 -to GPIO_1[19]
+set_location_assignment PIN_E20 -to GPIO_1[20]
+set_location_assignment PIN_F20 -to GPIO_1[21]
+set_location_assignment PIN_E19 -to GPIO_1[22]
+set_location_assignment PIN_E18 -to GPIO_1[23]
+set_location_assignment PIN_G20 -to GPIO_1[24]
+set_location_assignment PIN_G18 -to GPIO_1[25]
+set_location_assignment PIN_G17 -to GPIO_1[26]
+set_location_assignment PIN_H17 -to GPIO_1[27]
+set_location_assignment PIN_J15 -to GPIO_1[28]
+set_location_assignment PIN_H18 -to GPIO_1[29]
+set_location_assignment PIN_N22 -to GPIO_1[30]
+set_location_assignment PIN_N21 -to GPIO_1[31]
+set_location_assignment PIN_P15 -to GPIO_1[32]
+set_location_assignment PIN_N15 -to GPIO_1[33]
+set_location_assignment PIN_P17 -to GPIO_1[34]
+set_location_assignment PIN_P18 -to GPIO_1[35]
+
+
 set_location_assignment PIN_J2 -to HEX0[0]
 set_location_assignment PIN_J1 -to HEX0[1]
 set_location_assignment PIN_H2 -to HEX0[2]
@@ -222,11 +261,13 @@ set_global_assignment -name CYCLONEII_OPTIMIZATION_TECHNIQUE BALANCED
 set_global_assignment -name CYCLONEII_RESERVE_NCEO_AFTER_CONFIGURATION "USE AS REGULAR IO"
 set_global_assignment -name RESERVE_ASDO_AFTER_CONFIGURATION "AS INPUT TRI-STATED"
 set_global_assignment -name AUTO_MERGE_PLLS ON
-set_global_assignment -name USE_CONFIGURATION_DEVICE ON
 set_global_assignment -name STRATIX_CONFIGURATION_DEVICE EPCS4
 set_global_assignment -name PARTITION_COLOR 14622752 -section_id Top
 set_global_assignment -name LL_ROOT_REGION ON -section_id "Root Region"
 set_global_assignment -name LL_MEMBER_STATE LOCKED -section_id "Root Region"
+set_instance_assignment -name CURRENT_STRENGTH_NEW "MINIMUM CURRENT" -to GPIO_1[*]
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to GPIO_1[*]
+set_global_assignment -name VERILOG_FILE src/altmodules/pllx2.v
 set_global_assignment -name VECTOR_WAVEFORM_FILE clk50mhz.vwf
 set_global_assignment -name VERILOG_FILE src/vector06cc.v
 set_global_assignment -name VERILOG_FILE src/floppy/floppy.v
@@ -281,3 +322,8 @@ set_global_assignment -name VHDL_FILE src/ay/YM2149_linmix.vhd
 set_global_assignment -name VERILOG_FILE src/osd/textmode.v
 set_global_assignment -name VERILOG_FILE src/osd/chargen.v
 set_global_assignment -name VERILOG_FILE src/osd/screenbuffer.v
+set_global_assignment -name QIP_FILE src/altmodules/mclkpal.qip
+set_global_assignment -name VERILOG_FILE src/altmodules/mclkpal.v
+set_global_assignment -name VERILOG_FILE src/altmodules/ayclkdrv.v
+set_instance_assignment -name GLOBAL_SIGNAL "GLOBAL CLOCK" -to "clockster:clockmaker|clk30"
+set_global_assignment -name QIP_FILE src/altmodules/pllx2.qip
