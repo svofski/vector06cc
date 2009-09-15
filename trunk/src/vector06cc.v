@@ -471,8 +471,8 @@ reg [3:0] video_b;
 assign GPIO_1[29:26] = tv_luma[3:0];
 
 assign VGA_R = tv_mode ? tv_luma[3:0] : video_r;
-assign VGA_G = tv_mode ? {4{tv_luma[4]}} : video_g;
-assign VGA_B = tv_mode ? {4{tv_luma[5]}} : video_b;
+assign VGA_G = tv_mode ? tv_luma[3:0] : video_g;
+assign VGA_B = tv_mode ? tv_luma[3:0] : video_b;
 assign VGA_VS= vga_vs;
 assign VGA_HS= vga_hs;
 
