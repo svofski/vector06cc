@@ -94,9 +94,10 @@ input  [3:0]	border_idx;
 
 // tv
 input			clk4fsc;
-input [1:0]		tv_mode;
+input [1:0]		tv_mode;		// tv_mode[1] = alternating fields
+								// tv_mode[0] = tv mode
 output 			tv_sync;
-output reg[7:0] tv_luma;
+output reg[7:0] tv_luma;		// CVBS output, TV sync included
 output reg[7:0]	tv_chroma;
 output [7:0]    tv_test;
 
@@ -204,25 +205,22 @@ reg	osd_vsync, osd_hsync;
 
 reg 		osd_xdelaybuf;
 
-wire		osd_xdelay_tv;
-wire		osd_xdelay_vga;
-wire		osd_xdelay = tv_mode[0] ? osd_xdelay_tv : osd_xdelay_vga;
+wire		osd_xdelay;
 
-oneshot	#(10'd128) lineos0(.clk(clk24), .ce(1'b1), .trigger(hsync), .q(osd_xdelay_vga));
-
-// wtf -- why can't i put 138 here?
-oneshot	#(10'd128) lineos1(.clk(clk24), .ce(1'b1), .trigger(tvhs_local), .q(osd_xdelay_tv));
+oneshot	#(9'd200) lineos0(.clk(clk24), .ce(1'b1), .trigger(tv_mode[0] ? tvhs_local : hsync), .q(osd_xdelay));
 
 always @(posedge clk24) begin
 	osd_vsync = tv_mode[0] ? ~(tv_halfline == 275) : ~(fb_row_count == 128);
 
-	osd_xdelaybuf <= osd_xdelay;
-	osd_hsync <= ~(osd_xdelaybuf & ~osd_xdelay);
+	if (~tv_mode[0] | ce6) begin
+		osd_xdelaybuf <= osd_xdelay;
+		osd_hsync <= ~(osd_xdelaybuf & ~osd_xdelay);
+	end
 end
 
 // tv
 
-// copypasta from the main module, needs to be interned
+// copypasta from the main module, needs to be interned probably
 wire [1:0] 	lowcolor_b = {2{tv_osd_on}} & {realcolor_in[7],1'b0};
 wire 		lowcolor_g = 	  tv_osd_on & realcolor_in[5];
 wire 		lowcolor_r =  	  tv_osd_on & realcolor_in[2];
@@ -239,8 +237,6 @@ wire [3:0] truecolor_B = {overlayed_colour[7:6], lowcolor_b};
 // PAL frame sync
 assign tv_sync  = fieldzone ? fieldsync : tvhs_local; 
 
-// PAL field alternation optional
-wire pal_fieldalt = tv_mode[1] & tv_fieldctr[0];
 
 reg [10:0] tv_halfline;
 reg [10:0] tv_pixel;
@@ -302,7 +298,7 @@ always @*
 	
 	
 always @*
-	case ({tv_halfline[1]^pal_fieldalt/*tv_fieldctr[0]*/,tv_phase0[1:0]})
+	case ({tv_halfline[1]^pal_fieldalt,tv_phase0[1:0]})
 	0: 	tv_chroma <= tvUV_0;
 	1:	tv_chroma <= tvUV_1;
 	2:  tv_chroma <= tvUV_2;
@@ -313,9 +309,21 @@ always @*
 	7:	tv_chroma <= tvUW_3;
 	endcase
 
+// These are the colourburst phases that correspond
+// to 270 and 135 degrees (180+/-45) in alternating
+// lines.
+//
+// In the reality of this encoder, they correspond to 
+// 0 and 90 degrees.
 reg [2:0] tv_phase  = 0;
 reg [2:0] tv_phase0 = 1;
+
+// Field counter is kept for alternating the phase between fields,
+// which is necessary for correct colour detail (stripes for example).
+// Some TV tuners do not like field alternation and this is why
+// it is kept optional.
 reg [2:0] tv_fieldctr;
+wire pal_fieldalt = tv_mode[1] & tv_fieldctr[0];
 
 reg 		tv_colorburst;
 reg			tv_blank;
@@ -327,7 +335,7 @@ end
 
 wire [8:0] tv_sin00;
 wire [8:0] tv_sin90;
-wire [8:0] tv_sin = tv_halfline[1]^pal_fieldalt/*tv_fieldctr[0]*/ ? tv_sin00 : tv_sin90;
+wire [8:0] tv_sin = tv_halfline[1]^pal_fieldalt ? tv_sin00 : tv_sin90;
 sinrom sinA(tv_phase0[1:0], tv_sin00);
 sinrom sinB(tv_phase[1:0], tv_sin90);
 
@@ -347,21 +355,39 @@ wire [13:0] tvUW_0;
 wire [13:0] tvUW_1;
 wire [13:0] tvUW_2;
 wire [13:0] tvUW_3;								   
-								   // as per eMSX
-assign tvY1 = 8'h18 * truecolor_R; // hex(0.299*(2*0.714*256/3.3)*0.72*16) = $17.D
-assign tvY2 = 8'h2f * truecolor_G; // hex(0.587*(2*0.714*256/3.3)*0.72*16) = $2E.D
-assign tvY3 = 8'h09 * truecolor_B; // hex(0.114*(2*0.714*256/3.3)*0.72*16) = $09.1
+
+// These coefficients are taken from eMSX. Scaling
+// is done differently here, but only relative relation
+// between the coefficients is really important.
+// Perfect world's luminance,  Y = 0.299*R + 0.587*G + 0.114*B
+assign tvY1 = 8'h18 * truecolor_R; 
+assign tvY2 = 8'h2f * truecolor_G; 
+assign tvY3 = 8'h09 * truecolor_B; 
 
 wire [13:0] tvY_ = tvY1 + tvY2 + tvY3;
-assign tvY = tvY_[13:7]; // must be in the range 0..9
-
+assign tvY = tvY_[13:7]; 
                       
-// -5/-3 is okayest of most
+
+// UV encoding matrix
+// Normally U = 0.492(B-Y) and V = 0.877(R-Y)
+// So U and V are still functions of (R,G,B) and all coefficients can be precalculated
+// For encoding, we can expand these expressions already multiplied by sin/cos: Usin(wt) +/- Vcos(wt)
+//
+// Since we can't keep colourburst phase at 180+/-45 degrees, the correction
+// is made in coefficient calculation:
+//     for V phase of +90, 5/8*2pi is subtracted
+// 	   for V phase of -90, 3/8*2pi is subtracted
+// This keeps phase relation between U,V and colourburst vectors even.
+//
+// See tools/pal.py for the program that derives these coefficients.
+//
+// phase = +90 degrees
 uvsum #( +37,  -3, -33) uvsum0(truecolor_R, truecolor_G, truecolor_B, tvUV_0);
 uvsum #( +34, -46, +12) uvsum1(truecolor_R, truecolor_G, truecolor_B, tvUV_1);
 uvsum #( -37,  +3, +33) uvsum2(truecolor_R, truecolor_G, truecolor_B, tvUV_2);
 uvsum #( -34, +46, -12) uvsum3(truecolor_R, truecolor_G, truecolor_B, tvUV_3);
 
+// phase = -90 degrees
 uvsum #( -34, +46, -12) uwsum1(truecolor_R, truecolor_G, truecolor_B, tvUW_0);
 uvsum #( -37,  +3, +33) uwsum2(truecolor_R, truecolor_G, truecolor_B, tvUW_1);
 uvsum #( +34, -46, +12) uwsum3(truecolor_R, truecolor_G, truecolor_B, tvUW_2);
@@ -380,7 +406,7 @@ assign uvsum = s[13:7];
 
 endmodule
 
-module sinrom(input [2:0] adr, output reg [7:0] s); // 4 angles
+module sinrom(input [2:0] adr, output reg [7:0] s); 
 always @*
 	case (adr[1:0])
 	0:	s <= 255;
