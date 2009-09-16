@@ -1,7 +1,7 @@
 // ====================================================================
 //                         VECTOR-06C FPGA REPLICA
 //
-//               Copyright (C) 2007,2008 Viacheslav Slavinsky
+//               Copyright (C) 2007-2009 Viacheslav Slavinsky
 //
 // This core is distributed under modified BSD license. 
 // For complete licensing information see LICENSE.TXT.
@@ -27,9 +27,9 @@
 //						10: RAM disk test pins
 //						11: WR_n, io_stack, SRAM_ADDR[17:15] (RAM disk page)
 //
-//	SW4				HEX display
-//						 0:	CPU address bus
-//						 1: TState counter
+//	SW4				1 = PAL field phase alternate (should be on for normal tv's)
+//	SW5				1 = CVBS composite output on VGA R,G,B pins	
+//						(connect them together and feed to tv)
 //
 //	SW6				disable tape in
 //
@@ -57,7 +57,6 @@
 `define WITH_OSD
 `define WITH_DE1_JTAG
 `define JTAG_AUTOHOLD
-//`define TWO_PLL_OK 		// use second PLL to generate clean 14.0MHz for the AY, use 14.4MHz otherwise
 
 module vector06cc(CLOCK_27, clk50mhz, KEY[3:0], LEDr[9:0], LEDg[7:0], SW[9:0], HEX0, HEX1, HEX2, HEX3, 
 		////////////////////	SRAM Interface		////////////////
@@ -313,7 +312,7 @@ assign LEDg = sw23 == 0 ? status_word
 			: sw23 == 2 ? floppy_status 
 			: {vi53_timer_ce, INT, interrupt_ack, mJTAG_SELECT, mJTAG_SRAM_WR_N, SRAM_ADDR[17:15]};
 			
-SEG7_LUT_4 seg7display(HEX0, HEX1, HEX2, HEX3, SW[4] ? clock_counter : A);
+SEG7_LUT_4 seg7display(HEX0, HEX1, HEX2, HEX3, /*SW[4] ? clock_counter :*/ A);
 
 
 wire ram_read;
@@ -433,7 +432,7 @@ wire vga_vs;
 wire vga_hs;
 
 
-wire 		tv_mode = SW[5];
+wire [1:0]		tv_mode = {SW[4], SW[5]};
 
 wire 		tv_sync;
 wire [7:0] 	tv_luma;
@@ -455,7 +454,11 @@ video vidi(.clk24(clk24), .ce12(ce12), .ce6(ce6), .clk4fsc(clkpal4FSC), .video_s
 		   .tv_sync(tv_sync),
 		   .tv_luma(tv_luma),
 		   .tv_chroma(tv_chroma),
-		   .tv_test(tv_test));
+		   .tv_test(tv_test),
+		   .tv_mode(tv_mode),
+		   .tv_osd_fg(osd_fg),
+		   .tv_osd_bg(osd_bg),
+		   .tv_osd_on(osd_active));
 		
 wire [7:0] realcolor;		// this truecolour value fetched from buffer directly to display
 wire [7:0] realcolor2buf;	// this truecolour value goes into the scan doubler buffer
@@ -470,9 +473,9 @@ reg [3:0] video_b;
 
 assign GPIO_1[29:26] = tv_luma[3:0];
 
-assign VGA_R = tv_mode ? tv_luma[3:0] : video_r;
-assign VGA_G = tv_mode ? tv_luma[3:0] : video_g;
-assign VGA_B = tv_mode ? tv_luma[3:0] : video_b;
+assign VGA_R = tv_mode[0] ? tv_luma[3:0] : video_r;
+assign VGA_G = tv_mode[0] ? tv_luma[3:0] : video_g;
+assign VGA_B = tv_mode[0] ? tv_luma[3:0] : video_b;
 assign VGA_VS= vga_vs;
 assign VGA_HS= vga_hs;
 
@@ -858,7 +861,7 @@ wire[7:0]		osd_q = osd_rq + 8'd32;
 `ifdef WITH_OSD
 textmode osd(
 	.clk(clk24),
-	.ce(1'b1),
+	.ce(tv_mode[0] ? ce6 : 1'b1),
 	.vsync(osd_vsync),
 	.hsync(osd_hsync),
 	.pixel(osd_fg),

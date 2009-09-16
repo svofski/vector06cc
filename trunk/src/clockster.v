@@ -1,7 +1,7 @@
 // ====================================================================
 //                         VECTOR-06C FPGA REPLICA
 //
-// 					Copyright (C) 2007, Viacheslav Slavinsky
+// 				  Copyright (C) 2007-2009 Viacheslav Slavinsky
 //
 // This core is distributed under modified BSD license. 
 // For complete licensing information see LICENSE.TXT.
@@ -36,7 +36,6 @@ output clkpalFSC;
 
 reg[5:0] ctr;
 reg[4:0] initctr;
-//wire[4:0] ctr_2 = ctr - 4;
 
 reg qce12, qce6, qce3, qce3v, qvideo_slice, qpipe_ab, qce1m5;
 
@@ -54,18 +53,6 @@ wire clk28;
 
 mclk24mhz vector_xtal(clk50, clk24, clk300, clk28, lock);
 
-`ifdef PLL_PAL_CLOCK
-
-pllx2 palpll(.inclk0(clk[0]),.c0(clk70k9));
-
-reg [2:0] clkpaldiv;
-always @(posedge clk70k9) begin
-	clkpaldiv <= clkpaldiv + 1'b1;
-end
-ayclkdrv clkbufpalfsc(clkpaldiv[1], clkpalFSC);
-
-`else
-
 // Derive clock for PAL subcarrier: 4x 4.43361875
 `define PHACC_WIDTH 32
 `define PHACC_DELTA 253896634 
@@ -81,12 +68,11 @@ end
 
 ayclkdrv clkbufpalfsc(pal_phase[`PHACC_WIDTH-1], clkpalFSC);
 
-`endif
 
 reg[3:0] div300by16;
 reg[5:0] div300by21;
 always @(posedge clk300) div300by16 <= div300by16 + 1'b1;
-ayclkdrv clkbuf18mhz(&div300by16, clk18);
+ayclkdrv clkbuf18mhz(div300by16[3], clk18);
 
 assign clk14 = clk14_xx; // 300/21 = 14.3MHz
 always @(posedge clk300) begin
@@ -95,19 +81,6 @@ always @(posedge clk300) begin
 end
 ayclkdrv clkbuf14mhz(~|div300by21, clk14_xx);
 
-
-
-/*
-`ifdef TWO_PLL_OK
-assign clk14 = clk14_00;
-mclk14mhz ay_quartz(.inclk0(clk50), .c0(clk14_00));
-`else
-assign clk14 = clk14_xx;
-reg clk28div2;
-always @(posedge clk28) clk28div2 = ~clk28div2;
-ayclkdrv ayclkbuf(.inclk(clk28div2), .outclk(clk14_xx));
-`endif
-*/
 
 always @(posedge clk24) begin
 	if (initctr != 3) begin

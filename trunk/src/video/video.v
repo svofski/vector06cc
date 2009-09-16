@@ -1,7 +1,7 @@
 // ====================================================================
 //                         VECTOR-06C FPGA REPLICA
 //
-//               Copyright (C) 2007,2008 Viacheslav Slavinsky
+//               Copyright (C) 2007-2009 Viacheslav Slavinsky
 //
 // This core is distributed under modified BSD license. 
 // For complete licensing information see LICENSE.TXT.
@@ -53,10 +53,14 @@ module video(
 	testpin,
 	
 	clk4fsc,
+	tv_mode,
 	tv_sync,
 	tv_luma,
 	tv_chroma,
 	tv_test,
+	tv_osd_fg,
+	tv_osd_bg,
+	tv_osd_on,
 );
 
 parameter V_SYNC = 0;
@@ -90,6 +94,7 @@ input  [3:0]	border_idx;
 
 // tv
 input			clk4fsc;
+input [1:0]		tv_mode;
 output 			tv_sync;
 output reg[7:0] tv_luma;
 output reg[7:0]	tv_chroma;
@@ -97,6 +102,10 @@ output [7:0]    tv_test;
 
 // test pins
 output [3:0] 	testpin;
+
+input 			tv_osd_fg;
+input			tv_osd_bg;
+input			tv_osd_on;
 
 wire bordery;				// y-border active, from module vga_refresh
 wire borderx;				// x-border active, from module framebuffer
@@ -194,24 +203,44 @@ rambuffer line2(.clk(clk24),
 reg	osd_vsync, osd_hsync;
 
 reg 		osd_xdelaybuf;
-wire		osd_xdelay;
-oneshot	#(10'd128) lineos0(.clk(clk24), .ce(1'b1), .trigger(hsync), .q(osd_xdelay));
+
+wire		osd_xdelay_tv;
+wire		osd_xdelay_vga;
+wire		osd_xdelay = tv_mode[0] ? osd_xdelay_tv : osd_xdelay_vga;
+
+oneshot	#(10'd128) lineos0(.clk(clk24), .ce(1'b1), .trigger(hsync), .q(osd_xdelay_vga));
+
+// wtf -- why can't i put 138 here?
+oneshot	#(10'd128) lineos1(.clk(clk24), .ce(1'b1), .trigger(tvhs_local), .q(osd_xdelay_tv));
+
 always @(posedge clk24) begin
-	osd_vsync = ~(fb_row_count == 128);
+	osd_vsync = tv_mode[0] ? ~(tv_halfline == 275) : ~(fb_row_count == 128);
 
 	osd_xdelaybuf <= osd_xdelay;
 	osd_hsync <= ~(osd_xdelaybuf & ~osd_xdelay);
 end
 
-
 // tv
 
-wire [3:0] truecolor_R = {realcolor_in[2:0], 1'b0};
-wire [3:0] truecolor_G = {realcolor_in[5:3], 1'b0};
-wire [3:0] truecolor_B = {realcolor_in[7:6], 2'b0};
+// copypasta from the main module, needs to be interned
+wire [1:0] 	lowcolor_b = {2{tv_osd_on}} & {realcolor_in[7],1'b0};
+wire 		lowcolor_g = 	  tv_osd_on & realcolor_in[5];
+wire 		lowcolor_r =  	  tv_osd_on & realcolor_in[2];
+
+wire [7:0]  osd_colour = tv_osd_fg ? 8'b11111110 : 8'b01011001;
+
+wire [7:0] 	overlayed_colour = tv_osd_on ? osd_colour : realcolor_in;
+
+wire [3:0] truecolor_R = {overlayed_colour[2:0], lowcolor_r};
+wire [3:0] truecolor_G = {overlayed_colour[5:3], lowcolor_g};
+wire [3:0] truecolor_B = {overlayed_colour[7:6], lowcolor_b};
+
 
 // PAL frame sync
-assign tv_sync  = fieldzone ? fieldsync : tvhs_local; // tvvs;
+assign tv_sync  = fieldzone ? fieldsync : tvhs_local; 
+
+// PAL field alternation optional
+wire pal_fieldalt = tv_mode[1] & tv_fieldctr[0];
 
 reg [10:0] tv_halfline;
 reg [10:0] tv_pixel;
@@ -273,7 +302,7 @@ always @*
 	
 	
 always @*
-	case ({tv_halfline[1]^tv_fieldctr[0],tv_phase0[1:0]})
+	case ({tv_halfline[1]^pal_fieldalt/*tv_fieldctr[0]*/,tv_phase0[1:0]})
 	0: 	tv_chroma <= tvUV_0;
 	1:	tv_chroma <= tvUV_1;
 	2:  tv_chroma <= tvUV_2;
@@ -298,7 +327,7 @@ end
 
 wire [8:0] tv_sin00;
 wire [8:0] tv_sin90;
-wire [8:0] tv_sin = tv_halfline[1]^tv_fieldctr[0] ? tv_sin00 : tv_sin90;
+wire [8:0] tv_sin = tv_halfline[1]^pal_fieldalt/*tv_fieldctr[0]*/ ? tv_sin00 : tv_sin90;
 sinrom sinA(tv_phase0[1:0], tv_sin00);
 sinrom sinB(tv_phase[1:0], tv_sin90);
 
@@ -346,7 +375,8 @@ wire [13:0] c01 = c1 * R;
 wire [13:0] c02 = c2 * G;
 wire [13:0] c03 = c3 * B;
 
-assign uvsum = c01[13:7] + c02[13:7] + c03[13:7];
+wire[13:0] s = c01 + c02 + c03;
+assign uvsum = s[13:7];
 
 endmodule
 
