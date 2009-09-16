@@ -43,3 +43,13 @@ print "expected 4*Fsc=%f, Fsc=%f" % (dPhase*Fmclk/2**width, dPhase*Fmclk/2**widt
 
 dPhase = dPhase - 60
 print "expected 4*Fsc=%f, Fsc=%f" % (dPhase*Fmclk/2**width, dPhase*Fmclk/2**width/4)
+
+Fsc=14000000
+width=16
+dPhase=4*Fsc/Fmclk*2**width
+print "For 14MHz clock, 16-bit accumulator, delta word=%d" % int(round(dPhase))
+
+Fsc=18000000
+width=16
+dPhase=4*Fsc/Fmclk*2**width
+print "For 18MHz clock, 16-bit accumulator, delta word=%d" % int(round(dPhase))

@@ -68,18 +68,32 @@ end
 
 ayclkdrv clkbufpalfsc(pal_phase[`PHACC_WIDTH-1], clkpalFSC);
 
+// Make codec 18MHz
+`define COPHACC_DELTA 15729
+reg [15:0] cophacc;
+wire [15:0] cophacc_next = cophacc + `COPHACC_DELTA;
+always @(posedge clk300) cophacc <= cophacc_next;
 
-reg[3:0] div300by16;
+ayclkdrv clkbuf18mhz(cophacc[15], clk18);
+
+
+// phase accu doesn't work for AY, why?
+//
+// Make AY 14MHz 
+//`define AYPHACC_DELTA 12233
+//reg [15:0] ayphacc;
+//wire [15:0] ayphacc_next = ayphacc + `AYPHACC_DELTA;
+//always @(posedge clk300) ayphacc <= ayphacc_next;
+//
+//ayclkdrv clkbuf14mhz(ayphacc[15], clk14_xx);
+
 reg[5:0] div300by21;
-always @(posedge clk300) div300by16 <= div300by16 + 1'b1;
-ayclkdrv clkbuf18mhz(div300by16[3], clk18);
-
 assign clk14 = clk14_xx; // 300/21 = 14.3MHz
 always @(posedge clk300) begin
 	div300by21 <= div300by21 + 1'b1;
 	if (div300by21+1'b1 == 21) div300by21 <= 0;
 end
-ayclkdrv clkbuf14mhz(~|div300by21, clk14_xx);
+ayclkdrv clkbuf14mhz(div300by21[4], clk14_xx);
 
 
 always @(posedge clk24) begin
