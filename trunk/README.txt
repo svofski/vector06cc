@@ -29,7 +29,7 @@ The following features are implemented as of December 16, 2007:
 - PS/2 keyboard
 - 256K RAM disk
 - DE1 JTAG interface to JTAG USB API program
-
+- Colour composite TV signal output (PAL)
 
 DE1 Thingies
 ~~~~~~~~~~~~
