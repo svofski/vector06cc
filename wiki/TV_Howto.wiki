@@ -1,4 +1,4 @@
-#summary How to connect vector06cc to a TV / = Как подключить vector06cc к цветному телевизору
+#summary How to connect vector06cc to a TV / Как подключить vector06cc к цветному телевизору
 #labels Featured,Phase-Deploy
 
 = Как подключить vector06cc к цветному телевизору =
