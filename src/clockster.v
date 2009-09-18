@@ -68,6 +68,8 @@ end
 
 ayclkdrv clkbufpalfsc(pal_phase[`PHACC_WIDTH-1], clkpalFSC);
 
+`ifdef ONE_50MHZ_PLL_FOR_ALL
+
 // Make codec 18MHz
 `define COPHACC_DELTA 15729
 reg [15:0] cophacc;
@@ -94,7 +96,11 @@ always @(posedge clk300) begin
 	if (div300by21+1'b1 == 21) div300by21 <= 0;
 end
 ayclkdrv clkbuf14mhz(div300by21[4], clk14_xx);
+`else 
 
+mclk14mhz audiopll(.inclk0(clk), .c0(clk14), .c1(clk18));
+
+`endif
 
 always @(posedge clk24) begin
 	if (initctr != 3) begin

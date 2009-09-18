@@ -179,11 +179,19 @@ begin
 				Q_t := Q_v;
 				F_Out(Flag_N) <= '1';
 				F_Out(Flag_C) <= not Carry_v;
-				F_Out(Flag_H) <= not HalfCarry_v;
+				if Mode = 2 then
+					F_Out(Flag_H) <= HalfCarry_v; -- svofski:8080 not HalfCarry_v;
+				else
+					F_Out(Flag_H) <= not HalfCarry_v; 
+				end if;
 				F_Out(Flag_P) <= OverFlow_v;
 			when "100" => -- AND
 				Q_t(7 downto 0) := BusA and BusB;
-				F_Out(Flag_H) <= '1';
+				if Mode = 2 then
+					F_Out(Flag_H) <= BusA(3) or BusB(3); -- svofski:8080 A3|B3 according to tests
+				else
+					F_Out(Flag_H) <= '1'; 
+				end if;
 			when "101" => -- XOR
 				Q_t(7 downto 0) := BusA xor BusB;
 				F_Out(Flag_H) <= '0';
@@ -217,6 +225,9 @@ begin
 				F_Out(Flag_S) <= F_In(Flag_S);
 				F_Out(Flag_Z) <= F_In(Flag_Z);
 				F_Out(Flag_P) <= F_In(Flag_P);
+				if Mode = 2 then
+					F_Out(Flag_H) <= F_In(Flag_H);	-- svofski:8080, DAD doesn't affect AC
+				end if;
 			end if;
 		when "1100" =>
 			-- DAA
@@ -350,22 +361,28 @@ begin
 				Q_t(7) := '0';
 				F_Out(Flag_C) <= BusA(0);
 			end case;
-			F_Out(Flag_H) <= '0';
-			F_Out(Flag_N) <= '0';
-			F_Out(Flag_X) <= Q_t(3);
-			F_Out(Flag_Y) <= Q_t(5);
-			F_Out(Flag_S) <= Q_t(7);
-			if Q_t(7 downto 0) = "00000000" then
-				F_Out(Flag_Z) <= '1';
+			if Mode = 2 then
+				-- SVO-AC
+				-- 8080 Rotation instructions only affect carry
+				-- default F_Out <= F_In
 			else
-				F_Out(Flag_Z) <= '0';
-			end if;
-			F_Out(Flag_P) <= not (Q_t(0) xor Q_t(1) xor Q_t(2) xor Q_t(3) xor
-				Q_t(4) xor Q_t(5) xor Q_t(6) xor Q_t(7));
-			if ISet = "00" then
-				F_Out(Flag_P) <= F_In(Flag_P);
-				F_Out(Flag_S) <= F_In(Flag_S);
-				F_Out(Flag_Z) <= F_In(Flag_Z);
+				F_Out(Flag_H) <= '0';
+				F_Out(Flag_N) <= '0';
+				F_Out(Flag_X) <= Q_t(3);
+				F_Out(Flag_Y) <= Q_t(5);
+				F_Out(Flag_S) <= Q_t(7);
+				if Q_t(7 downto 0) = "00000000" then
+					F_Out(Flag_Z) <= '1';
+				else
+					F_Out(Flag_Z) <= '0';
+				end if;
+				F_Out(Flag_P) <= not (Q_t(0) xor Q_t(1) xor Q_t(2) xor Q_t(3) xor
+					Q_t(4) xor Q_t(5) xor Q_t(6) xor Q_t(7));
+				if ISet = "00" then
+					F_Out(Flag_P) <= F_In(Flag_P);
+					F_Out(Flag_S) <= F_In(Flag_S);
+					F_Out(Flag_Z) <= F_In(Flag_Z);
+				end if;
 			end if;
 		when others =>
 			null;
