@@ -362,8 +362,9 @@ begin
 	begin
 		if RESET_n = '0' then
 			PC <= (others => '0');  -- Program Counter
-			A <= (others => '0');
+			
 			TmpAddr <= (others => '0');
+			A <= (others => '0');
 			IR <= "00000000";
 			ISet <= "00";
 			XY_State <= "00";
@@ -371,17 +372,24 @@ begin
 			MCycles <= "000";
 			DO <= "00000000";
 
-			ACC <= (others => '1');
-			F <= (others => '1');
-			Ap <= (others => '1');
-			Fp <= (others => '1');
+			-- svofski:8080
+			-- after RESET, PC is set to 0 
+			-- accumulator, flags and all registers remain unchanged
+			if Mode /= 2 then
+				ACC <= (others => '1');
+				F <= (others => '1');
+				SP <= (others => '1');
+			end if;
+
 			I <= (others => '0');
 			R <= (others => '0');
-			SP <= (others => '1');
+			Ap <= (others => '1');
+			Fp <= (others => '1');
+			
 			Alternate <= '0';
 
 			Read_To_Reg_r <= "00000";
-			F <= (others => '1');
+			-- F <= (others => '1');
 			Arith16_r <= '0';
 			BTR_r <= '0';
 			Z16_r <= '0';
@@ -540,7 +548,9 @@ begin
 						-- CPL
 						ACC <= not ACC;
 						F(Flag_Y) <= not ACC(5);
-						F(Flag_H) <= '1';
+						if Mode /= 2 then
+							F(Flag_H) <= '1'; -- svofski:8080
+						end if;
 						F(Flag_X) <= not ACC(3);
 						F(Flag_N) <= '1';
 					end if;
@@ -548,16 +558,20 @@ begin
 						-- CCF
 						F(Flag_C) <= not F(Flag_C);
 						F(Flag_Y) <= ACC(5);
-						F(Flag_H) <= F(Flag_C);
 						F(Flag_X) <= ACC(3);
+						if Mode /= 2 then -- svofski:8080 not in 8080 mode							
+							F(Flag_H) <= F(Flag_C);
+						end if;
 						F(Flag_N) <= '0';
 					end if;
 					if I_SCF = '1' then
 						-- SCF
 						F(Flag_C) <= '1';
 						F(Flag_Y) <= ACC(5);
-						F(Flag_H) <= '0';
 						F(Flag_X) <= ACC(3);
+						if Mode /= 2 then -- svofski:8080 according to cputest AC should stay unaffected after STC							
+							F(Flag_H) <= '0';
+						end if;
 						F(Flag_N) <= '0';
 					end if;
 				end if;
