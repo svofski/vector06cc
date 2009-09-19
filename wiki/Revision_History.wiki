@@ -1,6 +1,12 @@
 #summary Here be the manually updated log of significant changes
 #labels Featured,Phase-Implementation
 
+=== Rev.353 ===
+ * T80 CPU fixes. No currently known discrepancies with 8080/КР580ВМ80А left.
+
+=== Rev.349 ===
+ * Implemented composite colour PAL output, see [[TV_Howto]]
+
 === Rev.331 ===
  * SkyNet now works correctly in the end of the photo part: sunami's face appears without the dash of doom and "home doctor" face is circled correctly
  * All stack operations now generate STACK status proper
