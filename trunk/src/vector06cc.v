@@ -214,14 +214,39 @@ always @(posedge clk24) if (ce3) slowclock <= slowclock + 1'b1;
 
 reg  breakpoint_condition;
 
-wire slowclock_enabled  =SW[8] == 1'b0;
-wire singleclock_enabled=SW[9] == 1'b0 || breakpoint_condition;
+reg slowclock_enabled;
+reg singleclock_enabled;
+reg warpclock_enabled;
+
+always @(posedge clk24) 
+	case ({SW[9],SW[8]}) 
+			// both down = tap on key 1
+	2'b00: 	{singleclock_enabled, slowclock_enabled, warpclock_enabled} = 3'b100;
+			// both up = regular
+	2'b11:	{singleclock_enabled, slowclock_enabled, warpclock_enabled} = 3'b000;
+			// down/up == warp
+	2'b01: 	{singleclock_enabled, slowclock_enabled, warpclock_enabled} = 3'b001;
+			// up/down = slow
+	2'b10:	{singleclock_enabled, slowclock_enabled, warpclock_enabled} = 3'b010;
+	endcase
+
 wire regular_clock_enabled = !slowclock_enabled & !singleclock_enabled & !breakpoint_condition;
 wire singleclock;
 
 singleclockster keytapclock(clk24, singleclock_enabled, KEY[1], singleclock);
 
-wire cpu_ce 	= singleclock_enabled ? singleclock : slowclock_enabled ? (slowclock == 0) & ce3 : ce3;
+reg cpu_ce;
+always @* 
+	casex ({singleclock_enabled, slowclock_enabled, warpclock_enabled})
+	3'b1xx:
+		cpu_ce <= singleclock;
+	3'bx1x:
+		cpu_ce <= (slowclock == 0) & ce3;
+	3'bxx1:
+		cpu_ce <= ce12 & ~video_slice;
+	3'b000:
+		cpu_ce <= ce3;
+	endcase
 
 reg [15:0] clock_counter;
 always @(posedge clk24) begin
@@ -246,22 +271,22 @@ wire ws_req_n = ~(DO[7] | ~DO[1]) | DO[4] | DO[6];	// == 0 when cpu wants cock
 
 always @(posedge clk24) begin
 	if (cpu_ce) begin
-		if (SYNC) begin
+		if (SYNC & ~warpclock_enabled) begin	
 			// if this is not a cpu slice (ws_rom[2]) and cpu wants access, latch the ws flag
 			if (~ws_req_n & ~ws_cpu_time) begin
 				READY <= 0;
 			end
 `ifdef WITH_BREAKPOINTS			
 			if (singleclock) begin
-                breakpoint_condition <= 0;
-            end
+				breakpoint_condition <= 0;
+			end
 			else if (A == 16'h0100) begin
-                breakpoint_condition <= 1;
-            end
+				breakpoint_condition <= 1;
+			end
 `else
-            breakpoint_condition <= 0;
+			breakpoint_condition <= 0;
 `endif
-		end 
+		end
 	end
 	// reset the latch when it's time
 	if (ws_cpu_time) begin
@@ -780,13 +805,14 @@ wire		floppy_rden  = io_read & floppy_sel;
 
 wire		floppy_death_by_floppy;
 
+
 `ifdef WITH_FLOPPY
 wire [7:0]	floppy_odata;
 wire [7:0]	floppy_status;
 
 floppy flappy(
 	.clk(clk24), 
-	.ce(ce3v),  
+	.ce(cpu_ce),  
 	.reset_n(KEY[0]), 		// to make it possible to change a floppy image, then press F11
 	
 	// sd card signals

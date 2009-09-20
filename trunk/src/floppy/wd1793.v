@@ -181,6 +181,17 @@ reg			watchdog_set;
 wire		watchdog_bark;
 watchdog	dogbert(.clk(clk), .clken(clken), .cock(watchdog_set), .q(watchdog_bark));
 
+always @*
+	case (addr)
+		A_TRACK:	odata <= wdstat_track;
+		A_SECTOR:	odata <= wdstat_sector;
+		A_STATUS:	odata <= wdstat_status;
+		A_CTL2:		odata <= {5'b11111,wdstat_side,1'b0,wdstat_drive};
+		A_DATA:		odata <= wdstat_datareg;
+		default:	odata <= 8'hff;
+	endcase
+	
+
 always @(posedge clk or negedge reset_n) begin: _wdmain
 	if (!reset_n) begin
 		wdstat_multisector <= 0;
@@ -193,7 +204,7 @@ always @(posedge clk or negedge reset_n) begin: _wdmain
 		buff_addr <= 0;
 		{buff_rd,buff_wr} <= 0;
 		oCPU_REQUEST <= CPU_REQUEST_ACK;
-		odata <= 8'b0;
+		//odata <= 8'b0;
 		wdstat_multisector <= 1'b0;
 		state <= STATE_READY;
 		cmd_mode <= 1'b0;
@@ -217,17 +228,17 @@ always @(posedge clk or negedge reset_n) begin: _wdmain
 		/* Register read operations */
 		if (rd) 
 			case (addr)
-				A_TRACK:	odata <= wdstat_track;
-				A_SECTOR:	odata <= wdstat_sector;
+				//A_TRACK:	odata <= wdstat_track;
+				//A_SECTOR:	odata <= wdstat_sector;
 				A_STATUS:	begin
-								odata <= wdstat_status;
+				//				odata <= wdstat_status;
 								s_index <= 0; 			// clear s_index after it's read once
 							end
-				A_CTL2:		odata <= {5'b11111,wdstat_side,1'b0,wdstat_drive};
-				A_DATA:		begin
-								odata <= wdstat_datareg;
-								// see STATE_READSECT below
-							end
+				//A_CTL2:		odata <= {5'b11111,wdstat_side,1'b0,wdstat_drive};
+				//A_DATA:		begin
+				//				odata <= wdstat_datareg;
+				//				// see STATE_READSECT below
+				//			end
 				default:;
 			endcase
 				
