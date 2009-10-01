@@ -8,16 +8,14 @@ This page contains constantly updated project notes. Also see ArchitecturalOverv
 
 = Clock Distribution =
 
-[http://vector06cc.googlecode.com/svn/trunk/doc/clocks.png]
+[http://vector06cc.googlecode.com/svn/trunk/doc/clocks-2.png]
 
 Clock distribution:
  * clk24 is the master clock, also VGA pixel clock 
  * ce12 (12MHz) is 512 pixel mode pixel clock (PAL)
  * ce6 (6MHz) is the pixel/ram address clock
  * ce3 (3MHz) this is the main CPU clock enable
- * ce3v (3MHz) is used by the FDC (r357: not anymore)
  * video_slice is high when video adapter wants RAM
- * pipe_ab is an internal signal in the video controller, invisible in this short simulation
  * timer_vi53_ce is the slow 1.5MHz clock enable for 8253 soundnik
 
 ----
