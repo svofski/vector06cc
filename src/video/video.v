@@ -298,15 +298,24 @@ always @*
 	
 	
 always @*
-	case ({tv_halfline[1]^pal_fieldalt,tv_phase0[1:0]})
+	case ({tv_halfline[1]^pal_fieldalt,tv_phase0[2:0]})
 	0: 	tv_chroma <= tvUV_0;
 	1:	tv_chroma <= tvUV_1;
 	2:  tv_chroma <= tvUV_2;
 	3:	tv_chroma <= tvUV_3;
-	4:	tv_chroma <= tvUW_0;
-	5:	tv_chroma <= tvUW_1;
-	6:	tv_chroma <= tvUW_2;
-	7:	tv_chroma <= tvUW_3;
+	4: 	tv_chroma <= tvUV_4;
+	5:	tv_chroma <= tvUV_5;
+	6:  tv_chroma <= tvUV_6;
+	7:	tv_chroma <= tvUV_7;
+
+	8:	tv_chroma <= tvUW_0;
+	9:	tv_chroma <= tvUW_1;
+	10:	tv_chroma <= tvUW_2;
+	11:	tv_chroma <= tvUW_3;
+	12:	tv_chroma <= tvUW_4;
+	13:	tv_chroma <= tvUW_5;
+	14:	tv_chroma <= tvUW_6;
+	15:	tv_chroma <= tvUW_7;
 	endcase
 
 // These are the colourburst phases that correspond
@@ -336,8 +345,8 @@ end
 wire [8:0] tv_sin00;
 wire [8:0] tv_sin90;
 wire [8:0] tv_sin = tv_halfline[1]^pal_fieldalt ? tv_sin00 : tv_sin90;
-sinrom sinA(tv_phase0[1:0], tv_sin00);
-sinrom sinB(tv_phase[1:0], tv_sin90);
+sinrom sinA(tv_phase0[2:0], tv_sin00);
+sinrom sinB(tv_phase[2:0], tv_sin90);
 
 assign tv_test[0] = tv_sin[7];
 
@@ -350,11 +359,19 @@ wire [13:0] tvUV_0;
 wire [13:0] tvUV_1;
 wire [13:0] tvUV_2;
 wire [13:0] tvUV_3;
+wire [13:0] tvUV_4;
+wire [13:0] tvUV_5;
+wire [13:0] tvUV_6;
+wire [13:0] tvUV_7;
 
 wire [13:0] tvUW_0;
 wire [13:0] tvUW_1;
 wire [13:0] tvUW_2;
 wire [13:0] tvUW_3;								   
+wire [13:0] tvUW_4;
+wire [13:0] tvUW_5;
+wire [13:0] tvUW_6;
+wire [13:0] tvUW_7;								   
 
 // These coefficients are taken from eMSX. Scaling
 // is done differently here, but only relative relation
@@ -381,38 +398,53 @@ assign tvY = tvY_[13:7];
 //
 // See tools/pal.py for the program that derives these coefficients.
 //
+
+
+
 // phase = +90 degrees
-uvsum #( +37,  -3, -33) uvsum0(truecolor_R, truecolor_G, truecolor_B, tvUV_0);
-uvsum #( +34, -46, +12) uvsum1(truecolor_R, truecolor_G, truecolor_B, tvUV_1);
-uvsum #( -37,  +3, +33) uvsum2(truecolor_R, truecolor_G, truecolor_B, tvUV_2);
-uvsum #( -34, +46, -12) uvsum3(truecolor_R, truecolor_G, truecolor_B, tvUV_3);
+uvsum #( +49, -41,  -7) uvsum0(truecolor_R, truecolor_G, truecolor_B, tvUV_0);
+uvsum #( +26, -45, +18) uvsum1(truecolor_R, truecolor_G, truecolor_B, tvUV_1);
+uvsum #( -11, -22, +34) uvsum2(truecolor_R, truecolor_G, truecolor_B, tvUV_2);
+uvsum #( -42, +12, +30) uvsum3(truecolor_R, truecolor_G, truecolor_B, tvUV_3);
+uvsum #( -49, +41,  +7) uvsum4(truecolor_R, truecolor_G, truecolor_B, tvUV_4);
+uvsum #( -26, +45, -18) uvsum5(truecolor_R, truecolor_G, truecolor_B, tvUV_5);
+uvsum #( +11, +22, -34) uvsum6(truecolor_R, truecolor_G, truecolor_B, tvUV_6);
+uvsum #( +42, -12, -30) uvsum7(truecolor_R, truecolor_G, truecolor_B, tvUV_7);
 
 // phase = -90 degrees
-uvsum #( -34, +46, -12) uwsum1(truecolor_R, truecolor_G, truecolor_B, tvUW_0);
-uvsum #( -37,  +3, +33) uwsum2(truecolor_R, truecolor_G, truecolor_B, tvUW_1);
-uvsum #( +34, -46, +12) uwsum3(truecolor_R, truecolor_G, truecolor_B, tvUW_2);
-uvsum #( +37,  -3, -33) uwsum4(truecolor_R, truecolor_G, truecolor_B, tvUW_3);
+uvsum #( -49, +41,  +7) uwsum1(truecolor_R, truecolor_G, truecolor_B, tvUW_0);
+uvsum #( -42, +12, +30) uwsum2(truecolor_R, truecolor_G, truecolor_B, tvUW_1);
+uvsum #( -11, -22, +34) uwsum3(truecolor_R, truecolor_G, truecolor_B, tvUW_2);
+uvsum #( +26, -45, +18) uwsum4(truecolor_R, truecolor_G, truecolor_B, tvUW_3);
+uvsum #( +49, -41,  -7) uwsum5(truecolor_R, truecolor_G, truecolor_B, tvUW_4);
+uvsum #( +42, -12, -30) uwsum6(truecolor_R, truecolor_G, truecolor_B, tvUW_5);
+uvsum #( +11, +22, -34) uwsum7(truecolor_R, truecolor_G, truecolor_B, tvUW_6);
+uvsum #( -26, +45, -18) uwsum8(truecolor_R, truecolor_G, truecolor_B, tvUW_7);
 endmodule
 
-module uvsum(input[7:0] R, input [7:0] G, input [7:0] B, output [7:0] uvsum);
-parameter c1,c2,c3;
+module uvsum(input signed [7:0] R, input signed [7:0] G, input signed [7:0] B, output signed [7:0] uvsum);
+parameter signed c1,c2,c3;
 
-wire [13:0] c01 = c1 * R;
-wire [13:0] c02 = c2 * G;
-wire [13:0] c03 = c3 * B;
+wire signed [13:0] c01 = c1 * R;
+wire signed [13:0] c02 = c2 * G;
+wire signed [13:0] c03 = c3 * B;
 
-wire[13:0] s = c01 + c02 + c03;
+wire signed [13:0] s = c01 + c02 + c03;
 assign uvsum = s[13:7];
 
 endmodule
 
 module sinrom(input [2:0] adr, output reg [7:0] s); 
 always @*
-	case (adr[1:0])
+	case (adr)
 	0:	s <= 255;
 	1:	s <= 255;
-	2:	s <= 0;
-	3:	s <= 0;
+	2:	s <= 255;
+	3:	s <= 255;
+	4:	s <= 0;
+	5:	s <= 0;
+	6:	s <= 0;
+	7:	s <= 0;
 	endcase
 endmodule
 

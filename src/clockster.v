@@ -19,7 +19,7 @@
 
 `default_nettype none
 
-module clockster(clk, clk50, clk24, clk18, clk14, ce12, ce6, ce3, ce3v, video_slice, pipe_ab, ce1m5, clkpalFSC);
+module clockster(clk, clk50, clk24, clk18, clk14, ce12, ce6, ce3, video_slice, pipe_ab, ce1m5, clkpalFSC);
 input  [1:0] 	clk;
 input			clk50;
 output clk24;
@@ -28,7 +28,6 @@ output clk14;
 output ce12 = qce12;
 output ce6 = qce6;
 output ce3 = qce3;
-output ce3v = qce3v;
 output video_slice = qvideo_slice;
 output pipe_ab = qpipe_ab;
 output ce1m5 = qce1m5;
@@ -56,6 +55,7 @@ mclk24mhz vector_xtal(clk50, clk24, clk300, clk28, lock);
 // Derive clock for PAL subcarrier: 4x 4.43361875
 `define PHACC_WIDTH 32
 `define PHACC_DELTA 253896634 
+`define PHACC_DELTA 507793268
 
 reg [`PHACC_WIDTH-1:0] pal_phase;
 wire [`PHACC_WIDTH-1:0] pal_phase_next;
@@ -110,10 +110,9 @@ always @(posedge clk24) begin
 		qpipe_ab <= ctr[5]; 				// pipe a/b 2x slower
 		qce12 <= ctr[0]; 					// pixel push @12mhz
 		qce6 <= ctr[1] & ctr[0];			// pixel push @6mhz
-		qce3 <= ctr[2] & !ctr[1] & ctr[0];
-		qce3v <= ctr[2] & ctr[1] & !ctr[0];
+		qce3 <= ctr[2] & ctr[1] & !ctr[0];
 		qvideo_slice <= !ctr[2];
-		qce1m5 <= ctr[3] & ctr[2] & !ctr[1] & ctr[0];
+		qce1m5 <= !ctr[3] & ctr[2] & ctr[1] & !ctr[0]; 
 		ctr <= ctr + 1'b1;
 	end
 end
