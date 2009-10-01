@@ -5,7 +5,7 @@ the Block Editor! File corruption is VERY likely to occur.
 */
 
 /*
-Copyright (C) 1991-2007 Altera Corporation
+Copyright (C) 1991-2009 Altera Corporation
 Your use of Altera Corporation's design tools, logic functions 
 and other software and tools, and its AMPP partner logic 
 functions, and any output files from any of the foregoing 
@@ -232,6 +232,16 @@ SIGNAL("GPIO_0[0]")
 	PARENT = "GPIO_0";
 }
 
+SIGNAL("clk50mhz")
+{
+	VALUE_TYPE = NINE_LEVEL_BIT;
+	SIGNAL_TYPE = SINGLE_BIT;
+	WIDTH = 1;
+	LSB_INDEX = -1;
+	DIRECTION = INPUT;
+	PARENT = "";
+}
+
 TRANSITION_LIST("SW[9]")
 {
 	NODE
@@ -405,6 +415,20 @@ TRANSITION_LIST("GPIO_0[0]")
 	{
 		REPEAT = 1;
 		LEVEL X FOR 1000.0;
+	}
+}
+
+TRANSITION_LIST("clk50mhz")
+{
+	NODE
+	{
+		REPEAT = 1;
+		NODE
+		{
+			REPEAT = 50;
+			LEVEL 0 FOR 10.0;
+			LEVEL 1 FOR 10.0;
+		}
 	}
 }
 
@@ -603,6 +627,15 @@ DISPLAY_LINE
 	TREE_INDEX = 19;
 	TREE_LEVEL = 1;
 	PARENT = 6;
+}
+
+DISPLAY_LINE
+{
+	CHANNEL = "clk50mhz";
+	EXPAND_STATUS = COLLAPSED;
+	RADIX = ASCII;
+	TREE_INDEX = 20;
+	TREE_LEVEL = 0;
 }
 
 TIME_BAR
