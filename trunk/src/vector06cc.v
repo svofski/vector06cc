@@ -53,10 +53,10 @@
 `define WITH_VI53
 `define WITH_AY
 `define WITH_FLOPPY
-`define FLOPPYLESS_HAX	// set FDC odata to $00 when compiling without floppy
 `define WITH_OSD
 `define WITH_DE1_JTAG
 `define JTAG_AUTOHOLD
+`define FLOPPYLESS_HAX	// set FDC odata to $00 when compiling without floppy
 
 module vector06cc(CLOCK_27, clk50mhz, KEY[3:0], LEDr[9:0], LEDg[7:0], SW[9:0], HEX0, HEX1, HEX2, HEX3, 
 		////////////////////	SRAM Interface		////////////////
@@ -175,7 +175,7 @@ output [35:0]	GPIO_1;
 wire mreset_n = KEY[0] & ~kbd_key_blkvvod;
 wire mreset = !mreset_n;
 wire clk24, clk18, clk14, clkpal4FSC;
-wire ce12, ce6, ce3, ce3v, vi53_timer_ce, video_slice, pipe_ab;
+wire ce12, ce6, ce3, vi53_timer_ce, video_slice, pipe_ab;
 
 clockster clockmaker(
 	.clk(CLOCK_27), 
@@ -186,11 +186,10 @@ clockster clockmaker(
 	.ce12(ce12), 
 	.ce6(ce6),
 	.ce3(ce3), 
-	.ce3v(ce3v), 
 	.video_slice(video_slice), 
 	.pipe_ab(pipe_ab), 
 	.ce1m5(vi53_timer_ce),
-	.clkpalFSC(clkpal4FSC));
+	.clkpalFSC(clkpal4FSC) );
 	
 
 assign AUD_XCK = clk18;
@@ -261,13 +260,13 @@ end
 /////////////////
 
 // a very special waitstate generator
-reg [4:0] 	ws_counter;
+reg [4:0] 	ws_counter = 0;
 reg 		ws_latch;
 always @(posedge clk24) ws_counter <= ws_counter + 1'b1;
+
 wire [3:0] ws_rom = ws_counter[4:1];
-wire ws_cpu_time = ws_rom[2] & ws_rom[1] & ws_rom[3];
+wire ws_cpu_time = ws_rom[3:1] == 1;
 wire ws_req_n = ~(DO[7] | ~DO[1]) | DO[4] | DO[6];	// == 0 when cpu wants cock
-//wire ws_req_n = ~(DO[7] | ~DO[1] | DO[4] | DO[6]); // enable waitstates for in/out
 
 always @(posedge clk24) begin
 	if (cpu_ce) begin
@@ -299,7 +298,7 @@ end
 /////////////////
 // DEBUG PINS  //
 /////////////////
-assign GPIO_0[8:0] = {clk24, ce12, ce6, ce3, ce3v, video_slice, clkpal4FSC, vi53_timer_ce, tv_test[0]};
+assign GPIO_0[8:0] = {clk24, ce12, ce6, ce3, vi53_timer_ce, video_slice, clkpal4FSC, 1'b1, tv_test[0]};
 
 /////////////////
 // CPU SECTION //
@@ -375,9 +374,7 @@ always @(posedge clk24) begin
 		if (WR_n == 0) gledreg[7:0] <= DO;
 		if (SYNC) begin
 			status_word <= DO;
-			//READY <= ~(DO[7] | ~DO[1]) | DO[4];			// insert one wait state on every cycle, it seems to be close to the original
 		end 
-		//else READY <= 1;
 		
 		address_bus_r <= address_bus[7:0];
 	end
@@ -522,23 +519,12 @@ end
 ///////////
 
 // Retrace irq delay:
-// For 36 seems to be the best compromise. m@color looks great and Black Ice isn't too broken
-// At 32, m@color demo starts showing horizontal stripes across the entire screen
-// Now the real problem is: nobody knows how it's ought to look!
 wire int_delay;
 reg int_request;
 wire int_rq_tick;
-//wire int_rq_tick_inte;
 reg  int_rq_hist;
 
-// 36: sssshhh in the evolution pic, skynet does not pass (?)
-// 34: no visible changes in m@color or b-ice, skynet passes, trr in evolution pic, pentium bug
-// 33: trrr in skynet (evolution pic)
-// 32: no visible changes in m@color, tv shifts left in b-ice (which is nice), skynet breaks+
-// 31: trrrr between skynet parts, but passes with pentium bug
-// 30: no visible changes in m@color, tv in b-ice as in 32, skynet passes with the usual pentium bug -- breaks
-// 29: is the absolute limit, b-ice breaks
-oneshot #(10'd33) retrace_delay(clk24, cpu_ce, retrace, int_delay);
+oneshot #(10'd28) retrace_delay(clk24, cpu_ce, retrace, int_delay);
 oneshot #(10'd191) retrace_irq(clk24, cpu_ce, ~int_delay, int_rq_tick);
 
 //assign int_rq_tick_inte = ~interrupt_ack & INTE & int_rq_tick;
@@ -552,9 +538,6 @@ always @(posedge clk24) begin
     if (interrupt_ack)
         int_request <= 0;
 end
-
-//oneshot #(144) retrace_irq(clk24, 1, retrace, int_request);
-
 
 ///////////////////
 // PS/2 KEYBOARD //
@@ -776,15 +759,27 @@ wire		iports_write 	= /*~ram_write_n &*/ io_write & iports_sel; // this repeats 
 // port $0C-$0F: palette value out
 wire iports_palette_sel = address_bus[1:0] == 2'b00;		// not used <- must be fixed some day
 
+
+// simulate real Vector-06c K155RU2 (SN7489N)
+// K155RU2 is asynchronous and remembers input value 
+// for every address set while WR is active (0).
+// Allegedly, real Vector-06c holds WR cycle for 
+// approximately 3 pixel clocks
+reg [3:0] palette_wr_sim;
+
 always @(posedge clk24) begin
 	if (iports_write & ~WR_n & cpu_ce) begin
 		video_palette_value <= DO;
-		video_palette_wren <= 1'b1;
+		palette_wr_sim <= 3;
+		//video_palette_wren <= 1'b1;
 	end 
-	else 
-		video_palette_wren <= 1'b0;
+	//else 
+	//	video_palette_wren <= 1'b0;
+	if (ce6 && |palette_wr_sim) palette_wr_sim <= palette_wr_sim - 1'b1;
 end
 
+always @*
+	video_palette_wren <= |palette_wr_sim;
 
 
 //////////////////////////////////
