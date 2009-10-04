@@ -115,6 +115,7 @@ module pit8253_counterunit(clk, ce, tce, cword, cwset, d, wren, rden, dout, gate
 assign testpins = {counter_wren, read_msb, counter_loaded, counter_starting, rl_mode, cw_mode};
 
 parameter M0 = 3'd0, M1 = 3'd1, M2 = 3'd2, M3 = 3'd3, M4 = 3'd4, M5 = 3'd5;
+parameter                       M2X= 3'd6, M3X= 3'd7; // according to OKI datasheet these modes are x10 and x11
 
 reg		outreg;
 assign 	out = outreg;
@@ -138,14 +139,16 @@ always @(posedge clk) begin
 end
 
 reg [15:0] 	counter_load;
-reg 		counter_wren;
+reg 		counter_wren_wr;
+reg			counter_wren_reload;
 wire[15:0] 	counter_q;
 
 reg [7:0]	read_latch; 		// latched value
 reg [1:0]	read_msb;			// double-byte read mode
 
+wire 		counter_wren = counter_wren_reload | ((cw_mode != M1 && cw_mode != M5) & counter_wren_wr);
 
-pit8253_downcounter dctr(clk, counter_clock_enable, cw_mode == M3, outreg, counter_load, counter_wren, counter_q);
+pit8253_downcounter dctr(clk, counter_clock_enable, cw_mode[1:0] == M3, outreg, counter_load, counter_wren, counter_q);
 
 // master, total, final grand enable
 wire counter_clock_enable = tce & /*counter_ena &*/ counter_loaded & !loading_stopper;
@@ -181,11 +184,11 @@ always @(posedge clk) begin
 					begin
 						outreg <= 1'b1;
 					end
-				M2:	// rate generator, start couting on load (or gate rising edge, not supported)
+				M2, M2X:	// rate generator, start couting on load (or gate rising edge, not supported)
 					begin
 						outreg <= 1'b1;
 					end
-				M3: // square waveform generator
+				M3, M3X: // square waveform generator
 					begin
 						outreg <= 1'b1;
 					end
@@ -212,24 +215,23 @@ always @(posedge clk) begin
 					counter_load[7:0] <= d;
 					//counter_loaded <= 1;
 					counter_starting <= 1;
-					counter_wren <= 1;
+					counter_wren_wr <= 1;
 				end
 		2'b10: 	begin
 					counter_load[15:8] <= d;
 					//counter_loaded <= 1;
 					counter_starting <= 1;
-					counter_wren <= 1;
+					counter_wren_wr <= 1;
 				end
 		2'b11:	begin
 					if (loading_msb) begin
 						counter_load[15:8] <= d;
-						//counter_loaded <= 1;
 						counter_starting <= 1;
 						counter_loading <= 0;
-						counter_wren <= 1;
+						counter_wren_wr <= ~counter_loaded;
 					end	else begin
 						counter_load[7:0] <= d;
-						counter_loaded <= 0;
+						counter_loaded <= ((cw_mode == M1) || (cw_mode == M5) || (cw_mode[1] == 1))  ? counter_loaded : 0; // don't stop during reload in M2, M3
 						counter_loading <= 1;
 					end
 						
@@ -275,7 +277,8 @@ always @(posedge clk) begin
 	
 	// reset counter_wren on next tce
 	if (tce & counter_wren) begin
-		counter_wren <= 0;
+		counter_wren_wr <= 0;
+		counter_wren_reload <= 0;
 	end
 
 	// enable counting on next tce
@@ -288,37 +291,39 @@ always @(posedge clk) begin
 		case (cw_mode) 
 			M0:	begin
 					if (counter_q == 16'd1) begin	// 1 locks the counter so the terminal count is 0
-						counter_loaded <= 0;
+						// counter_loaded <= 0; -- not! the counter continues counting
 						outreg <= 1;
 					end
 				end
-			M1: ; // M1 NOT IMPLEMENTED
-			M2:	begin
+				
+			M1:; // M1: NOT IMPLEMENTED, no gate, no reloads
+			
+			M2,M2X:	begin
 					// technically we should trigger/reload on 1
 					// but we need to do this up front to be ready
 					// by the next clk/tce
 					if (counter_q == 16'd2) begin
 						outreg <= 0;
-						counter_wren <= 1;
+						counter_wren_reload <= 1;
 					end else begin
 						outreg <= 1;
 					end
 				end
-			M3:	begin
+			M3,M3X:	begin
 					if (counter_q == 16'd2) begin
 						//halfmode <= cw_mode == M3 ^ outreg;
 						outreg <= ~outreg;
-						counter_wren <= 1;
+						counter_wren_reload <= 1;
 					end 
 				end
 			M4:	begin
 					if (counter_q == 16'd0) begin
 						outreg <= 0;
-						counter_loaded <= 0;
+						//counter_loaded <= 0;
 					end else
 						outreg <= 1; // reset out on next cycle
 				end
-			M5: ; // M5 NOT IMPLEMENTED
+			M5: ; // M5 NOT IMPLEMENTED, no gate, just roll
 			default:;
 		endcase
 	end
@@ -345,9 +350,11 @@ assign q = counter;
 always @(posedge clk) begin
 	if (wren) 
 		counter <= d;
-	else 
-		if (ce) counter <= next;
+	else if (ce) 
+		counter <= next;
 end
+
+
 endmodule
 
 // $Id$
