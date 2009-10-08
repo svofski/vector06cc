@@ -87,7 +87,7 @@ DCX RP       5   8
 ADD R        4   4        ADD M       7   8        SUB R      4   4
 SUB M        7   8        ADC R       4   4        ADC M      7   8
 SBB R        4   4        SBB M       7   8        ANA R      4   4
-ANA M        7   8        ORA M       4   4        ORA M      7   8
+ANA M        7   8        ORA R       4   4        ORA M      7   8
 XRA R        4   4        XRA M       7   8        ADI D8     7   8
 ACI D8       7   8        SUI D8      7   8        SBI D8     7   8
 ANI D8       7   8        ORI D8      7   8        XRI D8     7   8
