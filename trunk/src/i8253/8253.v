@@ -95,7 +95,7 @@ pit8253_counterunit cu2(clk, ce, tce, din, wren[3] & cwsel[2], din, wren[2], rde
 
 endmodule
 
-module pit8253_counterunit(clk, ce, tce, cword, cwset, d, wren, rden, dout, gate, out, testpins, value, counter_load);
+module pit8253_counterunit(clk, ce, tce, cword, cwset, d, wren, rden, dout, gate, out, testpins, value, counter_load, nextvalue);
 	input	clk;			// whatever main clk
 	input	ce;				// bus clock enable, e.g. 3MHz
 	input	tce;			// timer clock enable, e.g. 1.5MHz
@@ -104,15 +104,16 @@ module pit8253_counterunit(clk, ce, tce, cword, cwset, d, wren, rden, dout, gate
 	input	[7:0] d;		// data in for load
 	input	wren;			// data load enable
 	input	rden;			// data read enable
-	output	reg[7:0] dout;	// read value
+	output	[7:0] dout;	// read value
 	input	gate;			// gate pin
 	output	out;			// out pin according to mode
 
 	output [9:0] testpins;
 	output [15:0] value = counter_q;
 	output [15:0] counter_load;
+	output [15:0] nextvalue;
 	
-assign testpins = {counter_wren, read_msb, counter_loaded, counter_starting, rl_mode, cw_mode};
+assign testpins = {counter_wren, counter_clock_enable, 1'b0, counter_loaded, counter_starting, rl_mode, cw_mode};
 
 parameter M0 = 3'd0, M1 = 3'd1, M2 = 3'd2, M3 = 3'd3, M4 = 3'd4, M5 = 3'd5;
 parameter                       M2X= 3'd6, M3X= 3'd7; // according to OKI datasheet these modes are x10 and x11
@@ -126,7 +127,7 @@ wire [2:0] 	cw_mode = cwreg[3:1];
 wire 		bcd_mode = cwreg[0];
 wire [1:0]	rl_mode	 = cwreg[5:4];
 
-// gate sampler
+// gate sampler (unused)
 reg			gate_sampled;
 reg			gate_rising;
 reg			gate_falling;
@@ -138,43 +139,51 @@ always @(posedge clk) begin
 	end
 end
 
+// counter load value
 reg [15:0] 	counter_load;
-reg 		counter_wren_wr;
-reg			counter_wren_reload;
+
+// counter count 
 wire[15:0] 	counter_q;
 
-reg [7:0]	read_latch; 		// latched value
-reg [1:0]	read_msb;			// double-byte read mode
+// counter load value overwrite enable (from host)
+reg 		counter_wren_wr; 
 
-wire 		counter_wren = counter_wren_reload | ((cw_mode != M1 && cw_mode != M5) & counter_wren_wr);
+						   /* study GATE for GATE-d systems, a gatelesss hack */
+wire 		counter_wren = ((cw_mode != M1 && cw_mode != M5) & counter_wren_wr);
 
-pit8253_downcounter dctr(clk, counter_clock_enable, cw_mode[1:0] == M3, outreg, counter_load, counter_wren, counter_q);
+// let the counter auto-reload inself in modes M2,M2X,M3,M3X
+wire 		autoreload = (cw_mode[1:0] == M3) || (cw_mode[1:0] == M2); 
+
+pit8253_downcounter dctr(clk, counter_clock_enable, cw_mode[1:0] == M3, autoreload, outreg, counter_load, counter_wren, counter_q, nextvalue);
+
+// software stop by loading
+reg 		loading_stopper;
+always @(counter_loading,cw_mode) loading_stopper <= (cw_mode == M0 || cw_mode == M4) & counter_loading;
 
 // master, total, final grand enable
-wire counter_clock_enable = tce & /*counter_ena &*/ counter_loaded & !loading_stopper;
+wire counter_clock_enable = tce & counter_loaded & !loading_stopper;
 
 reg			loading_msb;	// for rl=3: 0: next 8-bit value will be lsb, 1: msb
 
-reg counter_starting;
-reg counter_loaded;
-reg counter_loading;
+reg 		counter_starting;
+reg 		counter_loaded;
+reg 		counter_loading;
 
-reg loading_stopper;
-always @(counter_loading,cw_mode) loading_stopper <= (cw_mode == M0 || cw_mode == M4) & counter_loading;
+
+// latching command written: counter value latch enable
+wire read_latch_e = cword[5:4] == 2'b00;
+
+// readhelper decides what to do with latching read, lsb/msb modes etc
+readhelper rbus(.clk(clk), .ce(tce), .rden(rden), .rl_mode(rl_mode), .cwset(cwset), .latch_e(read_latch_e), .counter_q(counter_q), .q(dout));
+
 
 always @(posedge clk) begin
 	if (cwset) begin
-		if (cword[5:4] == 2'b00) begin
-			read_msb <= 3;
-			read_latch <= counter_q[15:8];
-			dout <= counter_q[7:0];
-		end else begin
+		if (cword[5:4] != 2'b00) begin
 			loading_msb <= 0;	// reset the doorstopper
 			counter_loaded <= 0;
 			counter_loading <= 0;
 			cwreg <= cword;
-			read_msb <= 0;
-			read_latch <= 0;
 			case (cword[3:1]) 
 				M0:	// interrupt, 1-time, start count on load or gate
 					begin
@@ -213,13 +222,11 @@ always @(posedge clk) begin
 		case (rl_mode)
 		2'b01:	begin
 					counter_load[7:0] <= d;
-					//counter_loaded <= 1;
 					counter_starting <= 1;
 					counter_wren_wr <= 1;
 				end
 		2'b10: 	begin
 					counter_load[15:8] <= d;
-					//counter_loaded <= 1;
 					counter_starting <= 1;
 					counter_wren_wr <= 1;
 				end
@@ -240,45 +247,10 @@ always @(posedge clk) begin
 		2'b00:  ; // illegal state
 		endcase
 	end
-	
-	// read
-	if (rden & ce) begin
-		case (read_msb) 
-			3: 	begin
-					//dout <= read_latch[7:0];
-					dout <= read_latch;
-					read_msb <= 0;
-				end
-			2: 	begin
-					//dout <= read_latch[15:8];
-					//dout <= read_latch;
-					read_msb <= 0;
-				end
-			1: 	begin
-					dout <= counter_q[15:8];
-					read_msb <= 0;
-				end
-			0:
-				case (rl_mode)
-					2'b01:	begin
-								dout <= counter_q[7:0];
-							end
-					2'b10:  begin
-								dout <= counter_q[15:8];
-							end
-					2'b11:	begin
-								read_msb <= 1;
-								dout <= counter_q[7:0];
-							end
-					default:;
-				endcase
-		endcase
-	end
-	
+
 	// reset counter_wren on next tce
 	if (tce & counter_wren) begin
 		counter_wren_wr <= 0;
-		counter_wren_reload <= 0;
 	end
 
 	// enable counting on next tce
@@ -304,22 +276,18 @@ always @(posedge clk) begin
 					// by the next clk/tce
 					if (counter_q == 16'd2) begin
 						outreg <= 0;
-						counter_wren_reload <= 1;
 					end else begin
 						outreg <= 1;
 					end
 				end
 			M3,M3X:	begin
 					if (counter_q == 16'd2) begin
-						//halfmode <= cw_mode == M3 ^ outreg;
 						outreg <= ~outreg;
-						counter_wren_reload <= 1;
 					end 
 				end
 			M4:	begin
 					if (counter_q == 16'd0) begin
 						outreg <= 0;
-						//counter_loaded <= 0;
 					end else
 						outreg <= 1; // reset out on next cycle
 				end
@@ -331,27 +299,78 @@ always @(posedge clk) begin
 end
 endmodule
 
+// State-driven read dispatcher. 
+// Latched value is stored here. 
+// LSB/MSB read is decided upon here.
+module readhelper(input clk, input ce, input rden, input cwset, input latch_e, input [1:0] rl_mode, input [15:0] counter_q, output reg [7:0] q);
 
-module pit8253_downcounter(clk, ce, halfmode, o, d, wren, q);
+reg [2:0] read_state;
+reg	[15:0] latched_q;
+reg read_msb;
+
+wire [7:0] r_lsb = rl_mode == 2'b10 ? counter_q[15:8] : counter_q[7:0];
+wire [7:0] r_msb = rl_mode == 2'b01 ? counter_q[7:0]  : counter_q[15:8];
+
+
+always @*
+	case (read_msb)
+	0:	q <= read_state == 0 ? r_lsb : latched_q[7:0];
+	1: 	q <= read_state == 0 ? r_msb : latched_q[15:8];
+	endcase
+
+always @(posedge clk)
+	if (cwset && latch_e) latched_q <= counter_q;
+
+always @(posedge clk)
+	if (ce) begin
+		if (cwset) begin
+			read_msb <= 0;
+			if (latch_e) begin
+				read_state <= 2;
+			end
+			else
+				read_state <= 0;
+		end 
+		else begin
+			if (rden) begin
+				case (read_state) 
+				0:	read_state <= 0;
+				1: 	read_state <= 0;
+				2:	read_state <= 1;
+				endcase
+							
+				read_msb <= ~read_msb;
+			end 
+		end
+	end
+endmodule
+
+
+module pit8253_downcounter(clk, ce, halfmode, autoreload, o, d, wren, q, nextout);
 	input clk;
 	input ce;
 	input halfmode;	// for square wave gen
+	input autoreload;
 	input o;		// current state of out for M3
 	input [15:0] d;
 	input wren;
 	output [15:0] q;
+	output [15:0] nextout = next;
 
 reg  [15:0] counter;
 
-wire [15:0] next = counter - (~halfmode ? 16'd1 : counter[0] == 1'b0 ? 16'd2 : o ? 16'd1 : 16'd3);
+reg wrlatch;
+
+wire [15:0] next = counter - (~halfmode ? 16'd1 : counter[0] == 1'b0 ? 16'd2 : o ? 1 : 3);
 
 assign q = counter;
 
 always @(posedge clk) begin
-	if (wren) 
+	if (wren) begin
 		counter <= d;
-	else if (ce) 
-		counter <= next;
+	end else if (ce) begin
+		counter <= (autoreload & ~|next) ? d : next;
+	end
 end
 
 
