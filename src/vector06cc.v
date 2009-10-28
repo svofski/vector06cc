@@ -265,7 +265,7 @@ reg 		ws_latch;
 always @(posedge clk24) ws_counter <= ws_counter + 1'b1;
 
 wire [3:0] ws_rom = ws_counter[4:1];
-wire ws_cpu_time = ws_rom[3:1] == 1;
+wire ws_cpu_time = ws_rom[3:1] == 3'b101;
 wire ws_req_n = ~(DO[7] | ~DO[1]) | DO[4] | DO[6];	// == 0 when cpu wants cock
 
 always @(posedge clk24) begin
@@ -487,7 +487,7 @@ wire [7:0] realcolor2buf;	// this truecolour value goes into the scan doubler bu
 
 wire [3:0] paletteram_adr = (retrace/*|video_palette_wren*/) ? video_border_index : coloridx;
 
-palette_ram paletteram(paletteram_adr, video_palette_value, clk24, clk24, video_palette_wren, realcolor2buf);
+palette_ram paletteram(paletteram_adr, video_palette_value, clk24, clk24, video_palette_wren_delayed, realcolor2buf);
 
 reg [3:0] video_r;
 reg [3:0] video_g;
@@ -771,15 +771,20 @@ always @(posedge clk24) begin
 	if (iports_write & ~WR_n & cpu_ce) begin
 		video_palette_value <= DO;
 		palette_wr_sim <= 3;
-		//video_palette_wren <= 1'b1;
 	end 
-	//else 
-	//	video_palette_wren <= 1'b0;
 	if (ce6 && |palette_wr_sim) palette_wr_sim <= palette_wr_sim - 1'b1;
 end
 
 always @*
 	video_palette_wren <= |palette_wr_sim;
+
+// delay palette_wren to match the real hw timings
+reg [7:0] video_palette_wren_buf;
+wire      video_palette_wren_delayed = video_palette_wren_buf[7];
+always @(posedge clk24) begin
+	if (ce12) video_palette_wren_buf <= {video_palette_wren_buf[6:0],video_palette_wren};
+end
+
 
 
 //////////////////////////////////

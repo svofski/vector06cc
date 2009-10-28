@@ -43,7 +43,9 @@ output  [9:0]	tvx,tvy;
 // rest = 624-576 = 48
 
 parameter SCREENWIDTH = 10'd640;	
-parameter SCREENHEIGHT = 10'd576;//10'd587;
+parameter SCREENHEIGHT = 10'd576;
+parameter VISIBLEHEIGHT = SCREENHEIGHT - 2*2*16;
+parameter SCROLLLOAD_X = 112;	// when on line 0 scroll register is copied into the line counter
 
 reg videoActiveX;			// 1 == X is within visible area
 reg videoActiveY;			// 1 == Y is within visible area
@@ -110,10 +112,7 @@ always @(posedge clk24) begin
 					end
 			state4:
 					begin
-						fb_row <= {video_scroll_reg, 1'b1};
-						fb_row_count <= 511;
-					
-						scanyy <= SCREENHEIGHT - 2*2*(8'd16);
+						scanyy <= VISIBLEHEIGHT;
 						bordery <= 0;
 						scanyy_state <= state5;
 					end
@@ -130,7 +129,7 @@ always @(posedge clk24) begin
 					end
 			endcase
 		end 
-
+		
 		if (scanxx == 0) begin	
 			case (scanxx_state) 
 			state0: // enter FRONT PORCH + LEFT BORDER
@@ -147,7 +146,7 @@ always @(posedge clk24) begin
 						if (fb_row_count != 0) begin
 							fb_row_count <= fb_row_count - 1'b1;
 						end 
-						
+												
 						tvx <= 0;
 					end
 			state1: // enter HSYNC PULSE
@@ -178,6 +177,12 @@ always @(posedge clk24) begin
 			endcase
 		end 
 		else scanxx <= scanxx - 1'b1;
+
+		// load scroll register at this precise moment
+		if (scanyy_state == state5 && realx == SCROLLLOAD_X && scanyy == VISIBLEHEIGHT) begin
+			fb_row <= {video_scroll_reg, 1'b1};
+			fb_row_count <= 511;
+		end
 		
 		if (videoActiveX) begin
 			realx <= realx + 1'b1;
