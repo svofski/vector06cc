@@ -1,6 +1,11 @@
 #summary Here be the manually updated log of significant changes
 #labels Featured,Phase-Implementation
 
+=== Rev.366 ===
+ * Changed wait states to match the original, match based on instruction count between interrupts test by ivagor (spdtest.rom, spdtest2.rom)
+ * Added adjustable palette RAM write delay to make fixes like this less painful
+ * Changed the moment of scroll register update based on scrltst{2} by ivagor (horizontal shift still observed)
+
 === Rev.353 ===
  * T80 CPU fixes. No currently known discrepancies with 8080/КР580ВМ80А left.
  * PILLARS work
