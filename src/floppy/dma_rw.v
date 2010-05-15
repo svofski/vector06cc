@@ -28,14 +28,14 @@ parameter IDLE=4'd0, BUSY=4'd1, BLOCK=4'd2, OVER=4'd3, NBYTE=4'd4;
 parameter BLOCKSIZE=10'd512;
 
 input 				clk;			// clock
-input				ce;				// clock enable
+input				ce;			// clock enable
 input				reset_n;		// reset
 
 input  [15:0] 		iaddr;			// this addr latched as start of the buffer when beginning transfer
 output reg [15:0] 	oaddr;			// output address bus
 output reg[7:0]		odata;			// output data (direct from SPI controller)
 input 	[7:0]		idata;			// data from RAM 
-output reg			owren;			// RAM write strobe (positive)
+output reg			owren;		// RAM write strobe (positive)
 
 input	[3:0]		nblocks;		// input: bits [2:0] is the amount of 512-byte blocks to transfer
 									// 		  		      a non-zero value initiates transfer
