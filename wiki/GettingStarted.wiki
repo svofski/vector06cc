@@ -49,7 +49,17 @@ Now that you have the hardware, you want to upload software. You can search for 
 === DE1 Switches ===
 See README.txt, or comments in vector06cc.v for details, but long story short: SW8 and SW9 must be in the "1" or "Up" position. The rest are unimportant. Also, KEY0 is Reset with boot rom (power-on reset) and KEY3 is romless reset (БЛК+СБР), same as F12 key starts the loaded software. 
 
- Вкратце, понимая тяжесть прочения README.txt и коментариев в vector06cc.v, сообщаю, что переключатели SW8 и SW9 должны быть в верхнем положении "1", остальные лучше перевести в положение "0". Кроме того, есть кнопки: KEY0 выполняет полный сброс, кнопка KEY3 -- загрузку, то же что клавиша F12 на клавиатуре или БЛК+СБР на настоящем Векторе. Клавиша F11 == БЛК+ВВОД.
+==== Full switches breakdown: ====
+||SW1:SW0||red LED[7:0] display selector||00: Data In<br>01: Data Out<br>11: registered Data Out||
+||SW3:SW2||green LED group display selector||00: registered CPU status word<br>01: keyboard status/testpins<br>10: RAM disk test pins<br>11: WR_n, io_stack, SRAM_ADDR[17:15] (RAM disk page)||
+||SW4||1 = PAL field phase alternate (should be on for normal tv's)||See [TV_Howto] ||
+||SW5||1 = CVBS composite output on VGA R,G,B pins||See [TV_Howto]||
+||SW6||1 = disable tape in|| ||
+||SW7||manual bus hold||recommended for SRAM/JTAG exchange operations||
+||SW9:SW8||Clock modes||These must be both "1" for normal operation:<br>00: single-clock, tap clock by KEY[1]<br>01: warp mode: 6 MHz, no waitstates<br>10: slow clock, code is executed at eyeballable speed<br>11: normal Vector-06C speed, full compatibility mode||
+
+
+ Вкратце: SW8 и SW9 должны быть в верхнем положении "1", остальные лучше перевести в положение "0". Кроме того, есть кнопки: KEY0 выполняет полный сброс, кнопка KEY3 -- загрузку, то же что клавиша F12 на клавиатуре или БЛК+СБР на настоящем Векторе. Клавиша F11 == БЛК+ВВОД.
 
 == Using software ==
 There are several methods of running software. Here they are in order of ease of use. You will need *Cyclone II Starter Kit Control Panel* program supplied with your DE1 board in order to transfer data to the board's SRAM.
