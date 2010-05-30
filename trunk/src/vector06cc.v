@@ -17,7 +17,7 @@
 //
 // Switches, as they are configured now:
 //	SW1:SW0			red LED[7:0] display selector: 
-// 						00:	Data In
+// 						00: Data In
 //						01: Data Out
 //						11: registered Data Out
 //
@@ -27,19 +27,19 @@
 //						10: RAM disk test pins
 //						11: WR_n, io_stack, SRAM_ADDR[17:15] (RAM disk page)
 //
-//	SW4				1 = PAL field phase alternate (should be on for normal tv's)
-//	SW5				1 = CVBS composite output on VGA R,G,B pins	
-//						(connect them together and feed to tv)
+//	SW4			1 = PAL field phase alternate (should be on for normal tv's)
+//	SW5			1 = CVBS composite output on VGA R,G,B pins	
+//					(connect them together and feed to tv)
 //
-//	SW6				disable tape in
+//	SW6			disable tape in
 //
-//  SW5				not used
+//	SW7			manual bus hold, recommended for SRAM <-> JTAG exchange operations
 //
-//	SW7				manual bus hold, recommended for SRAM <-> JTAG exchange operations
-//
-//					These must be 1 for normal operation:
-//	SW8				slow clock, code is executed at eyeballable speed
-//	SW9				single-clock, tap clock by KEY[1]
+//				These must be both "1" for normal operation:
+//	SW9:SW8				00: single-clock, tap clock by KEY[1]
+//					01: warp mode: 6 MHz, no waitstates
+//					10: slow clock, code is executed at eyeballable speed
+//					11: normal Vector-06C speed, full compatibility mode
 //			
 //
 // --------------------------------------------------------------------
