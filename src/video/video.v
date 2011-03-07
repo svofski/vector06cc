@@ -30,6 +30,7 @@ module video(
 	clk24, 				// clock
 	ce12,				// 12mhz clock enable for vga-scan (buffer->vga)
 	ce6,				// 6mhz  clock enable for pal-scan (ram->buffer)
+	ce6x,
 	video_slice,		// video time slice, not cpu time
 	pipe_ab,			// pipe_ab for register pipeline
  
@@ -70,6 +71,7 @@ parameter V_REF  = 4;
 input 			clk24;
 input 			ce12;
 input			ce6;
+input           ce6x;
 input 			video_slice;
 input 			pipe_ab;
 
@@ -149,10 +151,10 @@ framebuffer 	winrar(
 reg 	[3:0] xcoloridx;
 wire 	[3:0] coloridx_modeless;
 
-always @(negedge clk24) begin
+always @(posedge clk24) begin
 	if (mode512) begin
-		if (ce6)
-			xcoloridx <= {2'b00, coloridx_modeless[2], coloridx_modeless[3]};
+		if (ce6x)
+			xcoloridx <= {coloridx_modeless[3], coloridx_modeless[2], 2'b00};
 		else
 			xcoloridx <= {2'b00, coloridx_modeless[1], coloridx_modeless[0]};
 	end
