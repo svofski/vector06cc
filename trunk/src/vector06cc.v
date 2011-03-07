@@ -175,7 +175,7 @@ output [35:0]	GPIO_1;
 wire mreset_n = KEY[0] & ~kbd_key_blkvvod;
 wire mreset = !mreset_n;
 wire clk24, clk18, clk14, clkpal4FSC;
-wire ce12, ce6, ce3, vi53_timer_ce, video_slice, pipe_ab;
+wire ce12, ce6, ce6x, ce3, vi53_timer_ce, video_slice, pipe_ab;
 
 clockster clockmaker(
 	.clk(CLOCK_27), 
@@ -185,6 +185,7 @@ clockster clockmaker(
 	.clk14(clk14),
 	.ce12(ce12), 
 	.ce6(ce6),
+	.ce6x(ce6x),
 	.ce3(ce3), 
 	.video_slice(video_slice), 
 	.pipe_ab(pipe_ab), 
@@ -461,7 +462,7 @@ wire [7:0] 	tv_luma;
 wire [7:0]	tv_chroma;
 wire [7:0]  tv_test;
 
-video vidi(.clk24(clk24), .ce12(ce12), .ce6(ce6), .clk4fsc(clkpal4FSC), .video_slice(video_slice), .pipe_ab(pipe_ab),
+video vidi(.clk24(clk24), .ce12(ce12), .ce6(ce6), .ce6x(ce6x), .clk4fsc(clkpal4FSC), .video_slice(video_slice), .pipe_ab(pipe_ab),
 		   .mode512(video_mode512), 
 		   .SRAM_DQ(sram_data_in), .SRAM_ADDR(VIDEO_A), 
 		   .hsync(vga_hs), .vsync(vga_vs), 
@@ -487,7 +488,11 @@ wire [7:0] realcolor2buf;	// this truecolour value goes into the scan doubler bu
 
 wire [3:0] paletteram_adr = (retrace/*|video_palette_wren*/) ? video_border_index : coloridx;
 
-palette_ram paletteram(paletteram_adr, video_palette_value, clk24, clk24, video_palette_wren_delayed, realcolor2buf);
+palette_ram paletteram(.address(paletteram_adr), 
+                       .data(video_palette_value), 
+                       .inclock(clk24), .outclock(clk24), 
+                       .wren(video_palette_wren_delayed), 
+                       .q(realcolor2buf));
 
 reg [3:0] video_r;
 reg [3:0] video_g;

@@ -19,7 +19,7 @@
 
 `default_nettype none
 
-module clockster(clk, clk50, clk24, clk18, clk14, ce12, ce6, ce3, video_slice, pipe_ab, ce1m5, clkpalFSC);
+module clockster(clk, clk50, clk24, clk18, clk14, ce12, ce6, ce6x, ce3, video_slice, pipe_ab, ce1m5, clkpalFSC);
 input  [1:0] 	clk;
 input			clk50;
 output clk24;
@@ -27,6 +27,7 @@ output clk18;
 output clk14;
 output ce12 = qce12;
 output ce6 = qce6;
+output ce6x = qce6x;
 output ce3 = qce3;
 output video_slice = qvideo_slice;
 output pipe_ab = qpipe_ab;
@@ -36,7 +37,7 @@ output clkpalFSC;
 reg[5:0] ctr;
 reg[4:0] initctr;
 
-reg qce12, qce6, qce3, qce3v, qvideo_slice, qpipe_ab, qce1m5;
+reg qce12, qce6, qce6x, qce3, qce3v, qvideo_slice, qpipe_ab, qce1m5;
 
 wire lock;
 wire clk13_93;
@@ -110,6 +111,7 @@ always @(posedge clk24) begin
 		qpipe_ab <= ctr[5]; 				// pipe a/b 2x slower
 		qce12 <= ctr[0]; 					// pixel push @12mhz
 		qce6 <= ctr[1] & ctr[0];			// pixel push @6mhz
+		qce6x <= ctr[1] & ~ctr[0];
 		qce3 <= ctr[2] & ctr[1] & !ctr[0];
 		qvideo_slice <= !ctr[2];
 		qce1m5 <= !ctr[3] & ctr[2] & ctr[1] & !ctr[0]; 
