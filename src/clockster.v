@@ -111,7 +111,7 @@ always @(posedge clk24) begin
 		qpipe_ab <= ctr[5]; 				// pipe a/b 2x slower
 		qce12 <= ctr[0]; 					// pixel push @12mhz
 		qce6 <= ctr[1] & ctr[0];			// pixel push @6mhz
-		qce6x <= ctr[1] & ~ctr[0];
+		qce6x <= ctr[1] & ~ctr[0];          // pre-pixel push @6mhz
 		qce3 <= ctr[2] & ctr[1] & !ctr[0];
 		qvideo_slice <= !ctr[2];
 		qce1m5 <= !ctr[3] & ctr[2] & ctr[1] & !ctr[0]; 
