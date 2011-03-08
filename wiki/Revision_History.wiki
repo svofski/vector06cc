@@ -1,6 +1,9 @@
 #summary Here be the manually updated log of significant changes
 #labels Featured,Phase-Implementation
 
+=== Rev.377 ===
+ * Fixed 512x256 modes
+
 === Rev.366 ===
  * Changed wait states to match the original, match based on instruction count between interrupts test by ivagor (spdtest.rom, spdtest2.rom)
  * Added adjustable palette RAM write delay to make fixes like this less painful
