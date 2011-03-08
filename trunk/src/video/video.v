@@ -46,7 +46,7 @@ module video(
 	osd_vsync,
 	
 	coloridx,			// output: 	palette ram address
-	realcolor_in,		// input:  	real colour value
+	realcolor_in,		// input:  	real colour value from palette ram
 	realcolor_out,		// output: 	real colour value --> vga
 	retrace,			// output: 	out of scan area, for interrupt request
     video_scroll_reg,	// input: 	line where display starts
@@ -151,9 +151,12 @@ framebuffer 	winrar(
 reg 	[3:0] xcoloridx;
 wire 	[3:0] coloridx_modeless;
 
-always @(posedge clk24) begin
+// It's possible to switch to @(posedge) and if(ce6x), which goes ahead of ce6x by 1/8
+// but then there's a little problem with TV out, because it's unbuffered: 
+// leftmost column gets half-pixels from the right column. 
+always @(negedge clk24) begin
 	if (mode512) begin
-		if (ce6x)
+		if (ce6)
 			xcoloridx <= {coloridx_modeless[3], coloridx_modeless[2], 2'b00};
 		else
 			xcoloridx <= {2'b00, coloridx_modeless[1], coloridx_modeless[0]};
