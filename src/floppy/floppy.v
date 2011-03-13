@@ -53,6 +53,9 @@ module floppy(
 	);
 	
 parameter IOBASE = 16'hE000;
+parameter OSDBASE = IOBASE + 256;
+parameter BUFMEMBASE = IOBASE + 512;
+
 parameter PORT_MMCA= 0;
 parameter PORT_SPDR= 1;
 parameter PORT_SPSR= 2;
@@ -114,72 +117,123 @@ output			host_hold;
 
 wire 	[15:0] 	cpu_ax;
 wire			memwrx;
-wire 	[7:0]	cpu_dox;
+wire			memrdx;
+wire 	[15:0]	cpu_dox;
+wire            cpu_byte;       // CPU requests byte access
 
 wire 	[15:0]	cpu_a = dma_ready ? cpu_ax  : dma_oaddr;
 assign			memwr = dma_ready ? memwrx  : dma_memwr;
-wire	[7:0]	cpu_do = dma_ready ? cpu_dox: dma_odata;
-reg  	[7:0]	cpu_di;
+wire	[15:0]	cpu_do = dma_ready ? cpu_dox: dma_odata;
+reg  	[15:0]	cpu_di;
 
 // Workhorse 6502 CPU
-cpu65xx_en cpu(
-		.clk(clk),
-		.reset(~reset_n),
-		.enable(ce & ~(wd_ram_rd|wd_ram_wr|~dma_ready)),
-		.nmi_n(1'b1),
-		.irq_n(1'b1),
-		.di(cpu_di),
-		.do(cpu_dox),
-		.addr(cpu_ax),
-		.we(memwrx)
-	);
+//cpu65xx_en cpu(
+//		.clk(clk),
+//		.reset(~reset_n),
+//		.enable(ce & ~(wd_ram_rd|wd_ram_wr|~dma_ready)),
+//		.nmi_n(1'b1),
+//		.irq_n(1'b1),
+//		.di(cpu_di),
+//		.do(cpu_dox),
+//		.addr(cpu_ax),
+//		.we(memwrx)
+//	);
+		
+vm1 cpu(.clk(clk), 
+        .ce(ce & ~(wd_ram_rd|wd_ram_wr|~dma_ready)),
+        .reset_n(reset_n),
+        //.IFETCH(ifetch),
+        .data_i(cpu_di),
+        .data_o(cpu_dox),
+        .addr_o(cpu_ax),
 
-// Main RAM, Low-mem, Buffer-mem, I/O ports to CPU connections
-wire 	[7:0]	ram_do;
-wire 	[7:0]	lowmem_do;
-wire 	[7:0]	bufmem_do;
-reg  	[7:0]	ioports_do;
+        .RPLY(reply_i),
+        
+        .DIN(memrdx),          // o: data in
+        .DOUT(memwrx),         // o: data out
+        .WTBT(cpu_byte),       // o: byteio op/odd address
+           
+        .VIRQ(1'b0),            // i: vector interrupt request
+        .IRQ1(1'b0),            // i: console interrupt
+        .IRQ2(1'b0),            // i: trap to 0100
+        .IRQ3(1'b0),            // i: trap to 0270
+        .usermode_i(0),
+        );      
+
+//---------------------------------------------
+// RPLY generator for register space
+//---------------------------------------------
+
+reg     reply_i;
+wire    cpu_io = memrdx | memwrx;
+
+wire    reg_space = 1;
+
+//always @* ram_data_o <= (_cpu_byte & _cpu_adrs[0])? {data_from_cpu[7:0], data_from_cpu[7:0]} : data_from_cpu;
+
+always @(posedge clk) begin
+    if (reg_space & cpu_io & ~reply_i)
+        reply_i <= 1;
+    else
+        if (ce) reply_i <= 0;
+end
+//---------------------------------------------
+
+
+// Main RAM, Buffer-mem, I/O ports to CPU connections
+wire 	[15:0]	ram_do = {ram_do_hi, ram_do_lo};
+wire 	[15:0]	bufmem_do;
+reg  	[15:0]	ioports_do;
 
 always begin: _cpu_datain
-	case({&cpu_a[15:4], lowmem_en, bufmem_en, rammem_en, osd_en}) 
-	5'b10000:	cpu_di <= (cpu_a[0] ? 8'h08:8'h00);
-	5'b01000:	cpu_di <= lowmem_do;
-	5'b00100:	cpu_di <= bufmem_do;
-	5'b00010:	cpu_di <= ram_do;
-	5'b00001:	cpu_di <= display_idata;
+	case({bufmem_en, rammem_en, osd_en}) 
+	3'b100:	    cpu_di <= {bufmem_do, bufmem_do};
+	3'b010:	    cpu_di <= {ram_do_hi, ram_do_lo};
+	3'b001:	    cpu_di <= {display_idata, display_idata};
 	default:	cpu_di <= ioports_do;
 	endcase
 end							
 
 // memory enables
-wire lowmem_en = |cpu_a[15:9] == 0;
-wire bufmem_en = (wd_ram_rd|wd_ram_wr) || (cpu_a >= 16'h200 && cpu_a < 16'h600);
-wire rammem_en = cpu_a >= 16'h0800 && cpu_a < 16'h8000;
+wire bufmem_en = (wd_ram_rd|wd_ram_wr) || (cpu_a >= BUFMEMBASE && cpu_a < BUFMEMBASE + 1024);  // 0xe200..0xe5ff
+
+wire rammem_en = cpu_a < 16'h8000;
 wire ioports_en= cpu_a >= IOBASE && cpu_a < IOBASE + 256;
-wire osd_en = cpu_a >= IOBASE + 256 && cpu_a < IOBASE + 512;
+wire osd_en = cpu_a >= OSDBASE && cpu_a < OSDBASE + 256;
 
 assign display_addr = cpu_a[7:0];
-assign display_data = cpu_do;
+assign display_data = cpu_do[7:0];
 assign display_wren = osd_en & memwr;
 
 
-floppyram flopramnik(
-	.address(cpu_a-16'h0800),
+// byte/word access complications
+
+wire          memwr_hi = memwr & (~cpu_byte | cpu_a[0]);  
+wire          memwr_lo = memwr & (~cpu_byte | ~cpu_a[0]);  
+
+wire    [7:0] cpu_do_hi = cpu_do[15:8];
+wire    [7:0] cpu_do_lo = cpu_do[7:0];
+
+wire    [7:0] ram_do_hi;        // byte from hi-bank
+wire    [7:0] ram_do_lo;        // byte from lo-bank
+
+floppyram flopramnik_hi(
+	.address(cpu_a[15:1]),
 	.clock(~clk),
-	.data(cpu_do),
-	.wren(memwr),
-	.q(ram_do)
+	.data(cpu_do_hi),
+	.wren(memwr_hi),
+	.q(ram_do_hi)
 	);
 
-ram512x8a zeropa(
-	.clock(~clk),
-	.clken(ce & lowmem_en),
-	.address(cpu_a),
-	.wren(memwr),
-	.data(cpu_do),
-	.q(lowmem_do));
+floppyram flopramnik_lo(
+    .address(cpu_a[15:1]),
+    .clock(~clk),
+    .data(cpu_do_lo),
+    .wren(memwr_lo),
+    .q(ram_do_lo)
+    );
 
-wire [9:0]	bufmem_addr = (wd_ram_rd|wd_ram_wr) ? wd_ram_addr : cpu_a - 10'h200;
+wire [9:0]	bufmem_addr = (wd_ram_rd|wd_ram_wr) ? wd_ram_addr : cpu_a - BUFMEMBASE;
 wire 		bufmem_wren = wd_ram_wr | memwr;
 wire [7:0]	bufmem_di = wd_ram_wr ? wd_ram_odata : cpu_do;
 

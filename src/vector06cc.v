@@ -50,8 +50,8 @@
 // Undefine following for smaller/faster builds
 `define WITH_CPU			
 `define WITH_KEYBOARD
-`define WITH_VI53
-`define WITH_AY
+//`define WITH_VI53
+//`define WITH_AY
 `define WITH_FLOPPY
 `define WITH_OSD
 `define WITH_DE1_JTAG

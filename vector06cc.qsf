@@ -267,19 +267,9 @@ set_global_assignment -name LL_ROOT_REGION ON -section_id "Root Region"
 set_global_assignment -name LL_MEMBER_STATE LOCKED -section_id "Root Region"
 set_instance_assignment -name CURRENT_STRENGTH_NEW "MINIMUM CURRENT" -to GPIO_1[*]
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to GPIO_1[*]
+set_instance_assignment -name GLOBAL_SIGNAL "GLOBAL CLOCK" -to "clockster:clockmaker|clk30"
 set_global_assignment -name VECTOR_WAVEFORM_FILE clk50mhz.vwf
 set_global_assignment -name VERILOG_FILE src/vector06cc.v
-set_global_assignment -name VERILOG_FILE src/floppy/floppy.v
-set_global_assignment -name VERILOG_FILE src/floppy/floppyram.v
-set_global_assignment -name VHDL_FILE src/floppy/uart/txd.vhd
-set_global_assignment -name VERILOG_FILE src/floppy/wd1793.v
-set_global_assignment -name VERILOG_FILE src/floppy/floppyrom.v
-set_global_assignment -name VERILOG_FILE src/floppy/ram512x8a.v
-set_global_assignment -name VERILOG_FILE src/floppy/ram1024x8a.v
-set_global_assignment -name VERILOG_FILE src/floppy/spi.v
-set_global_assignment -name VERILOG_FILE src/floppy/dma_rw.v
-set_global_assignment -name VERILOG_FILE src/floppy/timer100hz.v
-set_global_assignment -name VHDL_FILE src/floppy/65c02/cpu65xx_en.vhd
 set_global_assignment -name VERILOG_FILE src/ramdisk/kvaz.v
 set_global_assignment -name VERILOG_FILE src/lpm_rom0.v
 set_global_assignment -name VERILOG_FILE src/clockster.v
@@ -318,8 +308,24 @@ set_global_assignment -name VHDL_FILE src/T80/T80sef.vhd
 set_global_assignment -name VERILOG_FILE src/jtag/jtag_top.v
 set_global_assignment -name VERILOG_FILE src/ay/ayglue.v
 set_global_assignment -name VHDL_FILE src/ay/YM2149_linmix.vhd
+set_global_assignment -name VERILOG_FILE src/floppy/floppy.v
+set_global_assignment -name VERILOG_FILE src/floppy/floppyram.v
+set_global_assignment -name VHDL_FILE src/floppy/uart/txd.vhd
+set_global_assignment -name VERILOG_FILE src/floppy/wd1793.v
+set_global_assignment -name VERILOG_FILE src/floppy/ram512x8a.v
+set_global_assignment -name VERILOG_FILE src/floppy/ram1024x8a.v
+set_global_assignment -name VERILOG_FILE src/floppy/spi.v
+set_global_assignment -name VERILOG_FILE src/floppy/dma_rw.v
+set_global_assignment -name VERILOG_FILE src/floppy/timer100hz.v
+set_global_assignment -name VERILOG_FILE src/floppy/vm1/vm1.v
+set_global_assignment -name VERILOG_FILE src/floppy/vm1/control11.v
+set_global_assignment -name VERILOG_FILE src/floppy/vm1/datapath.v
+set_global_assignment -name VERILOG_FILE src/floppy/vm1/dpasync.v
+set_global_assignment -name SOURCE_FILE src/floppy/vm1/instr.h
+set_global_assignment -name VERILOG_FILE src/floppy/vm1/myalu.v
+set_global_assignment -name VERILOG_FILE src/floppy/vm1/myidc.v
+set_global_assignment -name SOURCE_FILE src/floppy/vm1/opc.h
 set_global_assignment -name VERILOG_FILE src/osd/textmode.v
 set_global_assignment -name VERILOG_FILE src/osd/chargen.v
 set_global_assignment -name VERILOG_FILE src/osd/screenbuffer.v
 set_global_assignment -name VERILOG_FILE src/altmodules/ayclkdrv.v
-set_instance_assignment -name GLOBAL_SIGNAL "GLOBAL CLOCK" -to "clockster:clockmaker|clk30"
