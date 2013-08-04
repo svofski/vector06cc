@@ -160,6 +160,8 @@ vm1 cpu(.clk(clk),
         .usermode_i(0),
         );      
 
+    defparam cpu.BOOTADDR = 16'o 1000;
+
 //---------------------------------------------
 // RPLY generator for register space
 //---------------------------------------------
@@ -217,15 +219,15 @@ wire    [7:0] cpu_do_lo = cpu_do[7:0];
 wire    [7:0] ram_do_hi;        // byte from hi-bank
 wire    [7:0] ram_do_lo;        // byte from lo-bank
 
-floppyram flopramnik_hi(
+floppyram_hi flopramnik_hi(
 	.address(cpu_a[15:1]),
 	.clock(~clk),
 	.data(cpu_do_hi),
 	.wren(memwr_hi),
 	.q(ram_do_hi)
 	);
-
-floppyram flopramnik_lo(
+	
+floppyram_lo flopramnik_lo(
     .address(cpu_a[15:1]),
     .clock(~clk),
     .data(cpu_do_lo),

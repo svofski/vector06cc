@@ -309,7 +309,8 @@ set_global_assignment -name VERILOG_FILE src/jtag/jtag_top.v
 set_global_assignment -name VERILOG_FILE src/ay/ayglue.v
 set_global_assignment -name VHDL_FILE src/ay/YM2149_linmix.vhd
 set_global_assignment -name VERILOG_FILE src/floppy/floppy.v
-set_global_assignment -name VERILOG_FILE src/floppy/floppyram.v
+set_global_assignment -name VERILOG_FILE src/floppy/floppyram_hi.v
+set_global_assignment -name VERILOG_FILE src/floppy/floppyram_lo.v
 set_global_assignment -name VHDL_FILE src/floppy/uart/txd.vhd
 set_global_assignment -name VERILOG_FILE src/floppy/wd1793.v
 set_global_assignment -name VERILOG_FILE src/floppy/ram512x8a.v

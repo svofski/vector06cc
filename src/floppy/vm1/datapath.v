@@ -30,6 +30,8 @@ output [15:0]   ALUOUT;
 input           usermode_i;
 output [143:0]  Rtest;
 
+parameter BOOTADDR;
+
 assign Rtest[15:0]      = R[0];
 assign Rtest[31:16]     = R[1];
 assign Rtest[47:32]     = R[2];
@@ -196,7 +198,7 @@ always @(posedge clk or negedge reset_n)
     if (ce) begin
         if (ctrl[`ALUPC])   R[7] <= alu_out; 
         if (ctrl[`DBIPC])   R[7] <= dbi_r;
-        if (ctrl[`SETPCROM]) R[7] <= 16'o 100000; 
+        if (ctrl[`SETPCROM]) R[7] <= BOOTADDR; 
         if (ctrl[`FPPC])    R[7] <= R[5];
         if (ctrl[`SELPC])   R[7] <= REGsel;
         if (ctrl[`ADRPC])   R[7] <= ADR; 

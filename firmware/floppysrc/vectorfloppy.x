@@ -3,7 +3,7 @@ OUTPUT_FORMAT("a.out-pdp11", "a.out-pdp11",
 	      "a.out-pdp11")
 OUTPUT_ARCH(pdp11)
 SEARCH_DIR("/usr/local/pdp11/pdp11-aout/lib");
-PROVIDE (__stack = 0);
+PROVIDE (__stack = 0x200);
 
 ENTRY(_start)
 
@@ -12,7 +12,7 @@ SECTIONS
   . = 0;
   .text :
   {
-    CREATE_OBJECT_SYMBOLS
+    /* CREATE_OBJECT_SYMBOLS*/
     *(.text)
     /* The next six sections are for SunOS dynamic linking.  The order
        is important.  */

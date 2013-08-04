@@ -16,6 +16,8 @@ disk.bin:	disk.aout
 
 disk.hex:	disk.aout
 	$(OBJCOPY) -O ihex $< $@
+	srec_cat disk.hex -intel -split 2 0 -o - -intel | sed s/^:04000005000.*$\/\/g >../../disk.even.hex 
+	srec_cat disk.hex -intel -split 2 1 -o - -intel | sed s/^:04000005000.*$\/\/g >../../disk.odd.hex
 
 disk.aout:	$(OBJS)
 	#$(L65) -C vector.lc lib/vector.o $(OBJS) lib/vector.lib -o disk.bin -m disk.map
