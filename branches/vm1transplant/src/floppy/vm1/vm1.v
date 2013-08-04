@@ -120,6 +120,8 @@ output  [15:0]  OPCODE;
 output  [143:0] Rtest;
 `endif
 
+parameter BOOTADDR = 16'o 100000;
+
 assign ALUCC = alucc;
 assign idccat = {idc_unused,idc_cco,idc_bra,idc_nof,idc_rsd,idc_dop,idc_sop};
 assign taken = dp_taken;
@@ -204,6 +206,8 @@ datapath dp(
     , .Rtest(Rtest)
 `endif  
     );
+    
+    defparam dp.BOOTADDR = BOOTADDR;
     
 assign test_bus = {DIN|DOUT,DIN,DOUT,RPLY,error_i,error_bus,DIN,DOUT};
 

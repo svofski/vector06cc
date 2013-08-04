@@ -25,8 +25,10 @@ vectors:
     .word   trap_trap
     .word   0
  
+    . = 0x200
 	.globl	_start, _end
-_start:	mov	$_start, sp
+_start:	
+    mov	$_start, sp
 	mov	$_end, brk		# initialize sbrk()
 	mov	$0400, r0
 vec:	clr	-(r0)
