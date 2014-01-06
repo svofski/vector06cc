@@ -28,11 +28,10 @@ set_global_assignment -name FAMILY "Cyclone II"
 set_global_assignment -name TOP_LEVEL_ENTITY vector06cc
 set_global_assignment -name ORIGINAL_QUARTUS_VERSION 7.1
 set_global_assignment -name PROJECT_CREATION_TIME_DATE "22:55:30  OCTOBER 17, 2007"
-set_global_assignment -name LAST_QUARTUS_VERSION 9.0
+set_global_assignment -name LAST_QUARTUS_VERSION "13.0 SP1"
 set_global_assignment -name DEVICE_FILTER_PACKAGE FBGA
 set_global_assignment -name DEVICE_FILTER_PIN_COUNT 484
 set_global_assignment -name DEVICE_FILTER_SPEED_GRADE 7
-set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
 set_global_assignment -name PARTITION_NETLIST_TYPE SOURCE -section_id Top
 set_location_assignment PIN_R22 -to KEY[0]
 set_location_assignment PIN_R21 -to KEY[1]
@@ -323,3 +322,18 @@ set_global_assignment -name VERILOG_FILE src/osd/chargen.v
 set_global_assignment -name VERILOG_FILE src/osd/screenbuffer.v
 set_global_assignment -name VERILOG_FILE src/altmodules/ayclkdrv.v
 set_instance_assignment -name GLOBAL_SIGNAL "GLOBAL CLOCK" -to "clockster:clockmaker|clk30"
+set_global_assignment -name PARTITION_FITTER_PRESERVATION_LEVEL PLACEMENT_AND_ROUTING -section_id Top
+set_global_assignment -name PHYSICAL_SYNTHESIS_COMBO_LOGIC OFF
+set_global_assignment -name PHYSICAL_SYNTHESIS_REGISTER_RETIMING OFF
+set_global_assignment -name PHYSICAL_SYNTHESIS_ASYNCHRONOUS_SIGNAL_PIPELINING OFF
+set_global_assignment -name PHYSICAL_SYNTHESIS_REGISTER_DUPLICATION OFF
+set_global_assignment -name PHYSICAL_SYNTHESIS_EFFORT EXTRA
+set_global_assignment -name MIN_CORE_JUNCTION_TEMP 0
+set_global_assignment -name MAX_CORE_JUNCTION_TEMP 85
+set_global_assignment -name SDC_FILE notsure.sdc
+set_global_assignment -name PHYSICAL_SYNTHESIS_COMBO_LOGIC_FOR_AREA OFF
+set_global_assignment -name PHYSICAL_SYNTHESIS_MAP_LOGIC_TO_MEMORY_FOR_AREA OFF
+set_global_assignment -name EDA_SIMULATION_TOOL "ModelSim-Altera (Verilog)"
+set_global_assignment -name EDA_TIME_SCALE "1 ps" -section_id eda_simulation
+set_global_assignment -name EDA_OUTPUT_DATA_FORMAT "VERILOG HDL" -section_id eda_simulation
+set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top

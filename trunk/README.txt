@@ -19,17 +19,19 @@ CONTENTS
 Features
 ~~~~~~~~
 
-The following features are implemented as of December 16, 2007:
+The following features are implemented:
 
 - CPU
+- Perfect timings matching the original machine in every detail
 - SRAM is used for everything
-- 8253 timer (not entirely, only what's useful for sound generation)
+- 8253 timer 
 - tape i/o (and beeper)
 - all internal stuff, video modes, palette
 - PS/2 keyboard
 - 256K RAM disk
 - DE1 JTAG interface to JTAG USB API program
 - Colour composite TV signal output (PAL)
+
 
 DE1 Thingies
 ~~~~~~~~~~~~
@@ -79,36 +81,14 @@ Known Problems
 	this mapping gets stuck.
 	
 	Workaround: always carefully press SHIFT, then ":", then release ":", 
-	then release SHIFT. If input gets stuck, unstuck it by carefully 
+	then release SHIFT. If input gets stuck, unstick it by carefully 
 	pressing same character again.
 
-2. PS key is not implemented
-
-	Well, duh.. 
-
-3. BLK+VVOD is not implemented
-
-	Use KEY0 instead.
-
-4. AY-3-WTF is not implemented
-
-n-1. ROM "<whatever>.rom" doesn't work
-	
-	Unless you know for sure that it must work, screw it.
-
-n. ROM "<whatver>.rom" works incorrectly.
-
-	If you know for sure how it must work, I'm open for suggestions.
 
 Known ROMs That Have Issues
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
-81dca11bea7fb69a1226a170f1f47e85 *EXOLON.ROM
-		Jerky border and keyboard input doesn't work, no known workaround
 
-
-b27de9107eba6a1d9fb43e92e281099e *MUSICIAN.ROM
-		Vertical scrolling is screwed up, depends on keys pressed.
-		I studied the code and can't see how it can behave differently.
+None.
 
 Acknowledgements
 ~~~~~~~~~~~~~~~~
