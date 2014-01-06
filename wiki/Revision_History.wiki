@@ -1,6 +1,11 @@
 #summary Here be the manually updated log of significant changes
 #labels Featured,Phase-Implementation
 
+=== Rev.388 ===
+ * rom_access is registered, hopefully this reduces SRAM_OE_N delay and makes it better compatible with newer revisions of DE1 board that have slower SRAM
+ * big cleanup in framebuffer.v: now SRAM accesses happen once on every video_slice, that is exactly 4 times per 8 pixels as it should be
+
+
 === Rev.377 ===
  * Fixed 512x256 modes
 
