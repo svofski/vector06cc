@@ -139,6 +139,7 @@ vga_refresh 	refresher(
 
 framebuffer 	winrar(
 							.clk24(clk24),
+							.ce12(ce12),
 							.ce_pixel(ce6),
 							.video_slice(video_slice), .pipe_abx(pipe_ab),
 							.fb_row(fb_row[8:0]),

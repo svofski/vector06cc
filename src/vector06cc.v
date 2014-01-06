@@ -54,8 +54,8 @@
 `define WITH_AY
 `define WITH_FLOPPY
 `define WITH_OSD
-`define WITH_DE1_JTAG
-`define JTAG_AUTOHOLD
+//`define WITH_DE1_JTAG
+//`define JTAG_AUTOHOLD
 `define FLOPPYLESS_HAX	// set FDC odata to $00 when compiling without floppy
 
 module vector06cc(CLOCK_27, clk50mhz, KEY[3:0], LEDr[9:0], LEDg[7:0], SW[9:0], HEX0, HEX1, HEX2, HEX3, 
@@ -392,13 +392,26 @@ lpm_rom0 bootrom(A[11:0], clk24, ROM_DO);
 
 
 assign SRAM_CE_N = 0;
-assign SRAM_OE_N = !rom_access && !ram_write_n && !video_slice && !mJTAG_SRAM_WR_N;
+assign SRAM_OE_N = !rom_access && !ram_write_n && !video_slice 
+`ifdef WITH_DE1_JTAG
+&& !mJTAG_SRAM_WR_N
+`endif
+;
 
 reg [7:0] address_bus_r;	// registered address for i/o
 
 wire [15:0] address_bus = video_slice & regular_clock_enabled ? VIDEO_A : A;
 
-wire rom_access = (!disable_rom) & (A < 2048);
+reg rom_access;
+
+always @(posedge clk24) begin
+	if (disable_rom)
+		rom_access <= 1'b0;
+	else
+		rom_access <= A < 2048;
+end
+
+
 wire [7:0] sram_data_in;
 assign DI = interrupt_ack ? 8'hFF : io_read ? peripheral_data_in : rom_access ? ROM_DO : sram_data_in;
 
