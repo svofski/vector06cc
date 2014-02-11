@@ -11,6 +11,8 @@
 //
 // Author: Viacheslav Slavinsky, http://sensi.org/~svo
 // 
+// SDRAM version: Ivan Gorodetsky
+//
 // Design File: vector06cc.v
 //
 // Top-level design file of Vector-06C replica.
@@ -58,7 +60,7 @@
 //`define JTAG_AUTOHOLD
 `define FLOPPYLESS_HAX	// set FDC odata to $00 when compiling without floppy
 
-module vector06cc(CLOCK_27, clk50mhz, KEY[3:0], LEDr[9:0], LEDg[7:0], SW[9:0], HEX0, HEX1, HEX2, HEX3, 
+module vector06cc(CLOCK_24,CLOCK_27, clk50mhz, KEY[3:0], LEDr[9:0], LEDg[7:0], SW[9:0], HEX0, HEX1, HEX2, HEX3, 
 		////////////////////	SRAM Interface		////////////////
 		SRAM_DQ,						//	SRAM Data bus 16 Bits
 		SRAM_ADDR,						//	SRAM Address bus 18 Bits
@@ -67,6 +69,20 @@ module vector06cc(CLOCK_27, clk50mhz, KEY[3:0], LEDr[9:0], LEDg[7:0], SW[9:0], H
 		SRAM_WE_N,						//	SRAM Write Enable
 		SRAM_CE_N,						//	SRAM Chip Enable
 		SRAM_OE_N,						//	SRAM Output Enable
+		 
+	DRAM_DQ,				//	SDRAM Data bus 16 Bits
+	DRAM_ADDR,				//	SDRAM Address bus 12 Bits
+	DRAM_LDQM,				//	SDRAM Low-byte Data Mask 
+	DRAM_UDQM,				//	SDRAM High-byte Data Mask
+	DRAM_WE_N,				//	SDRAM Write Enable
+	DRAM_CAS_N,				//	SDRAM Column Address Strobe
+	DRAM_RAS_N,				//	SDRAM Row Address Strobe
+	DRAM_CS_N,				//	SDRAM Chip Select
+	DRAM_BA_0,				//	SDRAM Bank Address 0
+	DRAM_BA_1,				//	SDRAM Bank Address 0
+	DRAM_CLK,				//	SDRAM Clock
+	DRAM_CKE,				//	SDRAM Clock Enable
+
 		 
 		VGA_HS,
 		VGA_VS,
@@ -108,6 +124,7 @@ module vector06cc(CLOCK_27, clk50mhz, KEY[3:0], LEDr[9:0], LEDg[7:0], SW[9:0], H
 		GPIO_0,
 		GPIO_1,
 );
+input [1:0]		CLOCK_24;
 input [1:0]		CLOCK_27;
 input			clk50mhz;
 input [3:0] 	KEY;
@@ -128,6 +145,19 @@ output			SRAM_LB_N;				//	SRAM Low-byte Data Mask
 output			SRAM_WE_N;				//	SRAM Write Enable
 output			SRAM_CE_N;				//	SRAM Chip Enable
 output			SRAM_OE_N;				//	SRAM Output Enable
+
+	inout	[15:0]	DRAM_DQ;				//	SDRAM Data bus 16 Bits
+	output	[11:0]	DRAM_ADDR;				//	SDRAM Address bus 12 Bits
+	output			DRAM_LDQM;				//	SDRAM Low-byte Data Mask 
+	output			DRAM_UDQM;				//	SDRAM High-byte Data Mask
+	output			DRAM_WE_N;				//	SDRAM Write Enable
+	output			DRAM_CAS_N;				//	SDRAM Column Address Strobe
+	output			DRAM_RAS_N;				//	SDRAM Row Address Strobe
+	output			DRAM_CS_N;				//	SDRAM Chip Select
+	output			DRAM_BA_0;				//	SDRAM Bank Address 0
+	output			DRAM_BA_1;				//	SDRAM Bank Address 0
+	output			DRAM_CLK;				//	SDRAM Clock
+	output			DRAM_CKE;				//	SDRAM Clock Enable
 
 /////// VGA
 output 			VGA_HS;
@@ -206,7 +236,7 @@ soundcodec soundnik(
 					.oAUD_DATA(AUD_DACDAT),
 					.oAUD_LRCK(AUD_DACLRCK),
 					.iAUD_ADCDAT(AUD_ADCDAT), 
-					.oAUD_ADCLRCK(AUD_ADCLRCK),
+					.oAUD_ADCLRCK(AUD_ADCLRCK)
 				   );
 
 reg [15:0] slowclock;
@@ -225,9 +255,10 @@ always @(posedge clk24)
 			// both up = regular
 	2'b11:	{singleclock_enabled, slowclock_enabled, warpclock_enabled} = 3'b000;
 			// down/up == warp
-	2'b01: 	{singleclock_enabled, slowclock_enabled, warpclock_enabled} = 3'b001;
+//	2'b01: 	{singleclock_enabled, slowclock_enabled, warpclock_enabled} = 3'b001;
 			// up/down = slow
 	2'b10:	{singleclock_enabled, slowclock_enabled, warpclock_enabled} = 3'b010;
+	default: {singleclock_enabled, slowclock_enabled, warpclock_enabled} = 3'b000;
 	endcase
 
 wire regular_clock_enabled = !slowclock_enabled & !singleclock_enabled & !breakpoint_condition;
@@ -242,9 +273,10 @@ always @*
 		cpu_ce <= singleclock;
 	3'bx1x:
 		cpu_ce <= (slowclock == 0) & ce3;
-	3'bxx1:
-		cpu_ce <= ce12 & ~video_slice;
-	3'b000:
+//	3'bxx1:
+//		cpu_ce <= ce12 & ~video_slice;
+//	3'b000:
+	3'b00x:
 		cpu_ce <= ce3;
 	endcase
 
@@ -351,6 +383,8 @@ wire WRN_CPUCE = WR_n | ~cpu_ce;
 
 `ifdef WITH_CPU
 	T8080se CPU(RESET_n, clk24, cpu_ce, READY, HOLD, INT, INTE, DBIN, SYNC, VAIT, HLDA, WR_n, A, DI, DO);
+wire inta_n;
+	
 	assign ram_read = status_word[7];
 	assign ram_write_n = status_word[1];
 	assign io_write = status_word[4];
@@ -388,20 +422,18 @@ end
 //////////////
 
 wire[7:0] ROM_DO;
-lpm_rom0 bootrom(A[11:0], clk24, ROM_DO);
+bootrom bootrom(.address(A[11:0]),.clken(DBIN&rom_access),.clock(clk24), .q(ROM_DO));
 
 
-assign SRAM_CE_N = 0;
-assign SRAM_OE_N = !rom_access && !ram_write_n && !video_slice 
-`ifdef WITH_DE1_JTAG
-&& !mJTAG_SRAM_WR_N
-`endif
-;
+//assign SRAM_CE_N = 0;
+//assign SRAM_OE_N = !rom_access && !ram_write_n && !video_slice 
+//`ifdef WITH_DE1_JTAG
+//&& !mJTAG_SRAM_WR_N
+//`endif
+//;
 
 reg [7:0] address_bus_r;	// registered address for i/o
 
-wire [15:0] address_bus = video_slice & regular_clock_enabled ? VIDEO_A : A;
-wire set_dq_to_do = !ram_write_n & !video_slice;
 
 reg rom_access;
 
@@ -411,31 +443,57 @@ always @(posedge clk24) begin
 	else
 		rom_access <= A < 2048;
 end
-
-
-wire [7:0] sram_data_in;
-assign DI = interrupt_ack ? 8'hFF : io_read ? peripheral_data_in : rom_access ? ROM_DO : sram_data_in;
-
+assign DI = interrupt_ack?8'hFF:io_read?peripheral_data_in:rom_access?ROM_DO:sram_data_in;
+ 
 wire [2:0]	ramdisk_page;
-
-sram_map sram_map(
-	.SRAM_ADDR(SRAM_ADDR), 
-	.SRAM_DQ(SRAM_DQ), 
-	.SRAM_WE_N(SRAM_WE_N), 
-	.SRAM_UB_N(SRAM_UB_N), 
-	.SRAM_LB_N(SRAM_LB_N),
-    .set_dq_to_dout(set_dq_to_do),
-	.memwr_n(WRN_CPUCE | ram_write_n | io_write | ~clk24), 
-	.abus(address_bus), 
-	.dout(DO), 
-	.din(sram_data_in),
-	.ramdisk_page(video_slice ? 3'b000 : ramdisk_page),
-	.jtag_addr(mJTAG_ADDR),
-	.jtag_din(mJTAG_DATA_FROM_HOST),
-	.jtag_do(mJTAG_DATA_TO_HOST),
-	.jtag_jtag(mJTAG_SELECT),
-	.jtag_nwe(mJTAG_SRAM_WR_N));
 	
+//wire [15:0] address_bus = video_slice & regular_clock_enabled ? VIDEO_A : A;
+wire [15:0] address_bus = A;
+
+
+reg[31:0] rdvidreg;
+always @(posedge clk24) rdvidreg={rdvidreg[30:0],rdvid};
+
+	
+assign DRAM_CLK=clk24;				//	SDRAM Clock
+assign DRAM_CKE=1;				//	SDRAM Clock Enable
+wire[15:0] dramout,dramout2;
+SDRAM_Controller ramd(
+	.clk24(clk24),				//  Clock 24 MHz
+	.reset(~RESET_n),					//  System reset
+	.DRAM_DQ(DRAM_DQ),				//	SDRAM Data bus 16 Bits
+	.DRAM_ADDR(DRAM_ADDR),			//	SDRAM Address bus 12 Bits
+	.DRAM_LDQM(DRAM_LDQM),				//	SDRAM Low-byte Data Mask 
+	.DRAM_UDQM(DRAM_UDQM),				//	SDRAM High-byte Data Mask
+	.DRAM_WE_N(DRAM_WE_N),				//	SDRAM Write Enable
+	.DRAM_CAS_N(DRAM_CAS_N),				//	SDRAM Column Address Strobe
+	.DRAM_RAS_N(DRAM_RAS_N),				//	SDRAM Row Address Strobe
+	.DRAM_CS_N(DRAM_CS_N),				//	SDRAM Chip Select
+	.DRAM_BA_0(DRAM_BA_0),				//	SDRAM Bank Address 0
+	.DRAM_BA_1(DRAM_BA_1),				//	SDRAM Bank Address 1
+	.iaddr(rdvid?{4'b0001,VIDEO_A[12:0],2'b00}:{ramdisk_page,A[15],A[12:0],A[14:13]}),
+	.idata(DO),
+	.rd(((ram_read&DBIN)&(rdvidreg[6]|rdvidreg[13]))|rdvid),
+	.we_n(ram_write_n|io_write|WR_n|~(rdvidreg[20])), 
+	.odata(dramout),
+	.odata2(dramout2),
+	.rdv(rdvid)
+);
+reg[7:0] sram_data_in;
+always @(posedge rdvidreg[11]) sram_data_in=DBIN?(A[13]?dramout[15:8]:dramout[7:0]):8'bZZZZZZZZ;
+always @(posedge rdvidreg[18]) sram_data_in=DBIN?(A[13]?dramout[15:8]:dramout[7:0]):8'bZZZZZZZZ;
+
+
+reg[7:0] vdata80,vdataA0,vdataC0,vdataE0;
+
+always @(posedge rdvidreg[4]) begin
+vdata80<=dramout[7:0];
+vdataA0<=dramout[15:8];
+end
+always @(posedge rdvidreg[5]) begin
+vdataC0<=dramout2[7:0];
+vdataE0<=dramout2[15:8];
+end
 
 wire [7:0] 	kvaz_debug;
 wire		ramdisk_control_write = address_bus_r == 8'h10 && io_write & ~WR_n; 
@@ -477,9 +535,18 @@ wire [7:0] 	tv_luma;
 wire [7:0]	tv_chroma;
 wire [7:0]  tv_test;
 
+reg[3:0] bib[14:0];
+always @(posedge ce6) {bib[14],bib[13],bib[12],bib[11],bib[10],bib[9],bib[8],bib[7],bib[6],bib[5],bib[4],bib[3],bib[2],bib[1],bib[0]}<={bib[13],bib[12],bib[11],bib[10],bib[9],bib[8],bib[7],bib[6],bib[5],bib[4],bib[3],bib[2],bib[1],bib[0],video_border_index};
+
 video vidi(.clk24(clk24), .ce12(ce12), .ce6(ce6), .ce6x(ce6x), .clk4fsc(clkpal4FSC), .video_slice(video_slice), .pipe_ab(pipe_ab),
 		   .mode512(video_mode512), 
-		   .SRAM_DQ(sram_data_in), .SRAM_ADDR(VIDEO_A), 
+//		   .SRAM_DQ(sram_data_in),
+		   .vdata80(vdata80),
+		   .vdataA0(vdataA0),
+		   .vdataC0(vdataC0),
+		   .vdataE0(vdataE0),
+			.SRAM_ADDR(VIDEO_A), 
+
 		   .hsync(vga_hs), .vsync(vga_vs), 
 		   .osd_hsync(osd_hsync), .osd_vsync(osd_vsync),
 		   .coloridx(coloridx),
@@ -487,7 +554,8 @@ video vidi(.clk24(clk24), .ce12(ce12), .ce6(ce6), .ce6x(ce6x), .clk4fsc(clkpal4F
 		   .realcolor_out(realcolor),
 		   .retrace(retrace),
 		   .video_scroll_reg(video_scroll_reg),
-		   .border_idx(video_border_index),
+//		   .border_idx(video_border_index),
+		   .border_idx(bib[14]),
 		   .testpin(GPIO_0[12:9]),
 		   .tv_sync(tv_sync),
 		   .tv_luma(tv_luma),
@@ -496,8 +564,11 @@ video vidi(.clk24(clk24), .ce12(ce12), .ce6(ce6), .ce6x(ce6x), .clk4fsc(clkpal4F
 		   .tv_mode(tv_mode),
 		   .tv_osd_fg(osd_fg),
 		   .tv_osd_bg(osd_bg),
-		   .tv_osd_on(osd_active));
-		
+		   .tv_osd_on(osd_active),
+			.rdvid(rdvid)
+			);
+wire rdvid;
+			
 wire [7:0] realcolor;		// this truecolour value fetched from buffer directly to display
 wire [7:0] realcolor2buf;	// this truecolour value goes into the scan doubler buffer
 
@@ -544,6 +615,7 @@ reg int_request;
 wire int_rq_tick;
 reg  int_rq_hist;
 
+//oneshot #(10'd28) retrace_delay(clk24, cpu_ce, retrace, int_delay);
 oneshot #(10'd28) retrace_delay(clk24, cpu_ce, retrace, int_delay);
 oneshot #(10'd191) retrace_irq(clk24, cpu_ce, ~int_delay, int_rq_tick);
 

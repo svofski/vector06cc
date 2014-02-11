@@ -103,6 +103,7 @@ mclk14mhz audiopll(.inclk0(clk), .c0(clk14), .c1(clk18));
 
 `endif
 
+reg[6:0] clo=1'b1;
 always @(posedge clk24) begin
 	if (initctr != 3) begin
 		initctr <= initctr + 1'b1;
@@ -112,7 +113,10 @@ always @(posedge clk24) begin
 		qce12 <= ctr[0]; 					// pixel push @12mhz
 		qce6 <= ctr[1] & ctr[0];			// pixel push @6mhz
 		qce6x <= ctr[1] & ~ctr[0];          // pre-pixel push @6mhz
-		qce3 <= ctr[2] & ctr[1] & !ctr[0];
+
+		qce3 <= ctr[2] & ctr[1] & !ctr[0]; //00100000 - svofski
+
+		
 		qvideo_slice <= !ctr[2];
 		qce1m5 <= !ctr[3] & ctr[2] & ctr[1] & !ctr[0]; 
 		ctr <= ctr + 1'b1;
