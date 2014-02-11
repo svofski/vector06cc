@@ -78,11 +78,12 @@ always @(posedge clk24) begin
 end
 
 // enable update on ce12 preceding ce_pixel
-wire video_en = video_slice & ce12 & !ce_pixel;
+wire video_a = video_slice & ce12 & !ce_pixel;
+wire video_b = !video_slice & ce12 & !ce_pixel;
 
 // video_slice occurs 4 times every 8 pixels
 always @(posedge clk24) begin
-	if (video_en) begin
+	if (video_a) begin
 		if (ax == 2'b11) begin 
 			if (!hsync & fb_row[0]) begin
 				column <= 5'h1A; 
@@ -91,7 +92,6 @@ always @(posedge clk24) begin
 			else column <= column + 1'b1;
 			if (column == 0) borderxreg <= ~borderxreg;
 		end
-		sram_addr <= {1'b1,ax,column[4:0],fb_row[8:1]};
 		ax <= ax + 1'b1;
 		wr[0] <= ax == 2'b00;
 		wr[1] <= ax == 2'b01;
@@ -101,6 +101,9 @@ always @(posedge clk24) begin
 	else begin
 		wr <= 4'b0000;
 	end
+
+    if (video_b)
+		sram_addr <= {1'b1,ax,column[4:0],fb_row[8:1]};
 end
 
 pipelinx pipdx_0(clk24, ce_pixel, pipe_abx, wr[0], SRAM_DQ, coloridx[3]);
