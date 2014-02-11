@@ -401,6 +401,7 @@ assign SRAM_OE_N = !rom_access && !ram_write_n && !video_slice
 reg [7:0] address_bus_r;	// registered address for i/o
 
 wire [15:0] address_bus = video_slice & regular_clock_enabled ? VIDEO_A : A;
+wire set_dq_to_do = !ram_write_n & !video_slice;
 
 reg rom_access;
 
@@ -422,8 +423,9 @@ sram_map sram_map(
 	.SRAM_DQ(SRAM_DQ), 
 	.SRAM_WE_N(SRAM_WE_N), 
 	.SRAM_UB_N(SRAM_UB_N), 
-	.SRAM_LB_N(SRAM_LB_N), 
-	.memwr_n(WRN_CPUCE | ram_write_n | io_write), 
+	.SRAM_LB_N(SRAM_LB_N),
+    .set_dq_to_dout(set_dq_to_do),
+	.memwr_n(WRN_CPUCE | ram_write_n | io_write | ~clk24), 
 	.abus(address_bus), 
 	.dout(DO), 
 	.din(sram_data_in),
