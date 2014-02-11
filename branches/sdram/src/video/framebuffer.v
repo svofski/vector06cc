@@ -30,7 +30,7 @@
 // Frame Buffer
 //
 ////
-module framebuffer(clk24, ce12, ce_pixel, video_slice, pipe_abx, fb_row, hsync, SRAM_DQ, SRAM_ADDR, coloridx, borderx, testpin);
+module framebuffer(clk24,ce12,ce_pixel,video_slice,pipe_abx,fb_row,hsync,vdata80,vdataA0,vdataC0,vdataE0,SRAM_ADDR,coloridx,borderx,testpin,rdvid);
 input 			clk24;
 input			ce12;
 input 			ce_pixel;
@@ -41,13 +41,20 @@ input [8:0]	fb_row;
 
 input hsync;
 
-input 	[7:0]	SRAM_DQ;
+//input 	[7:0]	SRAM_DQ;
+input 	[7:0]	vdata80;
+input 	[7:0]	vdataA0;
+input 	[7:0]	vdataC0;
+input 	[7:0]	vdataE0;
 output	[15:0]	SRAM_ADDR;
 
 output 	[3:0] 	coloridx;
 output 	 		borderx;
 
 output 	[5:0] 	testpin;
+
+output rdvid=wr[0];
+
 
 reg [3:0] wr;					// pipeline write pulses, derived from ax count
 
@@ -63,7 +70,8 @@ reg [4:0] column;				// byte column number
 
 reg [1:0] ax;					// position counter for generating write pulses
 									// same as video page number
-								
+
+	
 reg [15:0] sram_addr;
 wire [15:0] SRAM_ADDR;
 assign SRAM_ADDR = sram_addr;
@@ -78,12 +86,11 @@ always @(posedge clk24) begin
 end
 
 // enable update on ce12 preceding ce_pixel
-wire video_a = video_slice & ce12 & !ce_pixel;
-wire video_b = !video_slice & ce12 & !ce_pixel;
+wire video_en = video_slice & ce12 & !ce_pixel;
 
 // video_slice occurs 4 times every 8 pixels
 always @(posedge clk24) begin
-	if (video_a) begin
+	if (video_en) begin
 		if (ax == 2'b11) begin 
 			if (!hsync & fb_row[0]) begin
 				column <= 5'h1A; 
@@ -92,6 +99,8 @@ always @(posedge clk24) begin
 			else column <= column + 1'b1;
 			if (column == 0) borderxreg <= ~borderxreg;
 		end
+//		sram_addr <= {1'b1,ax,column[4:0],fb_row[8:1]};
+		sram_addr <= {1'b1,2'b0,column[4:0],fb_row[8:1]};
 		ax <= ax + 1'b1;
 		wr[0] <= ax == 2'b00;
 		wr[1] <= ax == 2'b01;
@@ -101,15 +110,12 @@ always @(posedge clk24) begin
 	else begin
 		wr <= 4'b0000;
 	end
-
-    if (video_b)
-		sram_addr <= {1'b1,ax,column[4:0],fb_row[8:1]};
 end
 
-pipelinx pipdx_0(clk24, ce_pixel, pipe_abx, wr[0], SRAM_DQ, coloridx[3]);
-pipelinx pipdx_1(clk24, ce_pixel, pipe_abx, wr[1], SRAM_DQ, coloridx[2]);
-pipelinx pipdx_2(clk24, ce_pixel, pipe_abx, wr[2], SRAM_DQ, coloridx[1]);
-pipelinx pipdx_3(clk24, ce_pixel, pipe_abx, wr[3], SRAM_DQ, coloridx[0]);
+pipelinx pipdx_0(clk24, ce_pixel, pipe_abx, wr[1], vdata80, coloridx[3]);
+pipelinx pipdx_1(clk24, ce_pixel, pipe_abx, wr[1], vdataA0, coloridx[2]);
+pipelinx pipdx_2(clk24, ce_pixel, pipe_abx, wr[1], vdataC0, coloridx[1]);
+pipelinx pipdx_3(clk24, ce_pixel, pipe_abx, wr[1], vdataE0, coloridx[0]);
 
 
 endmodule

@@ -36,7 +36,12 @@ module video(
  
 	mode512,			// 1 == 512 pixels/line mode
 	
-	SRAM_DQ,			// SRAM data bus (input)
+//	SRAM_DQ,			// SRAM data bus (input)
+	vdata80,
+	vdataA0,
+	vdataC0,
+	vdataE0,
+	
 	SRAM_ADDR,			// SRAM address, output
 
 	hsync, 				// VGA hsync
@@ -62,6 +67,7 @@ module video(
 	tv_osd_fg,
 	tv_osd_bg,
 	tv_osd_on,
+	rdvid
 );
 
 parameter V_SYNC = 0;
@@ -78,7 +84,11 @@ input 			pipe_ab;
 input 			mode512;			// 1 for 512x256 video mode
 
 // RAM access
-input [7:0] 	SRAM_DQ;
+//input [7:0] 	SRAM_DQ;
+input[7:0] vdata80;
+input[7:0] vdataA0;
+input[7:0] vdataC0;
+input[7:0] vdataE0;
 output[15:0]	SRAM_ADDR;
 
 // video outputs
@@ -109,6 +119,7 @@ output [3:0] 	testpin;
 input 			tv_osd_fg;
 input			tv_osd_bg;
 input			tv_osd_on;
+output		rdvid;
 
 wire bordery;				// y-border active, from module vga_refresh
 wire borderx;				// x-border active, from module framebuffer
@@ -144,11 +155,21 @@ framebuffer 	winrar(
 							.video_slice(video_slice), .pipe_abx(pipe_ab),
 							.fb_row(fb_row[8:0]),
 							.hsync(hsync),
-							.SRAM_DQ(SRAM_DQ), .SRAM_ADDR(SRAM_ADDR),
-							.coloridx(coloridx_modeless),
-							.borderx(borderx)
-						);
 
+//							.SRAM_DQ(SRAM_DQ),
+		   .vdata80(vdata80),
+		   .vdataA0(vdataA0),
+		   .vdataC0(vdataC0),
+		   .vdataE0(vdataE0),
+		
+							
+							.SRAM_ADDR(SRAM_ADDR),
+							.coloridx(coloridx_modeless),
+							.borderx(borderx),
+							.rdvid(rdvid)
+						);
+//wire rdvid;
+						
 reg 	[3:0] xcoloridx;
 wire 	[3:0] coloridx_modeless;
 
