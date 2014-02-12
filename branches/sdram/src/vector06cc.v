@@ -206,7 +206,6 @@ wire mreset_n = KEY[0] & ~kbd_key_blkvvod;
 wire mreset = !mreset_n;
 wire clk24, clk18, clk14, clkpal4FSC;
 wire ce12, ce6, ce6x, ce3, vi53_timer_ce, video_slice, pipe_ab;
-
 clockster clockmaker(
 	.clk(CLOCK_27), 
 	.clk50(clk50mhz),
@@ -220,7 +219,8 @@ clockster clockmaker(
 	.video_slice(video_slice), 
 	.pipe_ab(pipe_ab), 
 	.ce1m5(vi53_timer_ce),
-	.clkpalFSC(clkpal4FSC) );
+	.clkpalFSC(clkpal4FSC),
+	);
 	
 
 assign AUD_XCK = clk18;
@@ -255,7 +255,7 @@ always @(posedge clk24)
 			// both up = regular
 	2'b11:	{singleclock_enabled, slowclock_enabled, warpclock_enabled} = 3'b000;
 			// down/up == warp
-//	2'b01: 	{singleclock_enabled, slowclock_enabled, warpclock_enabled} = 3'b001;
+	2'b01: 	{singleclock_enabled, slowclock_enabled, warpclock_enabled} = 3'b001;
 			// up/down = slow
 	2'b10:	{singleclock_enabled, slowclock_enabled, warpclock_enabled} = 3'b010;
 	default: {singleclock_enabled, slowclock_enabled, warpclock_enabled} = 3'b000;
@@ -273,13 +273,23 @@ always @*
 		cpu_ce <= singleclock;
 	3'bx1x:
 		cpu_ce <= (slowclock == 0) & ce3;
-//	3'bxx1:
-//		cpu_ce <= ce12 & ~video_slice;
-//	3'b000:
-	3'b00x:
+	3'bxx1:
+//		cpu_ce <= ce12 & ~video_slice;//svofski, don't work with SDRAM
+		cpu_ce <= ce6x & ~video_slice_my;//works fine with SDRAM 120 MHz
+	3'b000:
 		cpu_ce <= ce3;
 	endcase
 
+reg[1:0] vid_cnt;
+reg video_slice_my,video_slice_mymy;
+always @(posedge video_slice) begin
+	vid_cnt<=vid_cnt+2'b1;
+	video_slice_mymy<=(!vid_cnt[1]&vid_cnt[0]);
+end	
+
+always @(posedge clk24) video_slice_my<=video_slice_mymy&video_slice;
+
+	
 reg [15:0] clock_counter;
 always @(posedge clk24) begin
 	if (~RESET_n) 
@@ -425,13 +435,6 @@ wire[7:0] ROM_DO;
 bootrom bootrom(.address(A[11:0]),.clken(DBIN&rom_access),.clock(clk24), .q(ROM_DO));
 
 
-//assign SRAM_CE_N = 0;
-//assign SRAM_OE_N = !rom_access && !ram_write_n && !video_slice 
-//`ifdef WITH_DE1_JTAG
-//&& !mJTAG_SRAM_WR_N
-//`endif
-//;
-
 reg [7:0] address_bus_r;	// registered address for i/o
 
 
@@ -454,12 +457,18 @@ wire [15:0] address_bus = A;
 reg[31:0] rdvidreg;
 always @(posedge clk24) rdvidreg={rdvidreg[30:0],rdvid};
 
+wire clk120;
+pll120 pll120(
+	.inclk0(clk50mhz),
+	.c0(clk120));
+
 	
-assign DRAM_CLK=clk24;				//	SDRAM Clock
+assign DRAM_CLK=clk120;				//	SDRAM Clock
 assign DRAM_CKE=1;				//	SDRAM Clock Enable
 wire[15:0] dramout,dramout2;
+wire read_finished;
 SDRAM_Controller ramd(
-	.clk24(clk24),				//  Clock 24 MHz
+	.clk120(clk120),				//  Clock 120 MHz
 	.reset(~RESET_n),					//  System reset
 	.DRAM_DQ(DRAM_DQ),				//	SDRAM Data bus 16 Bits
 	.DRAM_ADDR(DRAM_ADDR),			//	SDRAM Address bus 12 Bits
@@ -471,26 +480,27 @@ SDRAM_Controller ramd(
 	.DRAM_CS_N(DRAM_CS_N),				//	SDRAM Chip Select
 	.DRAM_BA_0(DRAM_BA_0),				//	SDRAM Bank Address 0
 	.DRAM_BA_1(DRAM_BA_1),				//	SDRAM Bank Address 1
-	.iaddr(rdvid?{4'b0001,VIDEO_A[12:0],2'b00}:{ramdisk_page,A[15],A[12:0],A[14:13]}),
+	.iaddr(rdvidreg[7]?{4'b0001,VIDEO_A[12:0],2'b00}:{ramdisk_page,A[15],A[12:0],A[14:13]}),
 	.idata(DO),
-	.rd(((ram_read&DBIN)&(rdvidreg[6]|rdvidreg[13]))|rdvid),
-	.we_n(ram_write_n|io_write|WR_n|~(rdvidreg[20])), 
+	.rd((ram_read&DBIN)|rdvidreg[7]),
+	.we_n(ram_write_n|io_write|WR_n), 
 	.odata(dramout),
 	.odata2(dramout2),
-	.rdv(rdvid)
+	.read_finished(read_finished),
+	.rdv(rdvidreg[7])
 );
 reg[7:0] sram_data_in;
-always @(posedge rdvidreg[11]) sram_data_in=DBIN?(A[13]?dramout[15:8]:dramout[7:0]):8'bZZZZZZZZ;
-always @(posedge rdvidreg[18]) sram_data_in=DBIN?(A[13]?dramout[15:8]:dramout[7:0]):8'bZZZZZZZZ;
+always @(negedge read_finished) sram_data_in=A[13]?dramout[15:8]:dramout[7:0];
 
 
 reg[7:0] vdata80,vdataA0,vdataC0,vdataE0;
 
-always @(posedge rdvidreg[4]) begin
+always @(posedge rdvidreg[12]) begin
 vdata80<=dramout[7:0];
 vdataA0<=dramout[15:8];
 end
-always @(posedge rdvidreg[5]) begin
+
+always @(posedge rdvidreg[13]) begin
 vdataC0<=dramout2[7:0];
 vdataE0<=dramout2[15:8];
 end
@@ -540,7 +550,6 @@ always @(posedge ce6) {bib[14],bib[13],bib[12],bib[11],bib[10],bib[9],bib[8],bib
 
 video vidi(.clk24(clk24), .ce12(ce12), .ce6(ce6), .ce6x(ce6x), .clk4fsc(clkpal4FSC), .video_slice(video_slice), .pipe_ab(pipe_ab),
 		   .mode512(video_mode512), 
-//		   .SRAM_DQ(sram_data_in),
 		   .vdata80(vdata80),
 		   .vdataA0(vdataA0),
 		   .vdataC0(vdataC0),
@@ -615,7 +624,6 @@ reg int_request;
 wire int_rq_tick;
 reg  int_rq_hist;
 
-//oneshot #(10'd28) retrace_delay(clk24, cpu_ce, retrace, int_delay);
 oneshot #(10'd28) retrace_delay(clk24, cpu_ce, retrace, int_delay);
 oneshot #(10'd191) retrace_irq(clk24, cpu_ce, ~int_delay, int_rq_tick);
 
