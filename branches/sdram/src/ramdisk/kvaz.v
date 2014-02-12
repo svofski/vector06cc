@@ -11,6 +11,8 @@
 //
 // Author: Viacheslav Slavinsky, http://sensi.org/~svo
 // 
+// Barkar kvaz support added by Ivan Gorodetsky
+//
 // Design File: kvaz.v
 //
 // RAM disk memory mapper. This unit maps standard Vector-06C RAM disk
@@ -63,7 +65,8 @@ wire			cr_ram_on		= control_reg[5];
 
 wire [3:0] adsel = address[15:12];
 
-wire addr_sel = adsel == 4'hA | adsel == 4'hB | adsel == 4'hC | adsel == 4'hD;
+//wire addr_sel = adsel == 4'hA | adsel == 4'hB | adsel == 4'hC | adsel == 4'hD; //standard
+wire addr_sel = adsel == 4'hA | adsel == 4'hB | adsel == 4'hC | adsel == 4'hD | ((adsel==4'h8)|(adsel==4'h9)&&(control_reg[6]==1))|((adsel==4'hE)|(adsel==4'hF)&&(control_reg[7]==1));//Barkar
 
 wire ram_sel = cr_ram_on & addr_sel & (memwr|memrd);
 
