@@ -112,10 +112,10 @@ always @(posedge clk24) begin
 	end
 end
 
-pipelinx pipdx_0(clk24, ce_pixel, pipe_abx, wr[1], vdata80, coloridx[3]);
-pipelinx pipdx_1(clk24, ce_pixel, pipe_abx, wr[1], vdataA0, coloridx[2]);
-pipelinx pipdx_2(clk24, ce_pixel, pipe_abx, wr[1], vdataC0, coloridx[1]);
-pipelinx pipdx_3(clk24, ce_pixel, pipe_abx, wr[1], vdataE0, coloridx[0]);
+pipelinx pipdx_0(clk24, ce_pixel, pipe_abx, wr[3], vdata80, coloridx[3]);
+pipelinx pipdx_1(clk24, ce_pixel, pipe_abx, wr[3], vdataA0, coloridx[2]);
+pipelinx pipdx_2(clk24, ce_pixel, pipe_abx, wr[3], vdataC0, coloridx[1]);
+pipelinx pipdx_3(clk24, ce_pixel, pipe_abx, wr[3], vdataE0, coloridx[0]);
 
 
 endmodule
