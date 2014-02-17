@@ -41,7 +41,6 @@ input [8:0]	fb_row;
 
 input hsync;
 
-//input 	[7:0]	SRAM_DQ;
 input 	[7:0]	vdata80;
 input 	[7:0]	vdataA0;
 input 	[7:0]	vdataC0;
@@ -89,6 +88,7 @@ end
 wire video_en = video_slice & ce12 & !ce_pixel;
 
 // video_slice occurs 4 times every 8 pixels
+// but in SDRAM version it doesn't matter
 always @(posedge clk24) begin
 	if (video_en) begin
 		if (ax == 2'b11) begin 
@@ -99,7 +99,6 @@ always @(posedge clk24) begin
 			else column <= column + 1'b1;
 			if (column == 0) borderxreg <= ~borderxreg;
 		end
-//		sram_addr <= {1'b1,ax,column[4:0],fb_row[8:1]};
 		sram_addr <= {1'b1,2'b0,column[4:0],fb_row[8:1]};
 		ax <= ax + 1'b1;
 		wr[0] <= ax == 2'b00;
