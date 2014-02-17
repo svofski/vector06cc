@@ -206,6 +206,7 @@ wire mreset_n = KEY[0] & ~kbd_key_blkvvod;
 wire mreset = !mreset_n;
 wire clk24, clk18, clk14, clkpal4FSC;
 wire ce12, ce6, ce6x, ce3, vi53_timer_ce, video_slice, pipe_ab;
+wire clk28;
 clockster clockmaker(
 	.clk(CLOCK_27), 
 	.clk50(clk50mhz),
@@ -274,20 +275,21 @@ always @*
 	3'bx1x:
 		cpu_ce <= (slowclock == 0) & ce3;
 	3'bxx1:
-//		cpu_ce <= ce12 & ~video_slice;//svofski, don't work with SDRAM
-		cpu_ce <= ce6x & ~video_slice_my;//works fine with SDRAM 120 MHz
+		cpu_ce <= ce3;
 	3'b000:
 		cpu_ce <= ce3;
 	endcase
 
-reg[1:0] vid_cnt;
+reg[1:0] vid_cnt,ce12my;
 reg video_slice_my,video_slice_mymy;
 always @(posedge video_slice) begin
 	vid_cnt<=vid_cnt+2'b1;
-	video_slice_mymy<=(!vid_cnt[1]&vid_cnt[0]);
+	video_slice_mymy<=(!vid_cnt[1]&!vid_cnt[0]);
 end	
 
 always @(posedge clk24) video_slice_my<=video_slice_mymy&video_slice;
+
+always @(posedge clk24) ce12my<={ce12my[0],ce12};
 
 	
 reg [15:0] clock_counter;
@@ -457,18 +459,13 @@ wire [15:0] address_bus = A;
 reg[31:0] rdvidreg;
 always @(posedge clk24) rdvidreg={rdvidreg[30:0],rdvid};
 
-wire clk120;
-pll120 pll120(
-	.inclk0(clk50mhz),
-	.c0(clk120));
 
-	
-assign DRAM_CLK=clk120;				//	SDRAM Clock
+assign DRAM_CLK=clk24;				//	SDRAM Clock
 assign DRAM_CKE=1;				//	SDRAM Clock Enable
 wire[15:0] dramout,dramout2;
-wire read_finished;
+wire memcpubusy,memvidbusy,rdcpu_finished;
 SDRAM_Controller ramd(
-	.clk120(clk120),				//  Clock 120 MHz
+	.clk24(clk24),				//  Clock 24 MHz
 	.reset(~RESET_n),					//  System reset
 	.DRAM_DQ(DRAM_DQ),				//	SDRAM Data bus 16 Bits
 	.DRAM_ADDR(DRAM_ADDR),			//	SDRAM Address bus 12 Bits
@@ -480,33 +477,27 @@ SDRAM_Controller ramd(
 	.DRAM_CS_N(DRAM_CS_N),				//	SDRAM Chip Select
 	.DRAM_BA_0(DRAM_BA_0),				//	SDRAM Bank Address 0
 	.DRAM_BA_1(DRAM_BA_1),				//	SDRAM Bank Address 1
-	.iaddr(rdvidreg[7]?{4'b0001,VIDEO_A[12:0],2'b00}:{ramdisk_page,A[15],A[12:0],A[14:13]}),
+	.iaddr((rdvidreg[6]|rdvidreg[14])?{4'b0001,VIDEO_A[12:0],2'b00}:{ramdisk_page,A[15],A[12:0],A[14:13]}),
 	.idata(DO),
-	.rd((ram_read&DBIN)|rdvidreg[7]),
+	.rd(ram_read&DBIN),
 	.we_n(ram_write_n|io_write|WR_n), 
 	.odata(dramout),
 	.odata2(dramout2),
-	.read_finished(read_finished),
-	.rdv(rdvidreg[7])
+	.memcpubusy(memcpubusy),
+	.rdcpu_finished(rdcpu_finished),
+	.memvidbusy(memvidbusy),
+	.rdv(rdvidreg[6]|rdvidreg[14])
 );
 reg[7:0] sram_data_in;
-always @(negedge read_finished) sram_data_in=A[13]?dramout[15:8]:dramout[7:0];
-
+always @(negedge rdcpu_finished) sram_data_in=dramout[7:0];
 
 reg[7:0] vdata80,vdataA0,vdataC0,vdataE0;
+always @(negedge memvidbusy)
+{vdataE0,vdataC0,vdataA0,vdata80}<={dramout2,dramout};
 
-always @(posedge rdvidreg[12]) begin
-vdata80<=dramout[7:0];
-vdataA0<=dramout[15:8];
-end
-
-always @(posedge rdvidreg[13]) begin
-vdataC0<=dramout2[7:0];
-vdataE0<=dramout2[15:8];
-end
 
 wire [7:0] 	kvaz_debug;
-wire		ramdisk_control_write = address_bus_r == 8'h10 && io_write & ~WR_n; 
+wire		ramdisk_control_write = address_bus_r == 8'h10 && io_write & ~WR_n;
 kvaz ramdisk(
 	.clk(clk24), 
 	.clke(cpu_ce), 
@@ -563,7 +554,6 @@ video vidi(.clk24(clk24), .ce12(ce12), .ce6(ce6), .ce6x(ce6x), .clk4fsc(clkpal4F
 		   .realcolor_out(realcolor),
 		   .retrace(retrace),
 		   .video_scroll_reg(video_scroll_reg),
-//		   .border_idx(video_border_index),
 		   .border_idx(bib[14]),
 		   .testpin(GPIO_0[12:9]),
 		   .tv_sync(tv_sync),
@@ -1019,7 +1009,8 @@ wire [7:0]	ay_sound;
 reg [2:0] aycectr;
 always @(posedge clk14) aycectr <= aycectr + 1'd1;
 
-ayglue shrieker(.clk(clk14), 
+ayglue shrieker(
+				.clk(clk14), 
 				.ce(aycectr == 0),
 				.reset_n(mreset_n), 
 				.address(address_bus_r[0]),
