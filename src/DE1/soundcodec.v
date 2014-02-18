@@ -24,7 +24,7 @@
 module soundcodec(clk18, pulses, pcm, tapein, reset_n, oAUD_XCK, oAUD_BCK, oAUD_DATA, oAUD_LRCK, iAUD_ADCDAT, oAUD_ADCLRCK);
 input	clk18;
 input	[3:0] pulses;
-input	[7:0] pcm;
+input	[8:0] pcm;
 output	reg tapein;
 input	reset_n;
 output	oAUD_XCK = clk18;

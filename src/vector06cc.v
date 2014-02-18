@@ -223,13 +223,12 @@ clockster clockmaker(
 	.clkpalFSC(clkpal4FSC),
 	);
 	
-reg[7:0]	CovoxData,SndSumSat;
+
+reg[7:0]	CovoxData;
 reg[8:0] SndSum;
 always @(posedge clk24) begin
-	if ((address_bus_r==8'd7)&io_write&~WR_n &~cpu_ce) CovoxData<=DO;
+	if ((address_bus_r==8'd7)&io_write&~WR_n) CovoxData<=DO;
 	SndSum<=ay_sound+CovoxData;
-	if(SndSum[8]==0)SndSumSat<=SndSum[7:0];
-	else SndSumSat<=8'd255;
 end
 	
 assign AUD_XCK = clk18;
@@ -238,7 +237,7 @@ soundcodec soundnik(
 					.clk18(clk18), 
 					.pulses({vv55int_pc_out[0],vi53_out}), 
 //					.pcm(ay_sound),	//AY
-					.pcm(SndSumSat),	//AY+COVOX
+					.pcm(SndSum),	//AY+COVOX
 					.tapein(tape_input), 
 					.reset_n(mreset_n),
 					.oAUD_XCK(AUD_XCK),
