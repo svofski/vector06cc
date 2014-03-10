@@ -10,6 +10,8 @@
 // An open implementation of Vector-06C home computer
 //
 // Author: Viacheslav Slavinsky, http://sensi.org/~svo
+//
+// Minor changes for stereo by Ivan Gorodetsky
 // 
 // Design File: audio_io.v
 //
@@ -36,7 +38,8 @@ module audio_io(oAUD_BCK,
 				oAUD_ADCLRCK,
 				iCLK_18_4,
 				iRST_N,
-				pulses,
+				pulsesL,
+				pulsesR,
 				linein);				
 
 parameter	REF_CLK			=	18432000;	//	18.432	MHz
@@ -53,13 +56,14 @@ output			oAUD_ADCLRCK;
 //	Control Signals
 input			iCLK_18_4;
 input			iRST_N;
-input	[15:0]	pulses;
+input	[15:0]	pulsesL;
+input	[15:0]	pulsesR;
 output	[15:0]	linein;
 
 //	Internal Registers and Wires
 reg		[3:0]	BCK_DIV;
 reg		[8:0]	LRCK_1X_DIV;
-reg		[3:0]	SEL_Cont;
+reg		[4:0]	SEL_Cont;
 
 reg				LRCK_1X;
 
@@ -112,9 +116,10 @@ begin
 end
 
 
-reg [15:0] pulsebuf;
+reg [31:0] pulsebuf;
 always @(negedge LRCK_1X) begin
-	pulsebuf <= pulses;
+	pulsebuf[15:0] <= pulsesL;//L
+	pulsebuf[31:16] <= pulsesR;//R
 end
 
 assign	oAUD_DATA	=	pulsebuf[~SEL_Cont];
@@ -123,7 +128,7 @@ assign linein = inputsample;
 reg [15:0] inputsample;
 reg [15:0] inputbuf;
 always @(negedge oAUD_BCK) begin
-	inputbuf[~SEL_Cont] <= iAUD_ADCDAT;
+	inputbuf[~SEL_Cont[3:0]] <= iAUD_ADCDAT;
 end
 
 always @(negedge LRCK_1X) begin

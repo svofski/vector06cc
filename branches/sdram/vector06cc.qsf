@@ -28,11 +28,11 @@ set_global_assignment -name FAMILY "Cyclone II"
 set_global_assignment -name TOP_LEVEL_ENTITY vector06cc
 set_global_assignment -name ORIGINAL_QUARTUS_VERSION 7.1
 set_global_assignment -name PROJECT_CREATION_TIME_DATE "22:55:30  OCTOBER 17, 2007"
-set_global_assignment -name LAST_QUARTUS_VERSION "13.0 SP1"
+set_global_assignment -name LAST_QUARTUS_VERSION 12.1
 set_global_assignment -name DEVICE_FILTER_PACKAGE FBGA
 set_global_assignment -name DEVICE_FILTER_PIN_COUNT 484
 set_global_assignment -name DEVICE_FILTER_SPEED_GRADE 7
-set_global_assignment -name PARTITION_NETLIST_TYPE SOURCE -section_id Top
+set_global_assignment -name PARTITION_NETLIST_TYPE POST_FIT -section_id Top
 set_location_assignment PIN_R22 -to KEY[0]
 set_location_assignment PIN_R21 -to KEY[1]
 set_location_assignment PIN_T22 -to KEY[2]
@@ -256,7 +256,7 @@ set_location_assignment PIN_C7 -to TCK
 set_location_assignment PIN_D7 -to TDO
 set_location_assignment PIN_D8 -to TCS
 set_location_assignment PIN_E8 -to TDI
-set_global_assignment -name CYCLONEII_OPTIMIZATION_TECHNIQUE BALANCED
+set_global_assignment -name CYCLONEII_OPTIMIZATION_TECHNIQUE SPEED
 set_global_assignment -name CYCLONEII_RESERVE_NCEO_AFTER_CONFIGURATION "USE AS REGULAR IO"
 set_global_assignment -name RESERVE_ASDO_AFTER_CONFIGURATION "AS INPUT TRI-STATED"
 set_global_assignment -name AUTO_MERGE_PLLS ON
@@ -323,6 +323,8 @@ set_location_assignment PIN_R7 -to DRAM_LDQM
 set_location_assignment PIN_T5 -to DRAM_RAS_N
 set_location_assignment PIN_M5 -to DRAM_UDQM
 set_location_assignment PIN_R8 -to DRAM_WE_N
+set_global_assignment -name ALLOW_POWER_UP_DONT_CARE OFF
+set_global_assignment -name SYNTH_TIMING_DRIVEN_SYNTHESIS OFF
 set_global_assignment -name VERILOG_FILE src/vector06cc.v
 set_global_assignment -name VERILOG_FILE src/DE1/SDRAM_Controller.v
 set_global_assignment -name VECTOR_WAVEFORM_FILE clk50mhz.vwf
@@ -338,9 +340,7 @@ set_global_assignment -name VERILOG_FILE src/floppy/dma_rw.v
 set_global_assignment -name VERILOG_FILE src/floppy/timer100hz.v
 set_global_assignment -name VHDL_FILE src/floppy/65c02/cpu65xx_en.vhd
 set_global_assignment -name VERILOG_FILE src/ramdisk/kvaz.v
-set_global_assignment -name VERILOG_FILE src/lpm_rom0.v
 set_global_assignment -name VERILOG_FILE src/clockster.v
-set_global_assignment -name VERILOG_FILE src/sram_map.v
 set_global_assignment -name VERILOG_FILE src/singleclockster.v
 set_global_assignment -name VERILOG_FILE src/oneshot.v
 set_global_assignment -name VERILOG_FILE src/specialkeys.v
@@ -355,7 +355,6 @@ set_global_assignment -name VERILOG_FILE src/keyboard/scan2matrix.v
 set_global_assignment -name VERILOG_FILE src/keyboard/ps2k.v
 set_global_assignment -name VERILOG_FILE src/keyboard/vectorkeys.v
 set_global_assignment -name VERILOG_FILE src/altmodules/mclk24mhz.v
-set_global_assignment -name VERILOG_FILE src/altmodules/mclk14mhz.v
 set_global_assignment -name VERILOG_FILE src/altmodules/palette_ram.v
 set_global_assignment -name VERILOG_FILE src/DE1/I2C_AV_Config.v
 set_global_assignment -name VERILOG_FILE src/DE1/USB_JTAG.v
@@ -374,12 +373,12 @@ set_global_assignment -name VHDL_FILE src/T80/T8080se.vhd
 set_global_assignment -name VHDL_FILE src/T80/T80sef.vhd
 set_global_assignment -name VERILOG_FILE src/jtag/jtag_top.v
 set_global_assignment -name VERILOG_FILE src/ay/ayglue.v
-set_global_assignment -name VHDL_FILE src/ay/YM2149_linmix.vhd
+set_global_assignment -name VHDL_FILE src/ay/ay8910.vhd
+set_global_assignment -name VHDL_FILE src/ay/ym2149.vhd
 set_global_assignment -name VERILOG_FILE src/osd/textmode.v
 set_global_assignment -name VERILOG_FILE src/osd/chargen.v
 set_global_assignment -name VERILOG_FILE src/osd/screenbuffer.v
 set_global_assignment -name VERILOG_FILE src/altmodules/ayclkdrv.v
-set_global_assignment -name SDC_FILE notsure.sdc
 set_global_assignment -name VERILOG_FILE bootrom.v
 set_global_assignment -name QIP_FILE bootrom.qip
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
