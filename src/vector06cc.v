@@ -38,11 +38,13 @@
 //	SW7			manual bus hold, recommended for SRAM <-> JTAG exchange operations
 //
 //				These must be both "1" for normal operation:
-//	SW9:SW8				00: single-clock, tap clock by KEY[1]
-//					01: warp mode: 6 MHz, no waitstates
+//	KEY2:SW8				00: single-clock, tap clock by KEY[1]
+//					01: quasiwarp mode: 3 MHz with no waitstates
 //					10: slow clock, code is executed at eyeballable speed
 //					11: normal Vector-06C speed, full compatibility mode
-//			
+//
+//	SW9			0 = ABC PSG stereo mixing
+//					1 = CBA PSG stereo mixing
 //
 // --------------------------------------------------------------------
 
@@ -204,15 +206,13 @@ output [35:0]	GPIO_1;
 // CLOCK SETUP
 wire mreset_n = KEY[0] & ~kbd_key_blkvvod;
 wire mreset = !mreset_n;
-wire clk24, clk18, clk14, clkpal4FSC;
+wire clk24, clk18, clkpal4FSC;
 wire ce12, ce6, ce6x, ce3, vi53_timer_ce, video_slice, pipe_ab;
-wire clk28;
 clockster clockmaker(
 	.clk(CLOCK_27), 
 	.clk50(clk50mhz),
 	.clk24(clk24), 
 	.clk18(clk18), 
-	.clk14(clk14),
 	.ce12(ce12), 
 	.ce6(ce6),
 	.ce6x(ce6x),
@@ -225,19 +225,30 @@ clockster clockmaker(
 	
 
 reg[7:0]	CovoxData;
-reg[8:0] SndSum;
+reg[10:0] SndSumL,SndSumR;
 always @(posedge clk24) begin
 	if ((address_bus_r==8'd7)&io_write&~WR_n) CovoxData<=DO;
-	SndSum<=ay_sound+CovoxData;
+	case(SW[9])
+	 1'b0: begin
+//ABC mixing
+	 SndSumL<=(ay_soundA<<1)+(ay_soundB)+(CovoxData<<1);
+	 SndSumR<=(ay_soundC<<1)+(ay_soundB)+(CovoxData<<1);
+	 end
+	 1'b1: begin
+//CBA mixing
+	 SndSumL<=(ay_soundC<<1)+(ay_soundB)+(CovoxData<<1);
+	 SndSumR<=(ay_soundA<<1)+(ay_soundB)+(CovoxData<<1);
+	 end
+	endcase
 end
-	
+
 assign AUD_XCK = clk18;
 wire tape_input;
 soundcodec soundnik(
 					.clk18(clk18), 
 					.pulses({vv55int_pc_out[0],vi53_out}), 
-//					.pcm(ay_sound),	//AY
-					.pcm(SndSum),	//AY+COVOX
+					.pcmL(SndSumL),	//AY+COVOX left
+					.pcmR(SndSumR),	//AY+COVOX right
 					.tapein(tape_input), 
 					.reset_n(mreset_n),
 					.oAUD_XCK(AUD_XCK),
@@ -246,7 +257,7 @@ soundcodec soundnik(
 					.oAUD_LRCK(AUD_DACLRCK),
 					.iAUD_ADCDAT(AUD_ADCDAT), 
 					.oAUD_ADCLRCK(AUD_ADCLRCK)
-				   );
+				   ); 
 
 reg [15:0] slowclock;
 always @(posedge clk24) if (ce3) slowclock <= slowclock + 1'b1;
@@ -256,9 +267,13 @@ reg  breakpoint_condition;
 reg slowclock_enabled;
 reg singleclock_enabled;
 reg warpclock_enabled;
+reg swkey2=1'b1;
+
+always @(negedge KEY[2]) swkey2<=~swkey2;
 
 always @(posedge clk24) 
-	case ({SW[9],SW[8]}) 
+//	case ({SW[9],SW[8]})//svofski
+	case ({swkey2,SW[8]})
 			// both down = tap on key 1
 	2'b00: 	{singleclock_enabled, slowclock_enabled, warpclock_enabled} = 3'b100;
 			// both up = regular
@@ -287,18 +302,6 @@ always @*
 	3'b000:
 		cpu_ce <= ce3;
 	endcase
-
-reg[1:0] vid_cnt,ce12my;
-reg video_slice_my,video_slice_mymy;
-always @(posedge video_slice) begin
-	vid_cnt<=vid_cnt+2'b1;
-	video_slice_mymy<=(!vid_cnt[1]&!vid_cnt[0]);
-end	
-
-always @(posedge clk24) video_slice_my<=video_slice_mymy&video_slice;
-
-always @(posedge clk24) ce12my<={ce12my[0],ce12};
-
 	
 reg [15:0] clock_counter;
 always @(posedge clk24) begin
@@ -323,11 +326,9 @@ wire ws_req_n = ~(DO[7] | ~DO[1]) | DO[4] | DO[6];	// == 0 when cpu wants cock
 
 always @(posedge clk24) begin
 	if (cpu_ce) begin
-		if (SYNC & ~warpclock_enabled) begin	
+		if (SYNC & ~warpclock_enabled) begin
 			// if this is not a cpu slice (ws_rom[2]) and cpu wants access, latch the ws flag
-			if (~ws_req_n & ~ws_cpu_time) begin
-				READY <= 0;
-			end
+			if (~ws_req_n & ~ws_cpu_time) READY <= 0;
 `ifdef WITH_BREAKPOINTS			
 			if (singleclock) begin
 				breakpoint_condition <= 0;
@@ -442,14 +443,11 @@ end
 //////////////
 
 wire[7:0] ROM_DO;
-bootrom bootrom(.address(A[11:0]),.clken(DBIN&rom_access),.clock(clk24), .q(ROM_DO));
-
+bootrom bootrom(.address(A[10:0]),.clock(clk24),.q(ROM_DO));
 
 reg [7:0] address_bus_r;	// registered address for i/o
 
-
 reg rom_access;
-
 always @(posedge clk24) begin
 	if (disable_rom)
 		rom_access <= 1'b0;
@@ -460,9 +458,7 @@ assign DI = interrupt_ack?8'hFF:io_read?peripheral_data_in:rom_access?ROM_DO:sra
  
 wire [2:0]	ramdisk_page;
 	
-//wire [15:0] address_bus = video_slice & regular_clock_enabled ? VIDEO_A : A;
 wire [15:0] address_bus = A;
-
 
 reg[31:0] rdvidreg;
 always @(posedge clk24) rdvidreg={rdvidreg[30:0],rdvid};
@@ -485,16 +481,16 @@ SDRAM_Controller ramd(
 	.DRAM_CS_N(DRAM_CS_N),				//	SDRAM Chip Select
 	.DRAM_BA_0(DRAM_BA_0),				//	SDRAM Bank Address 0
 	.DRAM_BA_1(DRAM_BA_1),				//	SDRAM Bank Address 1
-	.iaddr((rdvidreg[6]|rdvidreg[14])?{4'b0001,VIDEO_A[12:0],2'b00}:{ramdisk_page,A[15],A[12:0],A[14:13]}),
+	.iaddr((rdvidreg[6]|rdvidreg[10])?{4'b0001,VIDEO_A[12:0],2'b00}:{ramdisk_page,A[15],A[12:0],A[14:13]}),
 	.idata(DO),
-	.rd(ram_read&DBIN),
+	.rd(ram_read&DBIN&~rom_access),
 	.we_n(ram_write_n|io_write|WR_n), 
 	.odata(dramout),
 	.odata2(dramout2),
 	.memcpubusy(memcpubusy),
 	.rdcpu_finished(rdcpu_finished),
 	.memvidbusy(memvidbusy),
-	.rdv(rdvidreg[6]|rdvidreg[14])
+	.rdv(rdvidreg[6]|rdvidreg[10])
 );
 reg[7:0] sram_data_in;
 always @(negedge rdcpu_finished) sram_data_in=dramout[7:0];
@@ -1012,13 +1008,13 @@ wire [7:0]	ay_odata;
 wire		ay_sel = portmap_device == 3'b101 && address_bus_r[1] == 0; // only ports $14 and $15
 wire		ay_wren = ~WR_n & io_write & ay_sel;
 wire		ay_rden = io_read & ay_sel;
-wire [7:0]	ay_sound;
+wire [7:0]	ay_soundA,ay_soundB,ay_soundC;
 
-reg [2:0] aycectr;
-always @(posedge clk14) aycectr <= aycectr + 1'd1;
+reg [3:0] aycectr;
+always @(posedge clk24) if (aycectr<14) aycectr <= aycectr + 1'd1; else aycectr <= 0;
 
 ayglue shrieker(
-				.clk(clk14), 
+				.clk(clk24),
 				.ce(aycectr == 0),
 				.reset_n(mreset_n), 
 				.address(address_bus_r[0]),
@@ -1026,9 +1022,16 @@ ayglue shrieker(
 				.q(ay_odata),
 				.wren(ay_wren),
 				.rden(ay_rden),
-				.sound(ay_sound));
+				.soundA(ay_soundA),
+				.soundB(ay_soundB),
+				.soundC(ay_soundC)
+				);				
+				
 `else
-wire [7:0] 	ay_sound = 8'b0;
+//wire [7:0] 	ay_sound = 8'b0;
+wire [7:0]	ay_soundA=8'b0;
+wire [7:0]	ay_soundB=8'b0;
+wire [7:0]	ay_soundC=8'b0;
 wire		ay_rden = 1'b0;
 assign		ay_odata = 8'hFF;
 `endif
@@ -1112,6 +1115,3 @@ always @(posedge clk24) if (ce) begin: _fake_pu
 end
 */
 endmodule
-
-
-// $Id$

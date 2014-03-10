@@ -28,42 +28,23 @@ module SDRAM_Controller(
 	input rdv
 );
 
-parameter ST_RESET0 = 5'd0;
-parameter ST_RESET1 = 5'd1;
-parameter ST_IDLE   = 5'd2;
-parameter ST_RAS0   = 5'd3;
-parameter ST_RAS1   = 5'd4;
-parameter ST_READ0  = 5'd5;
-parameter ST_READ1  = 5'd6;
-parameter ST_READ2  = 5'd7;
-parameter ST_WRITE0 = 5'd8;
-parameter ST_WRITE1 = 5'd9;
-parameter ST_WRITE2 = 5'd10;
-parameter ST_REFRESH0 = 5'd11;
-parameter ST_REFRESH1 = 5'd12;
-parameter ST_READ3  = 5'd13;
-parameter ST_WRITE3  = 5'd14;
-parameter ST_READV  = 5'd15;
-parameter ST_REFRESH2 = 5'd16;
-parameter ST_REFRESH3 = 5'd17;
-parameter ST_REFRESH4 = 5'd18;
-parameter ST_READ4  = 5'd19;
-parameter ST_WRITE4  = 5'd20;
-parameter ST_READV0  = 5'd21;
-parameter ST_RAS2   = 5'd22;
-parameter ST_RESET2 = 5'd23;
-parameter ST_RESET3 = 5'd24;
-parameter ST_RESET4 = 5'd25;
-parameter ST_RESET5 = 5'd26;
-parameter ST_RESET6 = 5'd27;
-parameter ST_RESET7 = 5'd28;
-parameter ST_RESET8 = 5'd29;
-parameter ST_REFRESH5 = 5'd30;
-parameter ST_REFRESH6 = 5'd31;
+parameter ST_RESET0 = 4'd0;
+parameter ST_RESET1 = 4'd1;
+parameter ST_IDLE   = 4'd2;
+parameter ST_RAS0   = 4'd3;
+parameter ST_RAS1   = 4'd4;
+parameter ST_READ0  = 4'd5;
+parameter ST_READ1  = 4'd6;
+parameter ST_READ2  = 4'd7;
+parameter ST_WRITE0 = 4'd8;
+parameter ST_WRITE1 = 4'd9;
+parameter ST_WRITE2 = 4'd10;
+parameter ST_REFRESH0 = 4'd11;
+parameter ST_REFRESH1 = 4'd12;
+parameter ST_READV  = 4'd13;
 
 
-reg[1:0] rst;
-reg[4:0] state;
+reg[3:0] state;
 reg[21:0] addr;
 reg[15:0] data;
 reg exrd,exwen,lsb,rdvid;
@@ -97,25 +78,14 @@ always @(*) begin
 end
 
 always @(posedge clk24) begin
-	if (reset) begin
-		state <= ST_RESET0; exrd <= 0; exwen <= 1'b1;rdvid<=1'b0;
-		memcpubusy<=1'b0; memvidbusy<=1'b0;
-	end else begin
+	if (reset) {state,exrd,exwen,rdvid,memcpubusy,memvidbusy,rdcpu_finished}<={ST_RESET0,6'b010000};
+	else begin
 		case (state)
 		ST_RESET0: state <= ST_RESET1;
 		ST_RESET1: state <= ST_IDLE;
-		ST_RESET2: state <= ST_RESET3;
-		ST_RESET3: state <= ST_RESET4;
-		ST_RESET4: state <= ST_RESET5;
-		ST_RESET5: state <= ST_RESET6;
-		ST_RESET6: {state,rst} <= {ST_REFRESH0,2'd1};
-		ST_RESET7: {state,rst} <= {ST_REFRESH0,2'd2};
-		ST_RESET8: {state,rst} <= {ST_IDLE,2'd0};
 		ST_IDLE:
 		begin
-			memcpubusy<=1'b0;
-			memvidbusy<=1'b0;
-			rdcpu_finished<=1'b0;
+			{memcpubusy,memvidbusy,rdcpu_finished}<=3'b000;
 			if(rdv==0) begin exrd <= rd; exwen <= we_n;
 			end
 			addr[17:0] <= iaddr[18:1]; lsb<=iaddr[0]; data <= idata;rdvid<=rdv;
@@ -137,12 +107,7 @@ always @(posedge clk24) begin
 		ST_READ1: state <= ST_READ2;
 		ST_READ2: begin
 		case(rdvid)
-		1'b0:begin
-		rdcpu_finished<=1'b1;
-		state<=ST_IDLE;
-		if (lsb==0) odata[7:0]<=DRAM_DQ[7:0];
-		else odata[7:0]<=DRAM_DQ[15:8];
-		end
+		1'b0:{state,rdcpu_finished,odata[7:0]}<={ST_IDLE,1'b1,lsb?DRAM_DQ[15:8]:DRAM_DQ[7:0]};
 		1'b1:{state,odata} <= {ST_READV,DRAM_DQ[15:0]};
 		endcase
 		end

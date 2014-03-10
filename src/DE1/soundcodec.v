@@ -10,6 +10,8 @@
 // An open implementation of Vector-06C home computer
 //
 // Author: Viacheslav Slavinsky, http://sensi.org/~svo
+//
+// Minor changes for stereo by Ivan Gorodetsky
 // 
 // Design File: soundcodec.v
 //
@@ -21,10 +23,11 @@
 
 `default_nettype none
 
-module soundcodec(clk18, pulses, pcm, tapein, reset_n, oAUD_XCK, oAUD_BCK, oAUD_DATA, oAUD_LRCK, iAUD_ADCDAT, oAUD_ADCLRCK);
+module soundcodec(clk18, pulses, pcmL,pcmR, tapein, reset_n, oAUD_XCK, oAUD_BCK, oAUD_DATA, oAUD_LRCK, iAUD_ADCDAT, oAUD_ADCLRCK);
 input	clk18;
 input	[3:0] pulses;
-input	[8:0] pcm;
+input	[10:0] pcmL;
+input	[10:0] pcmR;
 output	reg tapein;
 input	reset_n;
 output	oAUD_XCK = clk18;
@@ -44,6 +47,8 @@ wire ma_ce = decimator == 0;
 
 wire [15:0] linein;			// comes from codec
 reg [15:0] ma_pulse;		// goes to codec
+reg [15:0] ma_pulseL,ma_pulseR;		// goes to codec
+
 
 reg [7:0] pulses_sample[0:3];
 
@@ -64,11 +69,12 @@ always @(posedge clk18) begin
 		sum <= pulses_sample[0] + pulses_sample[1] + pulses_sample[2] + pulses_sample[3];
 	end
 
-	ma_pulse <= {sum[7:2], 7'b0} + {m34,8'b0} + {pcm,5'b0};
+	ma_pulseL <= {sum[7:2], 7'b0} + {m34,8'b0} + {pcmL,4'b0};
+	ma_pulseR <= {sum[7:2], 7'b0} + {m34,8'b0} + {pcmR,4'b0};
 	
 end
 
-audio_io audioio(oAUD_BCK, oAUD_DATA, oAUD_LRCK, iAUD_ADCDAT, oAUD_ADCLRCK, clk18, reset_n, ma_pulse, linein);		
+audio_io audioio(oAUD_BCK, oAUD_DATA, oAUD_LRCK, iAUD_ADCDAT, oAUD_ADCLRCK, clk18, reset_n, ma_pulseL,ma_pulseR, linein);
 
 reg [15:0] level_avg;
 reg [7:0] lowest;
