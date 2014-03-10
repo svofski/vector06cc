@@ -39,7 +39,7 @@
 //
 //				These must be both "1" for normal operation:
 //	KEY2:SW8				00: single-clock, tap clock by KEY[1]
-//					01: quasiwarp mode: 3 MHz with no waitstates
+//					01: warp mode: nearly 6 MHz
 //					10: slow clock, code is executed at eyeballable speed
 //					11: normal Vector-06C speed, full compatibility mode
 //
@@ -208,6 +208,7 @@ wire mreset_n = KEY[0] & ~kbd_key_blkvvod;
 wire mreset = !mreset_n;
 wire clk24, clk18, clkpal4FSC;
 wire ce12, ce6, ce6x, ce3, vi53_timer_ce, video_slice, pipe_ab;
+wire clk60;
 clockster clockmaker(
 	.clk(CLOCK_27), 
 	.clk50(clk50mhz),
@@ -221,6 +222,7 @@ clockster clockmaker(
 	.pipe_ab(pipe_ab), 
 	.ce1m5(vi53_timer_ce),
 	.clkpalFSC(clkpal4FSC),
+	.clk60(clk60)
 	);
 	
 
@@ -298,11 +300,16 @@ always @*
 	3'bx1x:
 		cpu_ce <= (slowclock == 0) & ce3;
 	3'bxx1:
-		cpu_ce <= ce3;
+		cpu_ce <= ce6x&~video_slice_my;//good
 	3'b000:
 		cpu_ce <= ce3;
 	endcase
-	
+
+reg[1:0] vid_cnt;
+reg video_slice_my,video_slice_mymy;
+always @(posedge video_slice)	{vid_cnt,video_slice_mymy}<={vid_cnt+2'b1,!vid_cnt[1]&vid_cnt[0]};
+always @(posedge clk24) video_slice_my<=video_slice_mymy&video_slice;
+
 reg [15:0] clock_counter;
 always @(posedge clk24) begin
 	if (~RESET_n) 
@@ -454,8 +461,16 @@ always @(posedge clk24) begin
 	else
 		rom_access <= A < 2048;
 end
-assign DI = interrupt_ack?8'hFF:io_read?peripheral_data_in:rom_access?ROM_DO:sram_data_in;
- 
+assign DI=DI_;
+reg[7:0] DI_;
+always @(negedge clk24)
+ casex ({interrupt_ack,io_read,rom_access})
+  3'b1xx:DI_<=8'hFF;
+  3'b01x:DI_<=peripheral_data_in;
+  3'b001:DI_<=ROM_DO;
+  3'b000:DI_<=sram_data_in;
+ endcase
+
 wire [2:0]	ramdisk_page;
 	
 wire [15:0] address_bus = A;
@@ -464,12 +479,12 @@ reg[31:0] rdvidreg;
 always @(posedge clk24) rdvidreg={rdvidreg[30:0],rdvid};
 
 
-assign DRAM_CLK=clk24;				//	SDRAM Clock
+assign DRAM_CLK=clk60;				//	SDRAM Clock
 assign DRAM_CKE=1;				//	SDRAM Clock Enable
 wire[15:0] dramout,dramout2;
 wire memcpubusy,memvidbusy,rdcpu_finished;
 SDRAM_Controller ramd(
-	.clk24(clk24),				//  Clock 24 MHz
+	.clk(clk60),				//  Clock 60 MHz
 	.reset(~RESET_n),					//  System reset
 	.DRAM_DQ(DRAM_DQ),				//	SDRAM Data bus 16 Bits
 	.DRAM_ADDR(DRAM_ADDR),			//	SDRAM Address bus 12 Bits
@@ -481,7 +496,7 @@ SDRAM_Controller ramd(
 	.DRAM_CS_N(DRAM_CS_N),				//	SDRAM Chip Select
 	.DRAM_BA_0(DRAM_BA_0),				//	SDRAM Bank Address 0
 	.DRAM_BA_1(DRAM_BA_1),				//	SDRAM Bank Address 1
-	.iaddr((rdvidreg[6]|rdvidreg[10])?{4'b0001,VIDEO_A[12:0],2'b00}:{ramdisk_page,A[15],A[12:0],A[14:13]}),
+	.iaddr((rdvidreg[7])?{4'b0001,VIDEO_A[12:0],2'b00}:{ramdisk_page,A[15],A[12:0],A[14:13]}),
 	.idata(DO),
 	.rd(ram_read&DBIN&~rom_access),
 	.we_n(ram_write_n|io_write|WR_n), 
@@ -490,7 +505,7 @@ SDRAM_Controller ramd(
 	.memcpubusy(memcpubusy),
 	.rdcpu_finished(rdcpu_finished),
 	.memvidbusy(memvidbusy),
-	.rdv(rdvidreg[6]|rdvidreg[10])
+	.rdv(rdvidreg[7])
 );
 reg[7:0] sram_data_in;
 always @(negedge rdcpu_finished) sram_data_in=dramout[7:0];
@@ -1028,7 +1043,6 @@ ayglue shrieker(
 				);				
 				
 `else
-//wire [7:0] 	ay_sound = 8'b0;
 wire [7:0]	ay_soundA=8'b0;
 wire [7:0]	ay_soundB=8'b0;
 wire [7:0]	ay_soundC=8'b0;

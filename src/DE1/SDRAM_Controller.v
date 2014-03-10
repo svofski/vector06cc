@@ -4,7 +4,7 @@
 
 
 module SDRAM_Controller(
-	input			clk24,				//  Clock 24 MHz
+	input			clk,				//  Clock 60 MHz
 	input			reset,					//  System reset
 	inout	[15:0]	DRAM_DQ,				//	SDRAM Data bus 16 Bits
 	output	reg[11:0]	DRAM_ADDR,			//	SDRAM Address bus 12 Bits
@@ -39,9 +39,11 @@ parameter ST_READ2  = 4'd7;
 parameter ST_WRITE0 = 4'd8;
 parameter ST_WRITE1 = 4'd9;
 parameter ST_WRITE2 = 4'd10;
-parameter ST_REFRESH0 = 4'd11;
-parameter ST_REFRESH1 = 4'd12;
-parameter ST_READV  = 4'd13;
+parameter ST_READV  = 4'd11;
+parameter ST_REFRESH0 = 4'd12;
+parameter ST_REFRESH1 = 4'd13;
+parameter ST_REFRESH2 = 4'd14;
+parameter ST_REFRESH3 = 4'd15;
 
 
 reg[3:0] state;
@@ -77,7 +79,7 @@ always @(*) begin
 	endcase
 end
 
-always @(posedge clk24) begin
+always @(posedge clk) begin
 	if (reset) {state,exrd,exwen,rdvid,memcpubusy,memvidbusy,rdcpu_finished}<={ST_RESET0,6'b010000};
 	else begin
 		case (state)
@@ -86,9 +88,8 @@ always @(posedge clk24) begin
 		ST_IDLE:
 		begin
 			{memcpubusy,memvidbusy,rdcpu_finished}<=3'b000;
-			if(rdv==0) begin exrd <= rd; exwen <= we_n;
-			end
-			addr[17:0] <= iaddr[18:1]; lsb<=iaddr[0]; data <= idata;rdvid<=rdv;
+			if(rdv==0){exrd,exwen} <= {rd,we_n};
+			{addr[17:0],lsb,data,rdvid}<={iaddr[18:1],iaddr[0],idata,rdv};
 			casex ({rd,exrd,we_n,exwen,rdv})
 			5'b10110: {state,memcpubusy} <= {ST_RAS0,1'b1};
 			5'b00010: {state,memcpubusy} <= {ST_RAS0,1'b1};
@@ -96,7 +97,8 @@ always @(posedge clk24) begin
 			default: state <= ST_IDLE;
 			endcase
 		end
-		ST_RAS0:
+		ST_RAS0: state<=ST_RAS1;
+		ST_RAS1:
 			casex ({exrd,exwen,rdvid})
 			3'b110: state <= ST_READ0;
 			3'b000: state <= ST_WRITE0;
@@ -116,7 +118,10 @@ always @(posedge clk24) begin
 		ST_WRITE0: state <= ST_WRITE1;
 		ST_WRITE1: state <= ST_WRITE2;
 		ST_WRITE2: state <= ST_IDLE;
-		ST_REFRESH0: state <= ST_IDLE;
+		ST_REFRESH0: state <= ST_REFRESH3;
+		ST_REFRESH1: state <= ST_REFRESH3;
+		ST_REFRESH2: state <= ST_REFRESH3;
+		ST_REFRESH3: state <= ST_IDLE;
 		default: state <= ST_IDLE;
 		endcase
 	end
