@@ -39,7 +39,7 @@
 //
 //				These must be both "1" for normal operation:
 //	KEY2:SW8				00: single-clock, tap clock by KEY[1]
-//					01: warp mode: nearly 6 MHz
+//					01: warp mode: between 6 and 12 MHz
 //					10: slow clock, code is executed at eyeballable speed
 //					11: normal Vector-06C speed, full compatibility mode
 //
@@ -71,7 +71,7 @@ module vector06cc(CLOCK_24,CLOCK_27, clk50mhz, KEY[3:0], LEDr[9:0], LEDg[7:0], S
 		SRAM_WE_N,						//	SRAM Write Enable
 		SRAM_CE_N,						//	SRAM Chip Enable
 		SRAM_OE_N,						//	SRAM Output Enable
-		 
+
 	DRAM_DQ,				//	SDRAM Data bus 16 Bits
 	DRAM_ADDR,				//	SDRAM Address bus 12 Bits
 	DRAM_LDQM,				//	SDRAM Low-byte Data Mask 
@@ -85,17 +85,17 @@ module vector06cc(CLOCK_24,CLOCK_27, clk50mhz, KEY[3:0], LEDr[9:0], LEDg[7:0], S
 	DRAM_CLK,				//	SDRAM Clock
 	DRAM_CKE,				//	SDRAM Clock Enable
 
-		 
+
 		VGA_HS,
 		VGA_VS,
 		VGA_R,
 		VGA_G,
 		VGA_B, 
-		
+
 		////////////////////	I2C		////////////////////////////
 		I2C_SDAT,						//	I2C Data
 		I2C_SCLK,						//	I2C Clock
-		
+
 		AUD_BCLK, 
 		AUD_DACDAT, 
 		AUD_DACLRCK,
@@ -300,7 +300,7 @@ always @*
 	3'bx1x:
 		cpu_ce <= (slowclock == 0) & ce3;
 	3'bxx1:
-		cpu_ce <= ce6x&~video_slice_my;//good
+		cpu_ce <= ~ce12&~memcpubusy&~memvidbusy&~video_slice_my;
 	3'b000:
 		cpu_ce <= ce3;
 	endcase
@@ -496,7 +496,8 @@ SDRAM_Controller ramd(
 	.DRAM_CS_N(DRAM_CS_N),				//	SDRAM Chip Select
 	.DRAM_BA_0(DRAM_BA_0),				//	SDRAM Bank Address 0
 	.DRAM_BA_1(DRAM_BA_1),				//	SDRAM Bank Address 1
-	.iaddr((rdvidreg[7])?{4'b0001,VIDEO_A[12:0],2'b00}:{ramdisk_page,A[15],A[12:0],A[14:13]}),
+//	.iaddr((rdvidreg[7])?{4'b0001,VIDEO_A[12:0],2'b00}:{ramdisk_page,A[15],A[12:0],A[14:13]}),
+	.iaddr((rdvidreg[9])?{4'b0001,VIDEO_A[12:0],2'b00}:{ramdisk_page,A[15],A[12:0],A[14:13]}),
 	.idata(DO),
 	.rd(ram_read&DBIN&~rom_access),
 	.we_n(ram_write_n|io_write|WR_n), 
@@ -505,7 +506,8 @@ SDRAM_Controller ramd(
 	.memcpubusy(memcpubusy),
 	.rdcpu_finished(rdcpu_finished),
 	.memvidbusy(memvidbusy),
-	.rdv(rdvidreg[7])
+//	.rdv(rdvidreg[7])
+	.rdv(rdvidreg[9])
 );
 reg[7:0] sram_data_in;
 always @(negedge rdcpu_finished) sram_data_in=dramout[7:0];

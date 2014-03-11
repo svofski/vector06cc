@@ -70,8 +70,6 @@ wire [30:0] cophacc_next = cophacc + `COPHACC_DELTA;
 always @(posedge clk300) cophacc <= cophacc_next;
 assign clk18 = cophacc[30];
 
-reg[15:0] clo=1'b1;
-reg clk4;
 always @(posedge clk24) begin
 	if (initctr != 3) begin
 		initctr <= initctr + 1'b1;
@@ -87,8 +85,6 @@ always @(posedge clk24) begin
 		qvideo_slice <= !ctr[2];
 		qce1m5 <= !ctr[3] & ctr[2] & ctr[1] & !ctr[0];
 		ctr <= ctr + 1'b1;
-		clo<={clo[6:0],clo[7]};
-		clk4<=clo[0];
 	end
 end
 endmodule
