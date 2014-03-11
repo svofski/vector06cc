@@ -42,8 +42,7 @@ parameter ST_WRITE2 = 4'd10;
 parameter ST_READV  = 4'd11;
 parameter ST_REFRESH0 = 4'd12;
 parameter ST_REFRESH1 = 4'd13;
-parameter ST_REFRESH2 = 4'd14;
-parameter ST_REFRESH3 = 4'd15;
+
 
 
 reg[3:0] state;
@@ -118,10 +117,8 @@ always @(posedge clk) begin
 		ST_WRITE0: state <= ST_WRITE1;
 		ST_WRITE1: state <= ST_WRITE2;
 		ST_WRITE2: state <= ST_IDLE;
-		ST_REFRESH0: state <= ST_REFRESH3;
-		ST_REFRESH1: state <= ST_REFRESH3;
-		ST_REFRESH2: state <= ST_REFRESH3;
-		ST_REFRESH3: state <= ST_IDLE;
+		ST_REFRESH0: state <= ST_REFRESH1;
+		ST_REFRESH1: state <= ST_IDLE;
 		default: state <= ST_IDLE;
 		endcase
 	end
