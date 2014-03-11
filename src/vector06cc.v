@@ -496,8 +496,7 @@ SDRAM_Controller ramd(
 	.DRAM_CS_N(DRAM_CS_N),				//	SDRAM Chip Select
 	.DRAM_BA_0(DRAM_BA_0),				//	SDRAM Bank Address 0
 	.DRAM_BA_1(DRAM_BA_1),				//	SDRAM Bank Address 1
-//	.iaddr((rdvidreg[7])?{4'b0001,VIDEO_A[12:0],2'b00}:{ramdisk_page,A[15],A[12:0],A[14:13]}),
-	.iaddr((rdvidreg[9])?{4'b0001,VIDEO_A[12:0],2'b00}:{ramdisk_page,A[15],A[12:0],A[14:13]}),
+  .iaddr((rdvidreg[9])?{4'b0001,VIDEO_A[12:0],2'b00}:{ramdisk_page,A[15],A[12:0],A[14:13]}),
 	.idata(DO),
 	.rd(ram_read&DBIN&~rom_access),
 	.we_n(ram_write_n|io_write|WR_n), 
@@ -506,7 +505,6 @@ SDRAM_Controller ramd(
 	.memcpubusy(memcpubusy),
 	.rdcpu_finished(rdcpu_finished),
 	.memvidbusy(memvidbusy),
-//	.rdv(rdvidreg[7])
 	.rdv(rdvidreg[9])
 );
 reg[7:0] sram_data_in;
