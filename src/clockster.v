@@ -21,11 +21,11 @@
 
 `default_nettype none
 
-module clockster(clk, clk50, clk24, clk18, ce12, ce6, ce6x, ce3, video_slice, pipe_ab, ce1m5, clkpalFSC,clk60);
+module clockster(clk, clk50, clk24, clkAudio, ce12, ce6, ce6x, ce3, video_slice, pipe_ab, ce1m5, clkpalFSC,clk60);
 input  [1:0] 	clk;
 input			clk50;
 output clk24;
-output clk18;
+output clkAudio = qce12;
 output ce12 = qce12;
 output ce6 = qce6;
 output ce6x = qce6x;
@@ -44,7 +44,6 @@ reg qce12, qce6, qce6x, qce3, qce3v, qvideo_slice, qpipe_ab, qce1m5;
 wire lock;
 
 wire clk300;
-wire clk100;
 
 mclk24mhz vector_xtal(clk50, clk24, clk300, clk60, lock);
 
@@ -63,12 +62,6 @@ always @(posedge clk300) begin
 end
 
 ayclkdrv clkbufpalfsc(pal_phase[`PHACC_WIDTH-1], clkpalFSC);
-
-`define COPHACC_DELTA 131941395 //18.432 MHz
-reg [30:0] cophacc;
-wire [30:0] cophacc_next = cophacc + `COPHACC_DELTA;
-always @(posedge clk300) cophacc <= cophacc_next;
-assign clk18 = cophacc[30];
 
 always @(posedge clk24) begin
 	if (initctr != 3) begin
