@@ -11,7 +11,7 @@
 //
 // Author: Viacheslav Slavinsky, http://sensi.org/~svo
 // 
-// SDRAM version: Ivan Gorodetsky
+// SDRAM version and some other changes: Ivan Gorodetsky
 //
 // Design File: vector06cc.v
 //
@@ -33,9 +33,8 @@
 //	SW5			1 = CVBS composite output on VGA R,G,B pins	
 //					(connect them together and feed to tv)
 //
-//	SW6			disable tape in
-//
-//	SW7			manual bus hold, recommended for SRAM <-> JTAG exchange operations
+//	SW6			unused
+//	SW7			unused
 //
 //				These must be both "1" for normal operation:
 //	KEY2:SW8				00: single-clock, tap clock by KEY[1]
@@ -43,8 +42,7 @@
 //					10: slow clock, code is executed at eyeballable speed
 //					11: normal Vector-06C speed, full compatibility mode
 //
-//	SW9			0 = ABC PSG stereo mixing
-//					1 = CBA PSG stereo mixing
+//	SW9			unused
 //
 // --------------------------------------------------------------------
 
@@ -172,7 +170,7 @@ output	[3:0] 	VGA_B;
 inout			I2C_SDAT;				//	I2C Data
 output			I2C_SCLK;				//	I2C Clock
 
-inout			AUD_BCLK;
+output			AUD_BCLK;
 output			AUD_DACDAT;
 output			AUD_DACLRCK;
 output			AUD_XCK;
@@ -206,14 +204,14 @@ output [35:0]	GPIO_1;
 // CLOCK SETUP
 wire mreset_n = KEY[0] & ~kbd_key_blkvvod;
 wire mreset = !mreset_n;
-wire clk24, clk18, clkpal4FSC;
+wire clk24, clkAudio, clkpal4FSC;
 wire ce12, ce6, ce6x, ce3, vi53_timer_ce, video_slice, pipe_ab;
 wire clk60;
 clockster clockmaker(
-	.clk(CLOCK_27), 
+	.clk(CLOCK_24), 
 	.clk50(clk50mhz),
 	.clk24(clk24), 
-	.clk18(clk18), 
+	.clkAudio(clkAudio), 
 	.ce12(ce12), 
 	.ce6(ce6),
 	.ce6x(ce6x),
@@ -225,32 +223,18 @@ clockster clockmaker(
 	.clk60(clk60)
 	);
 	
-
-reg[7:0]	CovoxData;
-reg[10:0] SndSumL,SndSumR;
-always @(posedge clk24) begin
-	if ((address_bus_r==8'd7)&io_write&~WR_n) CovoxData<=DO;
-	case(SW[9])
-	 1'b0: begin
-//ABC mixing
-	 SndSumL<=(ay_soundA<<1)+(ay_soundB)+(CovoxData<<1);
-	 SndSumR<=(ay_soundC<<1)+(ay_soundB)+(CovoxData<<1);
-	 end
-	 1'b1: begin
-//CBA mixing
-	 SndSumL<=(ay_soundC<<1)+(ay_soundB)+(CovoxData<<1);
-	 SndSumR<=(ay_soundA<<1)+(ay_soundB)+(CovoxData<<1);
-	 end
-	endcase
-end
-
-assign AUD_XCK = clk18;
+assign AUD_XCK = clkAudio;
 wire tape_input;
 soundcodec soundnik(
-					.clk18(clk18), 
+					.clk12(clkAudio),
 					.pulses({vv55int_pc_out[0],vi53_out}), 
-					.pcmL(SndSumL),	//AY+COVOX left
-					.pcmR(SndSumR),	//AY+COVOX right
+					.ay_soundA(ay_soundA),	//
+					.ay_soundB(ay_soundB),	//
+					.ay_soundC(ay_soundC),	//
+					.rs_soundA(rs_soundA),	//
+					.rs_soundB(rs_soundB),	//
+					.rs_soundC(rs_soundC),	//
+					.covox(CovoxData),
 					.tapein(tape_input), 
 					.reset_n(mreset_n),
 					.oAUD_XCK(AUD_XCK),
@@ -259,7 +243,7 @@ soundcodec soundnik(
 					.oAUD_LRCK(AUD_DACLRCK),
 					.iAUD_ADCDAT(AUD_ADCDAT), 
 					.oAUD_ADCLRCK(AUD_ADCLRCK)
-				   ); 
+				   );
 
 reg [15:0] slowclock;
 always @(posedge clk24) if (ce3) slowclock <= slowclock + 1'b1;
@@ -366,7 +350,8 @@ assign GPIO_0[8:0] = {clk24, ce12, ce6, ce3, vi53_timer_ce, video_slice, clkpal4
 /////////////////
 wire RESET_n = mreset_n & !blksbr_reset_pulse;
 reg READY;
-wire HOLD = jHOLD | SW[7] | osd_command_bushold | floppy_death_by_floppy;
+//wire HOLD = jHOLD | SW[7] | osd_command_bushold | floppy_death_by_floppy;
+wire HOLD = jHOLD | osd_command_bushold | floppy_death_by_floppy;
 wire INT = int_request;
 wire INTE;
 wire DBIN;
@@ -461,9 +446,10 @@ always @(posedge clk24) begin
 	else
 		rom_access <= A < 2048;
 end
+
 assign DI=DI_;
 reg[7:0] DI_;
-always @(negedge clk24)
+always @*
  casex ({interrupt_ack,io_read,rom_access})
   3'b1xx:DI_<=8'hFF;
   3'b01x:DI_<=peripheral_data_in;
@@ -510,9 +496,8 @@ SDRAM_Controller ramd(
 reg[7:0] sram_data_in;
 always @(negedge rdcpu_finished) sram_data_in=dramout[7:0];
 
-reg[7:0] vdata80,vdataA0,vdataC0,vdataE0;
-always @(negedge memvidbusy)
-{vdataE0,vdataC0,vdataA0,vdata80}<={dramout2,dramout};
+reg[31:0] vdata,vdata2,vdata3,vdata4;
+always @(negedge memvidbusy)vdata<={dramout2,dramout};
 
 
 wire [7:0] 	kvaz_debug;
@@ -560,10 +545,10 @@ always @(posedge ce6) {bib[14],bib[13],bib[12],bib[11],bib[10],bib[9],bib[8],bib
 
 video vidi(.clk24(clk24), .ce12(ce12), .ce6(ce6), .ce6x(ce6x), .clk4fsc(clkpal4FSC), .video_slice(video_slice), .pipe_ab(pipe_ab),
 		   .mode512(video_mode512), 
-		   .vdata80(vdata80),
-		   .vdataA0(vdataA0),
-		   .vdataC0(vdataC0),
-		   .vdataE0(vdataE0),
+		   .vdata(vdata),
+		   .vdata2(vdata2),
+		   .vdata3(vdata3),
+		   .vdata4(vdata4),
 			.SRAM_ADDR(VIDEO_A), 
 
 		   .hsync(vga_hs), .vsync(vga_vs), 
@@ -755,9 +740,9 @@ wire [7:0]	vv55int_pa_out;
 wire [7:0]	vv55int_pb_out;
 wire [7:0]	vv55int_pc_out;
 
-wire [7:0] vv55int_pa_oe_n;
-wire [7:0] vv55int_pb_oe_n;
-wire [7:0] vv55int_pc_oe_n;
+wire vv55int_pa_oe_n;
+wire vv55int_pb_oe_n;
+wire vv55int_pc_oe_n;
 
 I82C55 vv55int(
 	vv55int_addr,
@@ -805,31 +790,74 @@ always @(kbd_key_shift or kbd_key_ctrl or kbd_key_rus) begin
 	vv55int_pc_in[6] <= ~kbd_key_ctrl;
 	vv55int_pc_in[7] <= ~kbd_key_rus;
 end
-always @(tape_input, SW) vv55int_pc_in[4] <= ~SW[6] & tape_input;
+always @(tape_input, SW) vv55int_pc_in[4] <= tape_input;
 always @* vv55int_pc_in[3:0] <= 4'b1111;
 
 
-//////////////////////
-// vv55 #1, fake PU //
-//////////////////////
+///////////////////////
+// vv55 #2, PU			//
+///////////////////////
+
 wire		vv55pu_sel = portmap_device == 3'b001;
 
 wire [1:0] 	vv55pu_addr = 	~address_bus_r[1:0];
 wire [7:0] 	vv55pu_idata = DO;	
 wire [7:0] 	vv55pu_odata;
+wire		vv55pu_oe_n;
 
-wire 		vv55pu_rden = io_read & vv55pu_sel;
-wire 		vv55pu_wren = ~WR_n & io_write & vv55pu_sel;
+wire vv55pu_cs_n = !(/*~ram_write_n &*/ (io_read | io_write) & vv55pu_sel);
+wire vv55pu_rd_n = ~io_read;//~DBIN;
+wire vv55pu_wr_n = WR_n | ~cpu_ce;
+wire vv55pu_rden = io_read & vv55pu_sel;
 
-fake8255 fakepaw0(
-	.clk(clk24),
-	.ce(cpu_ce),
-	.addr(vv55pu_addr),
-	.idata(DO),
-	.odata(vv55pu_odata),
-	.wren(vv55pu_wren),
-	.rden(vv55pu_rden));
+reg [7:0]	vv55pu_pa_in;
+reg [7:0]	vv55pu_pb_in;
+reg [7:0]	vv55pu_pc_in;
 
+wire [7:0]	vv55pu_pa_out;
+wire [7:0]	vv55pu_pb_out;
+wire [7:0]	vv55pu_pc_out;
+
+wire vv55pu_pa_oe_n;
+wire vv55pu_pb_oe_n;
+wire vv55pu_pc_oe_n;
+
+I82C55 vv55pu(
+	vv55pu_addr,
+	vv55pu_idata,
+	vv55pu_odata,
+	vv55pu_oe_n,
+
+	vv55pu_cs_n,
+	vv55pu_rd_n,
+	vv55pu_wr_n,
+
+	vv55pu_pa_in,
+	vv55pu_pa_out,
+	vv55pu_pa_oe_n,				//
+
+	vv55pu_pb_in,					//
+	vv55pu_pb_out,
+	vv55pu_pb_oe_n,				//
+
+	vv55pu_pc_in,
+	vv55pu_pc_out,
+	vv55pu_pc_oe_n,				//
+
+	mreset, 	// active 1
+
+	cpu_ce,
+	clk24);
+
+reg[7:0]	CovoxData;
+reg[7:0] RSdataIn,RSctrl;
+wire[7:0] RSdataOut;
+always @(posedge clk24) begin
+	CovoxData <= vv55pu_pa_out;
+	RSdataIn <= vv55pu_pb_out;
+	RSctrl <= vv55pu_pc_out;
+	vv55pu_pb_in <= RSdataOut;
+end
 
 
 ////////////////////////////////
@@ -856,7 +884,6 @@ pit8253 vi53(
 			vi53_out, 
 			vi53_testpin);
 `endif
-
 
 
 ////////////////////////////
@@ -1024,6 +1051,7 @@ wire		ay_sel = portmap_device == 3'b101 && address_bus_r[1] == 0; // only ports 
 wire		ay_wren = ~WR_n & io_write & ay_sel;
 wire		ay_rden = io_read & ay_sel;
 wire [7:0]	ay_soundA,ay_soundB,ay_soundC;
+wire [7:0]	rs_soundA,rs_soundB,rs_soundC;
 
 reg [3:0] aycectr;
 always @(posedge clk24) if (aycectr<14) aycectr <= aycectr + 1'd1; else aycectr <= 0;
@@ -1039,13 +1067,30 @@ ayglue shrieker(
 				.rden(ay_rden),
 				.soundA(ay_soundA),
 				.soundB(ay_soundB),
-				.soundC(ay_soundC)
+				.soundC(ay_soundC),
+				.cs(1'b1)
 				);				
-				
+
+ym2149 rsound(
+  .DI(RSdataIn),
+  .DO(RSdataOut),
+  .BDIR(RSctrl[2]), 
+  .BC(RSctrl[1]),
+  .OUT_A(rs_soundA),
+  .OUT_B(rs_soundB),
+  .OUT_C(rs_soundC),
+  .CS(1'b1),
+  .ENA(aycectr == 0),
+  .RESET(RSctrl[3]|~mreset_n),
+  .CLK(clk24)
+  );				
 `else
 wire [7:0]	ay_soundA=8'b0;
 wire [7:0]	ay_soundB=8'b0;
 wire [7:0]	ay_soundC=8'b0;
+wire [7:0]	rs_soundA=8'b0;
+wire [7:0]	rs_soundB=8'b0;
+wire [7:0]	rs_soundC=8'b0;
 wire		ay_rden = 1'b0;
 assign		ay_odata = 8'hFF;
 `endif
@@ -1103,29 +1148,4 @@ jtag_top	tigertiger(
 				.oJTAG_SELECT(mJTAG_SELECT)
 				);
 
-endmodule
-
-///////////////////////
-// Fake 8255 for PPI //
-///////////////////////
-module fake8255(clk, ce, addr, idata, odata, wren, rden);
-input 		clk;
-input 		ce;
-input [1:0]	addr;
-input [7:0]	idata;
-output[7:0] odata;
-input		wren;
-input		rden;
-
-assign odata = 8'h00;
-
-/*
-assign odata = fakepu_regs[addr];
-reg [7:0] fakepu_regs[3:0];
-always @(posedge clk24) if (ce) begin: _fake_pu
-	if (vv55pu_wren) begin
-		fakepu_regs[addr] = idata;
-	end
-end
-*/
 endmodule

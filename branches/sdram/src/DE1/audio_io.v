@@ -11,7 +11,7 @@
 //
 // Author: Viacheslav Slavinsky, http://sensi.org/~svo
 //
-// Minor changes for stereo by Ivan Gorodetsky
+// Stereo and DSP Mode by Ivan Gorodetsky
 // 
 // Design File: audio_io.v
 //
@@ -31,30 +31,31 @@
 // agreement for further details.
 //
 // --------------------------------------------------------------------
-module audio_io(oAUD_BCK,
+module audio_io(
+				oAUD_BCK,
 				oAUD_DATA,
 				oAUD_LRCK,
 				iAUD_ADCDAT,
 				oAUD_ADCLRCK,
-				iCLK_18_4,
+				iCLK12,
 				iRST_N,
 				pulsesL,
 				pulsesR,
 				linein);				
 
-parameter	REF_CLK			=	18432000;	//	18.432	MHz
-parameter	SAMPLE_RATE		=	48000;		//	48		KHz
+parameter	REF_CLK			=	12000000;	//	12	MHz
+parameter	SAMPLE_RATE		=	48000;		//	48		kHz
 parameter	DATA_WIDTH		=	16;			//	16		Bits
 parameter	CHANNEL_NUM		=	2;			//	Dual Channel
 
 //	Audio Side
 output			oAUD_DATA;
 output			oAUD_LRCK;
-output	reg		oAUD_BCK;
+output	oAUD_BCK=iCLK12;
 input			iAUD_ADCDAT;
 output			oAUD_ADCLRCK;
 //	Control Signals
-input			iCLK_18_4;
+input			iCLK12;
 input			iRST_N;
 input	[15:0]	pulsesL;
 input	[15:0]	pulsesR;
@@ -63,44 +64,26 @@ output	[15:0]	linein;
 //	Internal Registers and Wires
 reg		[3:0]	BCK_DIV;
 reg		[8:0]	LRCK_1X_DIV;
-reg		[4:0]	SEL_Cont;
+reg		[5:0]	SEL_Cont;
 
 reg				LRCK_1X;
 
-////////////	AUD_BCK Generator	//////////////
-always@(posedge iCLK_18_4 or negedge iRST_N)
-begin
-	if(!iRST_N)	begin
-		BCK_DIV		<=	0;
-		oAUD_BCK	<=	0;
-	end
-	else begin
-		if(BCK_DIV >= REF_CLK/(SAMPLE_RATE*DATA_WIDTH*CHANNEL_NUM*2)-1 )
-		begin
-			BCK_DIV		<=	0;
-			oAUD_BCK	<=	~oAUD_BCK;
-		end
-		else
-			BCK_DIV		<=	BCK_DIV + 1'd1;
-	end
-end
-//////////////////////////////////////////////////
-////////////	AUD_LRCK Generator	//////////////
-always@(posedge iCLK_18_4 or negedge iRST_N)
+always@(negedge oAUD_BCK or negedge iRST_N)
 begin
 	if(!iRST_N)	begin
 		LRCK_1X_DIV	<=	0;
 		LRCK_1X		<=	0;
 	end
+	else if(LRCK_1X_DIV>=REF_CLK/SAMPLE_RATE-1) begin
+		LRCK_1X_DIV	<=	0;
+		LRCK_1X	<=	1;
+	end
 	else begin
-		//	LRCK 1X
-		if(LRCK_1X_DIV >= REF_CLK/(SAMPLE_RATE*2)-1 ) begin
-			LRCK_1X_DIV	<=	0;
-			LRCK_1X	<=	~LRCK_1X;
-		end	else
-			LRCK_1X_DIV		<=	LRCK_1X_DIV+1'd1;
+		LRCK_1X_DIV		<=	LRCK_1X_DIV+1'd1;
+		LRCK_1X	<=	0;
 	end
 end
+
 
 assign	oAUD_LRCK	=	LRCK_1X;
 assign 	oAUD_ADCLRCK=	oAUD_LRCK;
@@ -109,17 +92,18 @@ assign 	oAUD_ADCLRCK=	oAUD_LRCK;
 //////////	16 Bits PISO MSB First	//////////////
 always@(negedge oAUD_BCK or negedge iRST_N)
 begin
-	if(!iRST_N)
+	if(!iRST_N) SEL_Cont	<=	0;
+	else if(oAUD_LRCK==1)
 		SEL_Cont	<=	0;
-	else
+	else if(SEL_Cont!=6'd32)
 		SEL_Cont	<=	SEL_Cont+1'd1;
 end
 
 
 reg [31:0] pulsebuf;
-always @(negedge LRCK_1X) begin
-	pulsebuf[15:0] <= pulsesL;//L
-	pulsebuf[31:16] <= pulsesR;//R
+always @(posedge LRCK_1X) begin
+	pulsebuf[15:0] <= pulsesR;//R
+	pulsebuf[31:16] <= pulsesL;//L
 end
 
 assign	oAUD_DATA	=	pulsebuf[~SEL_Cont];
@@ -128,14 +112,11 @@ assign linein = inputsample;
 reg [15:0] inputsample;
 reg [15:0] inputbuf;
 always @(negedge oAUD_BCK) begin
-	inputbuf[~SEL_Cont[3:0]] <= iAUD_ADCDAT;
+	if(SEL_Cont!=6'd32)inputbuf[~SEL_Cont[3:0]] <= iAUD_ADCDAT;
 end
 
-always @(negedge LRCK_1X) begin
-	inputsample <= inputbuf;
+always @(posedge LRCK_1X) begin
+	inputsample <= inputbuf;//only one channel
 end
 
 endmodule
-								
-// $Id$			
-					
