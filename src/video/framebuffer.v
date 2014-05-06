@@ -30,7 +30,7 @@
 // Frame Buffer
 //
 ////
-module framebuffer(clk24,ce12,ce_pixel,video_slice,pipe_abx,fb_row,hsync,vdata80,vdataA0,vdataC0,vdataE0,SRAM_ADDR,coloridx,borderx,testpin,rdvid);
+module framebuffer(clk24,ce12,ce_pixel,video_slice,pipe_abx,fb_row,hsync,vdata,vdata2,vdata3,vdata4,SRAM_ADDR,coloridx,borderx,testpin,rdvid);
 input 			clk24;
 input			ce12;
 input 			ce_pixel;
@@ -41,10 +41,10 @@ input [8:0]	fb_row;
 
 input hsync;
 
-input 	[7:0]	vdata80;
-input 	[7:0]	vdataA0;
-input 	[7:0]	vdataC0;
-input 	[7:0]	vdataE0;
+input 	[31:0]	vdata;
+input 	[31:0]	vdata2;
+input 	[31:0]	vdata3;
+input 	[31:0]	vdata4;
 output	[15:0]	SRAM_ADDR;
 
 output 	[3:0] 	coloridx;
@@ -111,10 +111,10 @@ always @(posedge clk24) begin
 	end
 end
 
-pipelinx pipdx_0(clk24, ce_pixel, pipe_abx, wr[3], vdata80, coloridx[3]);
-pipelinx pipdx_1(clk24, ce_pixel, pipe_abx, wr[3], vdataA0, coloridx[2]);
-pipelinx pipdx_2(clk24, ce_pixel, pipe_abx, wr[3], vdataC0, coloridx[1]);
-pipelinx pipdx_3(clk24, ce_pixel, pipe_abx, wr[3], vdataE0, coloridx[0]);
+pipelinx pipdx_0(clk24, ce_pixel, pipe_abx, wr[3], vdata[7:0], coloridx[3]);
+pipelinx pipdx_1(clk24, ce_pixel, pipe_abx, wr[3], vdata[15:8], coloridx[2]);
+pipelinx pipdx_2(clk24, ce_pixel, pipe_abx, wr[3], vdata[23:16], coloridx[1]);
+pipelinx pipdx_3(clk24, ce_pixel, pipe_abx, wr[3], vdata[31:24], coloridx[0]);
 
 
 endmodule
