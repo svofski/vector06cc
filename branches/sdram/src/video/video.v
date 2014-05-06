@@ -37,10 +37,10 @@ module video(
 	mode512,			// 1 == 512 pixels/line mode
 	
 //	SRAM_DQ,			// SRAM data bus (input)
-	vdata80,
-	vdataA0,
-	vdataC0,
-	vdataE0,
+	vdata,
+	vdata2,
+	vdata3,
+	vdata4,
 	
 	SRAM_ADDR,			// SRAM address, output
 
@@ -85,10 +85,10 @@ input 			mode512;			// 1 for 512x256 video mode
 
 // RAM access
 //input [7:0] 	SRAM_DQ;
-input[7:0] vdata80;
-input[7:0] vdataA0;
-input[7:0] vdataC0;
-input[7:0] vdataE0;
+input[31:0] vdata;
+input[31:0] vdata2;
+input[31:0] vdata3;
+input[31:0] vdata4;
 output[15:0]	SRAM_ADDR;
 
 // video outputs
@@ -157,11 +157,10 @@ framebuffer 	winrar(
 							.hsync(hsync),
 
 //							.SRAM_DQ(SRAM_DQ),
-		   .vdata80(vdata80),
-		   .vdataA0(vdataA0),
-		   .vdataC0(vdataC0),
-		   .vdataE0(vdataE0),
-		
+		   .vdata(vdata),
+		   .vdata2(vdata2),
+		   .vdata3(vdata3),
+		   .vdata4(vdata4),
 							
 							.SRAM_ADDR(SRAM_ADDR),
 							.coloridx(coloridx_modeless),
