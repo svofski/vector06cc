@@ -1,0 +1,32 @@
+MEMORY {
+    ZP:		start = $0080, size = $001A, define = yes;
+    RAM1:	start = $0800, size=$47ff, file=%O;
+}
+
+SEGMENTS {
+	CODE:	load = RAM1, type = ro, define = yes;
+    INIT:	load = RAM1, type = ro, define = yes, optional = yes;
+	RODATA:	load = RAM1, type = ro;
+	DATA:	load = RAM1, type = rw, run = RAM1, define = yes;
+	BSS:	load = RAM1, type = bss, define = yes;
+	ZEROPAGE: load = ZP, type = zp;
+}
+
+FEATURES {
+	STARTADDRESS:	default = $0200;
+	CONDES: segment = RODATA,
+			type = constructor,
+			label = __CONSTRUCTOR_TABLE__,
+			count = __CONSTRUCTOR_COUNT__;
+	CONDES: segment = RODATA,
+			type = destructor,
+			label = __DESTRUCTOR_TABLE__,
+			count = __DESTRUCTOR_COUNT__;
+}
+
+SYMBOLS {
+	__STACKSIZE__:	value = $200, weak = yes;
+	__RAM_SIZE__:	value = $47ff, weak = yes;
+	__RAM_START__:	value = $0800, weak = yes;
+}
+
