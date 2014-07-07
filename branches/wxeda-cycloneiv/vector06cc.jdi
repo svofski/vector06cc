@@ -1,6 +1,8 @@
 <sld_project_info>
   <project>
-    <hash md5_digest_80b="00000000000000000000"/>
+    <hash md5_digest_80b="e4742eb71ed24befc0ff"/>
   </project>
-  <file_info/>
+  <file_info>
+    <file device="EP4CE6E22C8" path="vector06cc.sof" usercode="0xFFFFFFFF"/>
+  </file_info>
 </sld_project_info>

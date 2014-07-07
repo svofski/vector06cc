@@ -45,6 +45,9 @@ wire lock;
 
 wire clk300;
 
+wxeda_clocks(.inclk0(clk), .c0(clk24), .c1(clk60), .c2(clk300), .c3(clkpalFSC));
+
+`ifdef BABOR
 mclk24mhz vector_xtal(clk50, clk24, clk300, clk60, lock);
 
 // Derive clock for PAL subcarrier: 4x 4.43361875
@@ -62,6 +65,8 @@ always @(posedge clk300) begin
 end
 
 ayclkdrv clkbufpalfsc(pal_phase[`PHACC_WIDTH-1], clkpalFSC);
+`endif
+
 
 always @(posedge clk24) begin
 	if (initctr != 3) begin
