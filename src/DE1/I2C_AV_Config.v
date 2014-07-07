@@ -125,18 +125,16 @@ begin
 		Dummy_DATA	:	LUT_DATA	<=	16'h0000;
 		SET_LIN_L	:	LUT_DATA	<=	16'h0017;//16'h001A; input gain 0dB
 		SET_LIN_R	:	LUT_DATA	<=	16'h0217;//16'h021A;
-		SET_HEAD_L	:	LUT_DATA	<=	16'h047B;
-		SET_HEAD_R	:	LUT_DATA	<=	16'h067B;
-		A_PATH_CTRL	:	LUT_DATA	<=	16'h08F2; //16'h08F8;
+		SET_HEAD_L	:	LUT_DATA	<=	16'h047B;//0 db
+		SET_HEAD_R	:	LUT_DATA	<=	16'h067B;//0 db
+		A_PATH_CTRL	:	LUT_DATA	<=	16'h08F2;//16'h08F8;
 		D_PATH_CTRL	:	LUT_DATA	<=	16'h0A06;
 		POWER_ON	:	LUT_DATA	<=	16'h0C00;
-		SET_FORMAT	:	LUT_DATA	<=	16'h0E01;		// MSB first left-justified, 16-bit
-		SAMPLE_CTRL	:	LUT_DATA	<=	16'h1002;
+		SET_FORMAT	:	LUT_DATA	<=	16'h0E13;//LRP=1, DSP Mode, 16-bit
+		SAMPLE_CTRL	:	LUT_DATA	<=	16'h1001;//48 kHz,250fs,USB mode
 		SET_ACTIVE	:	LUT_DATA	<=	16'h1201;
 		default		:	LUT_DATA	<=	16'h0000;
 	endcase
 end
 ////////////////////////////////////////////////////////////////////
 endmodule
-
-// $Id$
