@@ -51,16 +51,19 @@
 
 // Undefine following for smaller/faster builds
 `define WITH_CPU			
-`define WITH_KEYBOARD
-`define WITH_VI53
-`define WITH_AY
-`define WITH_FLOPPY
-`define WITH_OSD
+//`define WITH_KEYBOARD
+//`define WITH_VI53
+//`define WITH_AY
+//`define WITH_FLOPPY
+//`define WITH_OSD
 //`define WITH_DE1_JTAG
 //`define JTAG_AUTOHOLD
+`define WITH_SDRAM
 `define FLOPPYLESS_HAX	// set FDC odata to $00 when compiling without floppy
 
-module vector06cc(CLOCK_24,CLOCK_27, clk50mhz, KEY[3:0], LEDr[9:0], LEDg[7:0], SW[9:0], HEX0, HEX1, HEX2, HEX3, 
+module vector06cc(CLK48, KEY[3:0], LEDg[3:0], 
+/*
+HEX0, HEX1, HEX2, HEX3, 
 		////////////////////	SRAM Interface		////////////////
 		SRAM_DQ,						//	SRAM Data bus 16 Bits
 		SRAM_ADDR,						//	SRAM Address bus 18 Bits
@@ -69,6 +72,7 @@ module vector06cc(CLOCK_24,CLOCK_27, clk50mhz, KEY[3:0], LEDr[9:0], LEDg[7:0], S
 		SRAM_WE_N,						//	SRAM Write Enable
 		SRAM_CE_N,						//	SRAM Chip Enable
 		SRAM_OE_N,						//	SRAM Output Enable
+*/
 
 	DRAM_DQ,				//	SDRAM Data bus 16 Bits
 	DRAM_ADDR,				//	SDRAM Address bus 12 Bits
@@ -83,13 +87,12 @@ module vector06cc(CLOCK_24,CLOCK_27, clk50mhz, KEY[3:0], LEDr[9:0], LEDg[7:0], S
 	DRAM_CLK,				//	SDRAM Clock
 	DRAM_CKE,				//	SDRAM Clock Enable
 
-
 		VGA_HS,
 		VGA_VS,
 		VGA_R,
 		VGA_G,
 		VGA_B, 
-
+/*
 		////////////////////	I2C		////////////////////////////
 		I2C_SDAT,						//	I2C Data
 		I2C_SCLK,						//	I2C Clock
@@ -100,10 +103,10 @@ module vector06cc(CLOCK_24,CLOCK_27, clk50mhz, KEY[3:0], LEDr[9:0], LEDg[7:0], S
 		AUD_XCK,
 		AUD_ADCLRCK,
 		AUD_ADCDAT,
-
+*/
 		PS2_CLK,
 		PS2_DAT,
-
+/*
 		////////////////////	USB JTAG link	////////////////////
 		TDI,  							// CPLD -> FPGA (data in)
 		TCK,  							// CPLD -> FPGA (clk)
@@ -115,23 +118,22 @@ module vector06cc(CLOCK_24,CLOCK_27, clk50mhz, KEY[3:0], LEDr[9:0], LEDg[7:0], S
 		SD_DAT3,						//	SD Card Data 3
 		SD_CMD,							//	SD Card Command Signal
 		SD_CLK,							//	SD Card Clock
-		
+*/		
+        BEEP,
 		///////////////////// USRAT //////////////////////
 		UART_TXD,
 		UART_RXD,
-
 		// TEST PIN
+/*
 		GPIO_0,
 		GPIO_1,
+*/        
 );
-input [1:0]		CLOCK_24;
-input [1:0]		CLOCK_27;
-input			clk50mhz;
+input			CLK48;
 input [3:0] 	KEY;
-output [9:0] 	LEDr;
-output [7:0] 	LEDg;
-input [9:0] 	SW; 
+output [3:0] 	LEDg;
 
+/*
 output [6:0] 	HEX0;
 output [6:0] 	HEX1;
 output [6:0] 	HEX2;
@@ -146,6 +148,8 @@ output			SRAM_WE_N;				//	SRAM Write Enable
 output			SRAM_CE_N;				//	SRAM Chip Enable
 output			SRAM_OE_N;				//	SRAM Output Enable
 
+*/
+
 	inout	[15:0]	DRAM_DQ;				//	SDRAM Data bus 16 Bits
 	output	[11:0]	DRAM_ADDR;				//	SDRAM Address bus 12 Bits
 	output			DRAM_LDQM;				//	SDRAM Low-byte Data Mask 
@@ -159,13 +163,14 @@ output			SRAM_OE_N;				//	SRAM Output Enable
 	output			DRAM_CLK;				//	SDRAM Clock
 	output			DRAM_CKE;				//	SDRAM Clock Enable
 
-/////// VGA
+    /////// VGA
 output 			VGA_HS;
 output 			VGA_VS;
-output	[3:0] 	VGA_R;
-output	[3:0] 	VGA_G;
-output	[3:0] 	VGA_B;
+output	[4:0] 	VGA_R;
+output	[5:0] 	VGA_G;
+output	[4:0] 	VGA_B;
 
+/*
 ////////////////////////	I2C		////////////////////////////////
 inout			I2C_SDAT;				//	I2C Data
 output			I2C_SCLK;				//	I2C Clock
@@ -178,10 +183,12 @@ output			AUD_XCK;
 output			AUD_ADCLRCK;			//	Audio CODEC ADC LR Clock
 input			AUD_ADCDAT;				//	Audio CODEC ADC Data
 
+*/
 
 input			PS2_CLK;
 input			PS2_DAT;
 
+/*
 ////////////////////	USB JTAG link	////////////////////////////
 input  			TDI;					// CPLD -> FPGA (data in)
 input  			TCK;					// CPLD -> FPGA (clk)
@@ -193,12 +200,11 @@ input			SD_DAT;					//	SD Card Data 			(MISO)
 output			SD_DAT3;				//	SD Card Data 3 			(CSn)
 output			SD_CMD;					//	SD Card Command Signal	(MOSI)
 output			SD_CLK;					//	SD Card Clock			(SCK)
-
+*/
 output			UART_TXD;
 input			UART_RXD;
 
-output [12:0] 	GPIO_0;
-output [35:0]	GPIO_1;
+output          BEEP;
 
 
 // CLOCK SETUP
@@ -207,9 +213,9 @@ wire mreset = !mreset_n;
 wire clk24, clkAudio, clkpal4FSC;
 wire ce12, ce6, ce6x, ce3, vi53_timer_ce, video_slice, pipe_ab;
 wire clk60;
+
 clockster clockmaker(
-	.clk(CLOCK_24), 
-	.clk50(clk50mhz),
+	.clk(CLK48), 
 	.clk24(clk24), 
 	.clkAudio(clkAudio), 
 	.ce12(ce12), 
@@ -222,6 +228,10 @@ clockster clockmaker(
 	.clkpalFSC(clkpal4FSC),
 	.clk60(clk60)
 	);
+    
+assign BEEP = 1'b1;    
+
+wire AUD_XCK, AUD_BCLK, AUD_DACDAT, AUD_DACLRCK, AUD_ADCDAT, AUD_ADCLRCK;
 	
 assign AUD_XCK = clkAudio;
 wire tape_input;
@@ -257,6 +267,10 @@ reg swkey2=1'b1;
 
 always @(negedge KEY[2]) swkey2<=~swkey2;
 
+always
+    {singleclock_enabled, slowclock_enabled, warpclock_enabled} = 3'b000;
+    
+`ifdef WTFARP
 always @(posedge clk24) 
 //	case ({SW[9],SW[8]})//svofski
 	case ({swkey2,SW[8]})
@@ -270,7 +284,7 @@ always @(posedge clk24)
 	2'b10:	{singleclock_enabled, slowclock_enabled, warpclock_enabled} = 3'b010;
 	default: {singleclock_enabled, slowclock_enabled, warpclock_enabled} = 3'b000;
 	endcase
-
+`endif
 wire regular_clock_enabled = !slowclock_enabled & !singleclock_enabled & !breakpoint_condition;
 wire singleclock;
 
@@ -343,15 +357,15 @@ end
 /////////////////
 // DEBUG PINS  //
 /////////////////
-assign GPIO_0[8:0] = {clk24, ce12, ce6, ce3, vi53_timer_ce, video_slice, clkpal4FSC, 1'b1, tv_test[0]};
+//assign GPIO_0[8:0] = {clk24, ce12, ce6, ce3, vi53_timer_ce, video_slice, clkpal4FSC, 1'b1, tv_test[0]};
+//assign GPIO_0[7:0] = {clk24, ce12, ce6, ce3, vi53_timer_ce, video_slice, clkpal4FSC, clk60};
 
 /////////////////
 // CPU SECTION //
 /////////////////
 wire RESET_n = mreset_n & !blksbr_reset_pulse;
 reg READY;
-//wire HOLD = jHOLD | SW[7] | osd_command_bushold | floppy_death_by_floppy;
-wire HOLD = jHOLD | osd_command_bushold | floppy_death_by_floppy;
+wire HOLD = osd_command_bushold | floppy_death_by_floppy;
 wire INT = int_request;
 wire INTE;
 wire DBIN;
@@ -367,22 +381,20 @@ wire [7:0] DO;
 
 
 reg[7:0] status_word;
-
 reg[9:0] gledreg;
 
-assign LEDr[7:0] = SW[0] == 0 ? DI : SW[1] == 0 ? DO : gledreg[7:0];
-assign LEDr[9:8] = gledreg[9:8];
-//assign LEDg = SW[2] ? status_word : {vv55int_pb_out[3:0],video_palette_value[3:0]};
-wire [1:0] sw23 = {SW[3],SW[2]};
+wire [1:0] sw23 = {1'b0, 1'b0};
 
 wire [7:0] kbd_keystatus = {kbd_mod_rus, kbd_key_shift, kbd_key_ctrl, kbd_key_rus, kbd_key_blksbr};
 
-assign LEDg = sw23 == 0 ? status_word 
-			: sw23 == 1 ? floppy_leds//{floppy_rden,floppy_odata[6:0]}//{kbd_keystatus} 
-			: sw23 == 2 ? floppy_status 
-			: {vi53_timer_ce, INT, interrupt_ack, mJTAG_SELECT, mJTAG_SRAM_WR_N, SRAM_ADDR[17:15]};
+//assign LEDg = sw23 == 0 ? status_word 
+//			: sw23 == 1 ? floppy_leds//{floppy_rden,floppy_odata[6:0]}//{kbd_keystatus} 
+//			: sw23 == 2 ? floppy_status 
+//			: {vi53_timer_ce, INT, interrupt_ack, 1'b0};
+
+assign LEDg = {clk24, clkpal4FSC, clk60, CLK48};
 			
-SEG7_LUT_4 seg7display(HEX0, HEX1, HEX2, HEX3, /*SW[4] ? clock_counter :*/ A);
+//SEG7_LUT_4 seg7display(HEX0, HEX1, HEX2, HEX3, /*SW[4] ? clock_counter :*/ A);
 
 
 wire ram_read;
@@ -464,8 +476,9 @@ wire [15:0] address_bus = A;
 reg[31:0] rdvidreg;
 always @(posedge clk24) rdvidreg={rdvidreg[30:0],rdvid};
 
+`ifdef WITH_SDRAM
 
-assign DRAM_CLK=clk60;				//	SDRAM Clock
+assign DRAM_CLK=clk60;			//	SDRAM Clock
 assign DRAM_CKE=1;				//	SDRAM Clock Enable
 wire[15:0] dramout,dramout2;
 wire memcpubusy,memvidbusy,rdcpu_finished;
@@ -482,7 +495,7 @@ SDRAM_Controller ramd(
 	.DRAM_CS_N(DRAM_CS_N),				//	SDRAM Chip Select
 	.DRAM_BA_0(DRAM_BA_0),				//	SDRAM Bank Address 0
 	.DRAM_BA_1(DRAM_BA_1),				//	SDRAM Bank Address 1
-  .iaddr((rdvidreg[9])?{4'b0001,VIDEO_A[12:0],2'b00}:{ramdisk_page,A[15],A[12:0],A[14:13]}),
+    .iaddr((rdvidreg[9])?{4'b0001,VIDEO_A[12:0],2'b00}:{ramdisk_page,A[15],A[12:0],A[14:13]}),
 	.idata(DO),
 	.rd(ram_read&DBIN&~rom_access),
 	.we_n(ram_write_n|io_write|WR_n), 
@@ -498,6 +511,12 @@ always @(negedge rdcpu_finished) sram_data_in=dramout[7:0];
 
 reg[31:0] vdata,vdata2,vdata3,vdata4;
 always @(negedge memvidbusy)vdata<={dramout2,dramout};
+
+`else
+reg[31:0] vdata,vdata2,vdata3,vdata4;
+wire memcpubusy = 0, memvidbusy = 0, rdcpu_finished = 1;
+reg[7:0] sram_data_in;
+`endif
 
 
 wire [7:0] 	kvaz_debug;
@@ -533,7 +552,8 @@ wire vga_vs;
 wire vga_hs;
 
 
-wire [1:0]		tv_mode = {SW[4], SW[5]};
+//wire [1:0]		tv_mode = {SW[4], SW[5]};
+wire [1:0]		tv_mode = {1'b0, 1'b0};
 
 wire 		tv_sync;
 wire [7:0] 	tv_luma;
@@ -559,7 +579,7 @@ video vidi(.clk24(clk24), .ce12(ce12), .ce6(ce6), .ce6x(ce6x), .clk4fsc(clkpal4F
 		   .retrace(retrace),
 		   .video_scroll_reg(video_scroll_reg),
 		   .border_idx(bib[14]),
-		   .testpin(GPIO_0[12:9]),
+		   //.testpin(GPIO_0[12:9]),
 		   .tv_sync(tv_sync),
 		   .tv_luma(tv_luma),
 		   .tv_chroma(tv_chroma),
@@ -587,11 +607,11 @@ reg [3:0] video_r;
 reg [3:0] video_g;
 reg [3:0] video_b;
 
-assign GPIO_1[29:26] = tv_luma[3:0];
+//assign GPIO_1[29:26] = tv_luma[3:0];
 
-assign VGA_R = tv_mode[0] ? tv_luma[3:0] : video_r;
-assign VGA_G = tv_mode[0] ? tv_luma[3:0] : video_g;
-assign VGA_B = tv_mode[0] ? tv_luma[3:0] : video_b;
+assign VGA_R[4:1] = tv_mode[0] ? tv_luma[3:0] : video_r;
+assign VGA_G[5:2] = tv_mode[0] ? tv_luma[3:0] : video_g;
+assign VGA_B[4:1] = tv_mode[0] ? tv_luma[3:0] : video_b;
 assign VGA_VS= vga_vs;
 assign VGA_HS= vga_hs;
 
@@ -790,7 +810,7 @@ always @(kbd_key_shift or kbd_key_ctrl or kbd_key_rus) begin
 	vv55int_pc_in[6] <= ~kbd_key_ctrl;
 	vv55int_pc_in[7] <= ~kbd_key_rus;
 end
-always @(tape_input, SW) vv55int_pc_in[4] <= tape_input;
+always @(tape_input) vv55int_pc_in[4] <= tape_input;
 always @* vv55int_pc_in[3:0] <= 4'b1111;
 
 
@@ -1118,34 +1138,9 @@ specialkeys skeys(
 				
 always gledreg[8] <= disable_rom;				
 
+`ifdef WITH_I2C
 I2C_AV_Config 		u7(clk24,mreset_n,I2C_SCLK,I2C_SDAT);
+`endif
 
-/////////////////
-//   DE1 JTAG  //
-/////////////////
-
-// JTAG access to SRAM
-wire [17:0]	mJTAG_ADDR;
-wire [15:0]	mJTAG_DATA_TO_HOST,mJTAG_DATA_FROM_HOST;
-wire		mJTAG_SRAM_WR_N;
-wire 		mJTAG_SELECT;
-
-wire		jHOLD;
-
-jtag_top	tigertiger(
-				.clk24(clk24),
-				.reset_n(mreset_n),
-				.oHOLD(jHOLD),
-				.iHLDA(HLDA),
-				.iTCK(TCK),
-				.oTDO(TDO),
-				.iTDI(TDI),
-				.iTCS(TCS),
-				.oJTAG_ADDR(mJTAG_ADDR),
-				.iJTAG_DATA_TO_HOST(mJTAG_DATA_TO_HOST),
-				.oJTAG_DATA_FROM_HOST(mJTAG_DATA_FROM_HOST),
-				.oJTAG_SRAM_WR_N(mJTAG_SRAM_WR_N),
-				.oJTAG_SELECT(mJTAG_SELECT)
-				);
 
 endmodule
