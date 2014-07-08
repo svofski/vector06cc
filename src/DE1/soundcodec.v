@@ -23,13 +23,14 @@
 
 `default_nettype none
 
-module soundcodec(clk12,
+module soundcodec(clk24,
 						pulses,
 						ay_soundA,ay_soundB,ay_soundC,
 						rs_soundA,rs_soundB,rs_soundC,
 						covox,
-						tapein, reset_n, oAUD_XCK, oAUD_BCK, oAUD_DATA, oAUD_LRCK, iAUD_ADCDAT, oAUD_ADCLRCK);
-input	clk12;
+						tapein, reset_n,
+                        o_adc_clk, o_adc_cs_n, i_adc_data_in);
+input	clk24;
 input	[3:0] pulses;
 input	[7:0] ay_soundA;
 input	[7:0] ay_soundB;
@@ -40,22 +41,20 @@ input	[7:0] rs_soundC;
 input	[7:0] covox;
 output	reg tapein;
 input	reset_n;
-output	oAUD_XCK = clk12;
-output	oAUD_BCK;
-output	oAUD_DATA;
-output	oAUD_LRCK;
-input	iAUD_ADCDAT;
-output	oAUD_ADCLRCK;
+
+output  o_adc_clk;
+output  o_adc_cs_n;
+input   i_adc_data_in;
 
 parameter HYST = 4;
 
-reg [7:0] decimator;
-always @(posedge clk12) decimator <= decimator + 1'd1;
+reg [8:0] decimator;
+always @(posedge clk24) decimator <= decimator + 1'd1;
 
 wire ma_ce = decimator == 0;
 
 
-wire [15:0] linein;			// comes from codec
+wire [15:0] linein;			        // comes from codec
 reg [15:0] ma_pulseL,ma_pulseR;		// goes to codec
 
 reg [7:0] pulses_sample[0:3];
@@ -68,7 +67,7 @@ wire [5:0] m34 = {pulses[3], 4'b0};
 
 reg [7:0] sum;
 
-always @(posedge clk12) begin
+always @(posedge clk24) begin
 	if (ma_ce) begin
 		pulses_sample[3] <= pulses_sample[2];
 		pulses_sample[2] <= pulses_sample[1];
@@ -80,13 +79,11 @@ always @(posedge clk12) begin
 	ma_pulseR <= {sum[7:2],7'b0}+{m34,8'b0}+{ay_soundA,4'b0}+{ay_soundB,3'b0}+{rs_soundA,4'b0}+{rs_soundB,3'b0}+{covox,4'b0};
 end
 
-audio_io audioio(oAUD_BCK,oAUD_DATA,oAUD_LRCK,iAUD_ADCDAT,oAUD_ADCLRCK,clk12,reset_n,
-						{~ma_pulseL[15],ma_pulseL[14:0]},
-						{~ma_pulseR[15],ma_pulseR[14:0]},
-						linein);
+wire [7:0] line8in;
+tlc549c adc(.clk24(clk24), .adc_data_in(i_adc_data_in), .adc_data(line8in), .adc_clk(o_adc_clk), .adc_cs_n(o_adc_cs_n));
 
-wire [7:0] line8in = {~linein[15],linein[14:8]};    // shift signed value to be withing 0..255 range, 128 is midpoint
-always @(posedge clk12) begin
+//wire [7:0] line8in = {~linein[15],linein[14:8]};    // shift signed value to be within 0..255 range, 128 is midpoint
+always @(posedge clk24) begin
     if (line8in < 128+HYST) tapein <= 1'b0;
     if (line8in > 128-HYST) tapein <= 1'b1; 
 end

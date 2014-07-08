@@ -51,8 +51,8 @@
 
 // Undefine following for smaller/faster builds
 `define WITH_CPU			
-//`define WITH_KEYBOARD
-//`define WITH_VI53
+`define WITH_KEYBOARD
+`define WITH_VI53
 //`define WITH_AY
 //`define WITH_FLOPPY
 //`define WITH_OSD
@@ -61,7 +61,9 @@
 `define WITH_SDRAM
 `define FLOPPYLESS_HAX	// set FDC odata to $00 when compiling without floppy
 
-module vector06cc(CLK48, KEY[3:0], LEDg[3:0], 
+module vector06cc(CLK48, 
+    KEY[3:0], 
+    LEDg[3:0], 
 /*
 HEX0, HEX1, HEX2, HEX3, 
 		////////////////////	SRAM Interface		////////////////
@@ -87,25 +89,14 @@ HEX0, HEX1, HEX2, HEX3,
 	DRAM_CLK,				//	SDRAM Clock
 	DRAM_CKE,				//	SDRAM Clock Enable
 
-		VGA_HS,
-		VGA_VS,
-		VGA_R,
-		VGA_G,
-		VGA_B, 
-/*
-		////////////////////	I2C		////////////////////////////
-		I2C_SDAT,						//	I2C Data
-		I2C_SCLK,						//	I2C Clock
+    VGA_HS,
+    VGA_VS,
+    VGA_R,
+    VGA_G,
+    VGA_B, 
 
-		AUD_BCLK, 
-		AUD_DACDAT, 
-		AUD_DACLRCK,
-		AUD_XCK,
-		AUD_ADCLRCK,
-		AUD_ADCDAT,
-*/
-		PS2_CLK,
-		PS2_DAT,
+    PS2_CLK,
+    PS2_DAT,
 /*
 		////////////////////	USB JTAG link	////////////////////
 		TDI,  							// CPLD -> FPGA (data in)
@@ -119,15 +110,13 @@ HEX0, HEX1, HEX2, HEX3,
 		SD_CMD,							//	SD Card Command Signal
 		SD_CLK,							//	SD Card Clock
 */		
-        BEEP,
-		///////////////////// USRAT //////////////////////
-		UART_TXD,
-		UART_RXD,
-		// TEST PIN
-/*
-		GPIO_0,
-		GPIO_1,
-*/        
+    ADDAT,
+    ADCLK,
+    ADCSn,
+    BEEP,
+    ///////////////////// USRAT //////////////////////
+    UART_TXD,
+    UART_RXD,
 );
 input			CLK48;
 input [3:0] 	KEY;
@@ -138,30 +127,20 @@ output [6:0] 	HEX0;
 output [6:0] 	HEX1;
 output [6:0] 	HEX2;
 output [6:0] 	HEX3;
-
-////////////////////////	SRAM Interface	////////////////////////
-inout	[15:0]	SRAM_DQ;				//	SRAM Data bus 16 Bits
-output	[17:0]	SRAM_ADDR;				//	SRAM Address bus 18 Bits
-output			SRAM_UB_N;				//	SRAM High-byte Data Mask 
-output			SRAM_LB_N;				//	SRAM Low-byte Data Mask 
-output			SRAM_WE_N;				//	SRAM Write Enable
-output			SRAM_CE_N;				//	SRAM Chip Enable
-output			SRAM_OE_N;				//	SRAM Output Enable
-
 */
 
-	inout	[15:0]	DRAM_DQ;				//	SDRAM Data bus 16 Bits
-	output	[11:0]	DRAM_ADDR;				//	SDRAM Address bus 12 Bits
-	output			DRAM_LDQM;				//	SDRAM Low-byte Data Mask 
-	output			DRAM_UDQM;				//	SDRAM High-byte Data Mask
-	output			DRAM_WE_N;				//	SDRAM Write Enable
-	output			DRAM_CAS_N;				//	SDRAM Column Address Strobe
-	output			DRAM_RAS_N;				//	SDRAM Row Address Strobe
-	output			DRAM_CS_N;				//	SDRAM Chip Select
-	output			DRAM_BA_0;				//	SDRAM Bank Address 0
-	output			DRAM_BA_1;				//	SDRAM Bank Address 0
-	output			DRAM_CLK;				//	SDRAM Clock
-	output			DRAM_CKE;				//	SDRAM Clock Enable
+inout	[15:0]	DRAM_DQ;				//	SDRAM Data bus 16 Bits
+output	[11:0]	DRAM_ADDR;				//	SDRAM Address bus 12 Bits
+output			DRAM_LDQM;				//	SDRAM Low-byte Data Mask 
+output			DRAM_UDQM;				//	SDRAM High-byte Data Mask
+output			DRAM_WE_N;				//	SDRAM Write Enable
+output			DRAM_CAS_N;				//	SDRAM Column Address Strobe
+output			DRAM_RAS_N;				//	SDRAM Row Address Strobe
+output			DRAM_CS_N;				//	SDRAM Chip Select
+output			DRAM_BA_0;				//	SDRAM Bank Address 0
+output			DRAM_BA_1;				//	SDRAM Bank Address 0
+output			DRAM_CLK;				//	SDRAM Clock
+output			DRAM_CKE;				//	SDRAM Clock Enable
 
     /////// VGA
 output 			VGA_HS;
@@ -169,21 +148,6 @@ output 			VGA_VS;
 output	[4:0] 	VGA_R;
 output	[5:0] 	VGA_G;
 output	[4:0] 	VGA_B;
-
-/*
-////////////////////////	I2C		////////////////////////////////
-inout			I2C_SDAT;				//	I2C Data
-output			I2C_SCLK;				//	I2C Clock
-
-output			AUD_BCLK;
-output			AUD_DACDAT;
-output			AUD_DACLRCK;
-output			AUD_XCK;
-
-output			AUD_ADCLRCK;			//	Audio CODEC ADC LR Clock
-input			AUD_ADCDAT;				//	Audio CODEC ADC Data
-
-*/
 
 input			PS2_CLK;
 input			PS2_DAT;
@@ -205,6 +169,9 @@ output			UART_TXD;
 input			UART_RXD;
 
 output          BEEP;
+output          ADCLK;
+output          ADCSn;
+input           ADDAT;
 
 
 // CLOCK SETUP
@@ -236,7 +203,7 @@ wire AUD_XCK, AUD_BCLK, AUD_DACDAT, AUD_DACLRCK, AUD_ADCDAT, AUD_ADCLRCK;
 assign AUD_XCK = clkAudio;
 wire tape_input;
 soundcodec soundnik(
-					.clk12(clkAudio),
+					.clk24(clk24),
 					.pulses({vv55int_pc_out[0],vi53_out}), 
 					.ay_soundA(ay_soundA),	//
 					.ay_soundB(ay_soundB),	//
@@ -247,12 +214,9 @@ soundcodec soundnik(
 					.covox(CovoxData),
 					.tapein(tape_input), 
 					.reset_n(mreset_n),
-					.oAUD_XCK(AUD_XCK),
-					.oAUD_BCK(AUD_BCLK), 
-					.oAUD_DATA(AUD_DACDAT),
-					.oAUD_LRCK(AUD_DACLRCK),
-					.iAUD_ADCDAT(AUD_ADCDAT), 
-					.oAUD_ADCLRCK(AUD_ADCLRCK)
+                    .o_adc_clk(ADCLK),
+                    .o_adc_cs_n(ADCSn),
+                    .i_adc_data_in(ADDAT),
 				   );
 
 reg [15:0] slowclock;
