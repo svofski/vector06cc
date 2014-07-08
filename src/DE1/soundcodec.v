@@ -29,7 +29,8 @@ module soundcodec(clk24,
 						rs_soundA,rs_soundB,rs_soundC,
 						covox,
 						tapein, reset_n,
-                        o_adc_clk, o_adc_cs_n, i_adc_data_in);
+                        o_adc_clk, o_adc_cs_n, i_adc_data_in,
+                        o_pwm);
 input	clk24;
 input	[3:0] pulses;
 input	[7:0] ay_soundA;
@@ -46,13 +47,15 @@ output  o_adc_clk;
 output  o_adc_cs_n;
 input   i_adc_data_in;
 
+output reg o_pwm;
+
 parameter HYST = 4;
+parameter PWM_WIDTH = 10;
 
 reg [8:0] decimator;
 always @(posedge clk24) decimator <= decimator + 1'd1;
 
 wire ma_ce = decimator == 0;
-
 
 wire [15:0] linein;			        // comes from codec
 reg [15:0] ma_pulseL,ma_pulseR;		// goes to codec
@@ -83,9 +86,15 @@ wire [7:0] line8in;
 tlc549c adc(.clk24(clk24), .adc_data_in(i_adc_data_in), .adc_data(line8in), .adc_clk(o_adc_clk), .adc_cs_n(o_adc_cs_n));
 
 //wire [7:0] line8in = {~linein[15],linein[14:8]};    // shift signed value to be within 0..255 range, 128 is midpoint
-always @(posedge clk24) begin
+always @(posedge clk24) begin 
     if (line8in < 128+HYST) tapein <= 1'b0;
     if (line8in > 128-HYST) tapein <= 1'b1; 
 end
+
+reg [PWM_WIDTH - 1:0] pwm_counter;
+always @(posedge clk24) 
+    pwm_counter <= pwm_counter + 1'b1;
+
+always o_pwm <= pwm_counter < ma_pulseL[15:15-PWM_WIDTH] ? 1'b0 : 1'bz;
 
 endmodule
