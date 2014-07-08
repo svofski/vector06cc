@@ -53,9 +53,9 @@
 `define WITH_CPU			
 `define WITH_KEYBOARD
 `define WITH_VI53
-//`define WITH_AY
-//`define WITH_FLOPPY
-//`define WITH_OSD
+`define WITH_AY
+`define WITH_FLOPPY
+`define WITH_OSD
 //`define WITH_DE1_JTAG
 //`define JTAG_AUTOHOLD
 `define WITH_SDRAM
@@ -63,8 +63,8 @@
 
 module vector06cc(CLK48, 
     KEY[3:0], 
-    LEDg[3:0], 
 /*
+    LED[3:0], 
 HEX0, HEX1, HEX2, HEX3, 
 		////////////////////	SRAM Interface		////////////////
 		SRAM_DQ,						//	SRAM Data bus 16 Bits
@@ -104,12 +104,13 @@ HEX0, HEX1, HEX2, HEX3,
 		TCS,  							// CPLD -> FPGA (CS)
 	    TDO,  							// FPGA -> CPLD (data out)
 
+*/		
 		////////////////////	SD_Card Interface	////////////////
 		SD_DAT,							//	SD Card Data
 		SD_DAT3,						//	SD Card Data 3
 		SD_CMD,							//	SD Card Command Signal
 		SD_CLK,							//	SD Card Clock
-*/		
+
     ADDAT,
     ADCLK,
     ADCSn,
@@ -120,7 +121,6 @@ HEX0, HEX1, HEX2, HEX3,
 );
 input			CLK48;
 input [3:0] 	KEY;
-output [3:0] 	LEDg;
 
 /*
 output [6:0] 	HEX0;
@@ -158,13 +158,14 @@ input  			TDI;					// CPLD -> FPGA (data in)
 input  			TCK;					// CPLD -> FPGA (clk)
 input  			TCS;					// CPLD -> FPGA (CS)
 output 			TDO;					// FPGA -> CPLD (data out)
+*/
 
 ////////////////////	SD Card Interface	////////////////////////
 input			SD_DAT;					//	SD Card Data 			(MISO)
 output			SD_DAT3;				//	SD Card Data 3 			(CSn)
 output			SD_CMD;					//	SD Card Command Signal	(MOSI)
 output			SD_CLK;					//	SD Card Clock			(SCK)
-*/
+
 output			UART_TXD;
 input			UART_RXD;
 
@@ -196,7 +197,7 @@ clockster clockmaker(
 	.clk60(clk60)
 	);
     
-assign BEEP = 1'b1;    
+//assign BEEP = 1'b1;    
 
 wire AUD_XCK, AUD_BCLK, AUD_DACDAT, AUD_DACLRCK, AUD_ADCDAT, AUD_ADCLRCK;
 	
@@ -217,6 +218,7 @@ soundcodec soundnik(
                     .o_adc_clk(ADCLK),
                     .o_adc_cs_n(ADCSn),
                     .i_adc_data_in(ADDAT),
+                    .o_pwm(BEEP)
 				   );
 
 reg [15:0] slowclock;
@@ -356,7 +358,7 @@ wire [7:0] kbd_keystatus = {kbd_mod_rus, kbd_key_shift, kbd_key_ctrl, kbd_key_ru
 //			: sw23 == 2 ? floppy_status 
 //			: {vi53_timer_ce, INT, interrupt_ack, 1'b0};
 
-assign LEDg = {clk24, clkpal4FSC, clk60, CLK48};
+//assign LEDg = {clk24, clkpal4FSC, clk60, CLK48};
 			
 //SEG7_LUT_4 seg7display(HEX0, HEX1, HEX2, HEX3, /*SW[4] ? clock_counter :*/ A);
 
@@ -1052,7 +1054,6 @@ ayglue shrieker(
 				.soundA(ay_soundA),
 				.soundB(ay_soundB),
 				.soundC(ay_soundC),
-				.cs(1'b1)
 				);				
 
 ym2149 rsound(

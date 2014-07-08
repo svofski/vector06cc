@@ -68,9 +68,9 @@ CHIP  "vector06cc"  ASSIGNED TO AN: EP4CE6E22C8
 
 Pin Name/Usage               : Location  : Dir.   : I/O Standard      : Voltage : I/O Bank  : User Assignment
 -------------------------------------------------------------------------------------------------------------
-LEDg[2]                      : 1         : output : 2.5 V             :         : 1         : Y              
-LEDg[1]                      : 2         : output : 2.5 V             :         : 1         : Y              
-LEDg[0]                      : 3         : output : 2.5 V             :         : 1         : Y              
+SD_CLK                       : 1         : output : 2.5 V             :         : 1         : Y              
+SD_CMD                       : 2         : output : 2.5 V             :         : 1         : Y              
+SD_DAT3                      : 3         : output : 2.5 V             :         : 1         : Y              
 GND                          : 4         : gnd    :                   :         :           :                
 VCCINT                       : 5         : power  :                   : 1.2V    :           :                
 RESERVED_INPUT_WITH_WEAK_PULLUP : 6         :        :                   :         : 1         :                
@@ -208,7 +208,7 @@ RESERVED_INPUT_WITH_WEAK_PULLUP : 137       :        :                   :      
 RESERVED_INPUT_WITH_WEAK_PULLUP : 138       :        :                   :         : 8         :                
 VCCIO8                       : 139       : power  :                   : 2.5V    : 8         :                
 GND                          : 140       : gnd    :                   :         :           :                
-LEDg[3]                      : 141       : output : 2.5 V             :         : 8         : Y              
+SD_DAT                       : 141       : input  : 2.5 V             :         : 8         : Y              
 RESERVED_INPUT_WITH_WEAK_PULLUP : 142       :        :                   :         : 8         :                
 RESERVED_INPUT_WITH_WEAK_PULLUP : 143       :        :                   :         : 8         :                
 RESERVED_INPUT_WITH_WEAK_PULLUP : 144       :        :                   :         : 8         :                
