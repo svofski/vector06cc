@@ -197,7 +197,6 @@ clockster clockmaker(
 	.clk60(clk60)
 	);
     
-//assign BEEP = 1'b1;    
 
 wire AUD_XCK, AUD_BCLK, AUD_DACDAT, AUD_DACLRCK, AUD_ADCDAT, AUD_ADCLRCK;
 	
