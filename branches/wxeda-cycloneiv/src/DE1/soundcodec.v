@@ -79,8 +79,12 @@ wire delta_sigma_ce = divctr == 0;
 
 wire [2:0] beepsum = {pulses[0] + pulses[1] + pulses[2] + {2{pulses[3]}}}; 
 wire [9:0] aysum = ay_soundA + ay_soundB + ay_soundC;
+wire [9:0] rssum = rs_soundA + rs_soundB + rs_soundC;
 
-wire [15:0] mixed = {beepsum, 13'b0} + {aysum, 5'b0};
+//	ma_pulseL <= {sum[7:2],7'b0}+{m34,8'b0}+{ay_soundC,4'b0}+{ay_soundB,3'b0}+{rs_soundC,4'b0}+{rs_soundB,3'b0}+{covox,4'b0};
+//	ma_pulseR <= {sum[7:2],7'b0}+{m34,8'b0}+{ay_soundA,4'b0}+{ay_soundB,3'b0}+{rs_soundA,4'b0}+{rs_soundB,3'b0}+{covox,4'b0};
+
+wire [15:0] mixed = {beepsum, 13'b0} + {aysum, 4'b0} + {rssum, 4'b0} + {covox, 4'b0};
 
 wire [7:0] line8in;
 tlc549c adc(.clk24(clk24), .adc_data_in(i_adc_data_in), .adc_data(line8in), .adc_clk(o_adc_clk), .adc_cs_n(o_adc_cs_n));
