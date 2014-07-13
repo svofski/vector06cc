@@ -393,11 +393,11 @@ wire [13:0] tvUV_7;
 wire [13:0] tvUW_0;
 wire [13:0] tvUW_1;
 wire [13:0] tvUW_2;
-wire [13:0] tvUW_3;								   
+wire [13:0] tvUW_3;
 wire [13:0] tvUW_4;
 wire [13:0] tvUW_5;
 wire [13:0] tvUW_6;
-wire [13:0] tvUW_7;								   
+wire [13:0] tvUW_7;
 
 // These coefficients are taken from eMSX. Scaling
 // is done differently here, but only relative relation
