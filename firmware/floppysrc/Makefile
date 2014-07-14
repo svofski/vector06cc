@@ -21,7 +21,7 @@ all:	disk
 disk:	$(OBJS)
 	$(L65) -C vector.lc $(OBJS) lib/vector.lib -o disk.bin -m disk.map
 	bin2hex disk.bin disk.hex
-	cp disk.hex ..\..
+	cp disk.hex ../..
 
 clean:
 	rm -f $(OBJS) $(ASSS) disk.bin disk.map disk.hex
