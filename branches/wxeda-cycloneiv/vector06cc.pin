@@ -153,8 +153,8 @@ GND                          : 82        : gnd    :                   :         
 DRAM_ADDR[2]                 : 83        : output : 2.5 V             :         : 5         : Y              
 DRAM_ADDR[3]                 : 84        : output : 2.5 V             :         : 5         : Y              
 BEEP                         : 85        : output : 2.5 V             :         : 5         : Y              
-UART_RXD                     : 86        : input  : 2.5 V             :         : 5         : Y              
-UART_TXD                     : 87        : output : 2.5 V             :         : 5         : Y              
+UART_TXD                     : 86        : output : 2.5 V             :         : 5         : Y              
+UART_RXD                     : 87        : input  : 2.5 V             :         : 5         : Y              
 KEY[2]                       : 88        : input  : 2.5 V             :         : 5         : Y              
 KEY[3]                       : 89        : input  : 2.5 V             :         : 5         : Y              
 KEY[0]                       : 90        : input  : 2.5 V             :         : 6         : Y              
