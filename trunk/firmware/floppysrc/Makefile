@@ -1,4 +1,3 @@
-#SHELL=cmd.exe
 C65=cc65
 A65=ca65
 L65=ld65
