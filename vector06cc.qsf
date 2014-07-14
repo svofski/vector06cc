@@ -93,8 +93,8 @@ set_location_assignment PIN_141 -to SD_DAT
 
 set_location_assignment PIN_98 -to PS2_DAT
 set_location_assignment PIN_99 -to PS2_CLK
-set_location_assignment PIN_86 -to UART_RXD
-set_location_assignment PIN_87 -to UART_TXD
+set_location_assignment PIN_87 -to UART_RXD
+set_location_assignment PIN_86 -to UART_TXD
 
 set_location_assignment PIN_30 -to DRAM_DQ[0]
 set_location_assignment PIN_28 -to DRAM_DQ[1]
