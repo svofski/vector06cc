@@ -321,7 +321,7 @@ wire [3:0] cvbs_clamped = cvbs_unclamped[4] ? 4'hF : cvbs_unclamped[3:0];
 wire [4:0] luma_unclamped = V_REF + tvY;
 wire [3:0] luma_clamped = luma_unclamped[4] ? 4'hF : luma_unclamped[3:0];
 
-wire [4:0] chroma_unclamped = V_REF + tv_chroma;
+wire [4:0] chroma_unclamped = 8 + tv_chroma;
 wire [3:0] chroma_clamped = chroma_unclamped[4] ? 4'hF : chroma_unclamped[3:0];
 
 always @* 
