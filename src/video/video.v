@@ -333,18 +333,17 @@ always @*
 	endcase
 
 always @* 
-	casex ({tv_sync,tv_colorburst,tv_blank})
-	3'b0xx: tv_luma <= V_SYNC;
-	3'b111:	tv_luma <= V_REF;
-	3'b101:	tv_luma <= V_REF;
+	casex ({tv_sync,tv_blank})
+	2'b0x: tv_luma <= V_SYNC;
+	2'b11:	tv_luma <= V_REF;
 	default:tv_luma <= luma_clamped; 
 	endcase
 
 always @* 
 	casex ({tv_sync,tv_colorburst,tv_blank})
-	3'b0xx: tv_chroma_o <= V_REF;
+	3'b0xx: tv_chroma_o <= 0;
 	3'b111:	tv_chroma_o <= tv_sin[7] ? (V_REF-1) : (V_REF+1); 
-	3'b101:	tv_chroma_o <= V_REF;
+	3'b101:	tv_chroma_o <= 0;
 	default:tv_chroma_o <= chroma_clamped; 
 	endcase
     
