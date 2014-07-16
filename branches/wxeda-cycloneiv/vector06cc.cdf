@@ -4,7 +4,7 @@ JedecChain;
 	DefaultMfr(6E);
 
 	P ActionCode(Cfg)
-		Device PartName(EP4CE6E22) Path("") File("vector06cc.sof") MfrSpec(OpMask(1));
+		Device PartName(EP4CE6E22) Path("D:/users/svo/src/vector06cc/wxeda-cycloneiv/") File("vector06cc.sof") MfrSpec(OpMask(1));
 
 ChainEnd;
 
