@@ -62,7 +62,8 @@ module video(
 	tv_mode,
 	tv_sync,
 	tv_luma,
-	tv_chroma,
+	tv_chroma_o,
+    tv_cvbs,
 	tv_test,
 	tv_osd_fg,
 	tv_osd_bg,
@@ -110,8 +111,11 @@ input [1:0]		tv_mode;		// tv_mode[1] = alternating fields
 								// tv_mode[0] = tv mode
 output 			tv_sync;
 output reg[7:0] tv_luma;		// CVBS output, TV sync included
-output reg[7:0]	tv_chroma;
+output reg[7:0]	tv_chroma_o;
+output reg[7:0] tv_cvbs;
 output [7:0]    tv_test;
+
+reg [7:0] tv_chroma;
 
 // test pins
 output [3:0] 	testpin;
@@ -311,18 +315,40 @@ always @* begin
 	end
 end
 
-wire [4:0] unclamped = V_REF + tvY + tv_chroma;
-wire [3:0] clamped = unclamped[4] ? 4'hF : unclamped[3:0];
+wire [4:0] cvbs_unclamped = V_REF + tvY + tv_chroma;
+wire [3:0] cvbs_clamped = cvbs_unclamped[4] ? 4'hF : cvbs_unclamped[3:0];
+
+wire [4:0] luma_unclamped = V_REF + tvY;
+wire [3:0] luma_clamped = luma_unclamped[4] ? 4'hF : luma_unclamped[3:0];
+
+wire [4:0] chroma_unclamped = V_REF + tv_chroma;
+wire [3:0] chroma_clamped = chroma_unclamped[4] ? 4'hF : chroma_unclamped[3:0];
+
+always @* 
+	casex ({tv_sync,tv_colorburst,tv_blank})
+	3'b0xx: tv_cvbs <= V_SYNC;
+	3'b111: tv_cvbs <= tv_sin[7] ? (V_REF-1) : (V_REF+1); 
+	3'b101: tv_cvbs <= V_REF;
+	default:tv_cvbs <= cvbs_clamped; 
+	endcase
 
 always @* 
 	casex ({tv_sync,tv_colorburst,tv_blank})
 	3'b0xx: tv_luma <= V_SYNC;
-	3'b111:	tv_luma <= tv_sin[7] ? (V_REF-1) : (V_REF+1); 
+	3'b111:	tv_luma <= V_REF;
 	3'b101:	tv_luma <= V_REF;
-	default:tv_luma <= clamped; 
+	default:tv_luma <= luma_clamped; 
 	endcase
-	
-	
+
+always @* 
+	casex ({tv_sync,tv_colorburst,tv_blank})
+	3'b0xx: tv_chroma_o <= V_REF;
+	3'b111:	tv_chroma_o <= tv_sin[7] ? (V_REF-1) : (V_REF+1); 
+	3'b101:	tv_chroma_o <= V_REF;
+	default:tv_chroma_o <= chroma_clamped; 
+	endcase
+    
+    
 always @*
 	case ({tv_halfline[1]^pal_fieldalt,tv_phase0[2:0]})
 	0: 	tv_chroma <= tvUV_0;

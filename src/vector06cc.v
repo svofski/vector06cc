@@ -54,12 +54,15 @@
 `define WITH_KEYBOARD
 `define WITH_VI53
 `define WITH_AY
+//`define WITH_RSOUND
 `define WITH_FLOPPY
 `define WITH_OSD
 `define WITH_SDRAM
 `define FLOPPYLESS_HAX  // set FDC odata to $00 when compiling without floppy
-`define WITH_COMPOSITE  // output composite video on VGA pins
-`define COMPOSITE_PWM   // use sigma-delta modulator on composite video out
+`define WITH_TV         // WXEDA board has too few resources to switch modes in runtime
+//`define WITH_COMPOSITE  // output composite video on VGA pins
+//`define COMPOSITE_PWM   // use sigma-delta modulator on composite video out
+`define WITH_SVIDEO 
 
 module vector06cc(CLK48, 
     KEY[3:0], 
@@ -81,6 +84,9 @@ module vector06cc(CLK48,
     VGA_R,
     VGA_G,
     VGA_B, 
+    
+    SVIDEO_Y,
+    SVIDEO_C,
 
     PS2_CLK,
     PS2_DAT,
@@ -98,6 +104,13 @@ module vector06cc(CLK48,
     ///////////////////// USRAT //////////////////////
     UART_TXD,
     UART_RXD,
+    
+DS_EN1,
+DS_EN3,
+DS_EN2,
+DS_EN4,
+
+    
 );
 input           CLK48;
 input [3:0]     KEY;
@@ -122,6 +135,9 @@ output  [4:0]   VGA_R;
 output  [5:0]   VGA_G;
 output  [4:0]   VGA_B;
 
+output          SVIDEO_Y;
+output          SVIDEO_C;
+
 input           PS2_CLK;
 input           PS2_DAT;
 
@@ -138,6 +154,13 @@ output          BEEP;
 output          ADCLK;
 output          ADCSn;
 input           ADDAT;
+
+output DS_EN1, DS_EN3, DS_EN2, DS_EN4;
+
+assign DS_EN1 = 1'b1;
+assign DS_EN2 = 1'b1;
+assign DS_EN3 = 1'b1;
+assign DS_EN4 = 1'b1;
 
 
 // CLOCK SETUP
@@ -483,15 +506,16 @@ wire vga_vs;
 wire vga_hs;
 
 
-`ifdef WITH_COMPOSITE
+`ifdef WITH_TV
 wire [1:0]      tv_mode = {2'b11};
 `else
 wire [1:0]      tv_mode = {2'b00};
 `endif
 
 wire        tv_sync;
-wire [7:0]  tv_luma;
-wire [7:0]  tv_chroma;
+wire [3:0]  tv_luma;
+wire [3:0]  tv_chroma;
+wire [3:0]  tv_cvbs;
 wire [7:0]  tv_test;
 
 reg[3:0] bib[14:0];
@@ -516,13 +540,14 @@ video vidi(.clk24(clk24), .ce12(ce12), .ce6(ce6), .ce6x(ce6x), .clk4fsc(clkpal4F
            //.testpin(GPIO_0[12:9]),
            .tv_sync(tv_sync),
            .tv_luma(tv_luma),
-           .tv_chroma(tv_chroma),
+           .tv_chroma_o(tv_chroma),
+           .tv_cvbs(tv_cvbs),
            .tv_test(tv_test),
            .tv_mode(tv_mode),
            .tv_osd_fg(osd_fg),
            .tv_osd_bg(osd_bg),
            .tv_osd_on(osd_active),
-            .rdvid(rdvid)
+           .rdvid(rdvid)
             );
 wire rdvid;
             
@@ -543,23 +568,40 @@ reg [3:0] video_b;
 
 wire [3:0] tv_out;
 
-`ifdef COMPOSITE_PWM
-
-reg [4:0] composite_pwm;
-always @(posedge clk_color_mod) 
-    composite_pwm <= composite_pwm[3:0] + tv_luma[3:0];
-
-assign tv_out = {4{composite_pwm[4]}};
-
+`ifdef WITH_COMPOSITE
+    `ifdef COMPOSITE_PWM
+        reg [4:0] cvbs_pwm;
+        always @(posedge clk_color_mod)
+            cvbs_pwm <= cvbs_pwm[3:0] + tv_cvbs[3:0];
+        assign tv_out = {4{cvbs_pwm[4]}};
+    `else
+        assign tv_out = tv_luma[3:0];
+    `endif
 `else
-
-assign tv_out = tv_luma[3:0];
-
+    assign tv_out = 4'b0;
 `endif
 
-assign VGA_R[4:1] = tv_mode[0] ? tv_out : video_r;
-assign VGA_G[5:2] = tv_mode[0] ? tv_out : video_g;
-assign VGA_B[4:1] = tv_mode[0] ? tv_out : video_b; 
+`ifdef WITH_SVIDEO
+    reg [4:0] luma_pwm;
+    reg [4:0] chroma_pwm;
+    always @(posedge clk_color_mod) begin
+        luma_pwm <= luma_pwm[3:0] + tv_luma[3:0];
+        chroma_pwm <= chroma_pwm[3:0] + tv_chroma[3:0];
+    end
+    assign VGA_G[0] = luma_pwm[4];
+    assign VGA_G[1] = chroma_pwm[4];
+`endif
+
+`ifdef WITH_COMPOSITE 
+    assign VGA_R[4:1] = tv_out;
+    assign VGA_G[5:2] = tv_out;
+    assign VGA_B[4:1] = tv_out; 
+`else
+    assign VGA_R[4:1] = video_r;
+    assign VGA_G[5:2] = video_g;
+    assign VGA_B[4:1] = video_b; 
+`endif
+
 assign VGA_VS= vga_vs;
 assign VGA_HS= vga_hs;
 
@@ -818,8 +860,8 @@ I82C55 vv55pu(
     clk24);
 
 reg[7:0]    CovoxData;
-reg[7:0] RSdataIn,RSctrl;
-wire[7:0] RSdataOut;
+reg[7:0]    RSdataIn,RSctrl;
+wire[7:0]   RSdataOut;
 always @(posedge clk24) begin
     CovoxData <= vv55pu_pa_out;
     RSdataIn <= vv55pu_pb_out;
@@ -991,7 +1033,7 @@ wire[7:0]       osd_q = osd_rq + 8'd32;
 `ifdef WITH_OSD
 textmode osd(
     .clk(clk24),
-    .ce(tv_mode[0] ? ce6 : 1'b1),
+    .ce(tv_mode[0] ? ce12 : 1'b1),
     .vsync(osd_vsync),
     .hsync(osd_hsync),
     .pixel(osd_fg),
@@ -1014,12 +1056,13 @@ assign osd_rq  = 0;
 ////////
 wire [7:0]  ay_odata;
 
+wire [7:0]  ay_soundA,ay_soundB,ay_soundC;
+wire [7:0]  rs_soundA,rs_soundB,rs_soundC;
+
 `ifdef WITH_AY
 wire        ay_sel = portmap_device == 3'b101 && address_bus_r[1] == 0; // only ports $14 and $15
 wire        ay_wren = ~WR_n & io_write & ay_sel;
 wire        ay_rden = io_read & ay_sel;
-wire [7:0]  ay_soundA,ay_soundB,ay_soundC;
-wire [7:0]  rs_soundA,rs_soundB,rs_soundC;
 
 reg [3:0] aycectr;
 always @(posedge clk24) if (aycectr<14) aycectr <= aycectr + 1'd1; else aycectr <= 0;
@@ -1037,6 +1080,15 @@ ayglue shrieker(
                 .soundB(ay_soundB),
                 .soundC(ay_soundC),
                 );              
+`else
+assign ay_soundA=8'b0;
+assign ay_soundB=8'b0;
+assign ay_soundC=8'b0;
+assign ay_rden = 1'b0;
+assign ay_odata = 8'hFF;
+`endif
+
+`ifdef WITH_RSOUND
 
 ym2149 rsound(
     .DI(RSdataIn),
@@ -1052,17 +1104,10 @@ ym2149 rsound(
     .CLK(clk24)
     );                
 `else
-wire [7:0]  ay_soundA=8'b0;
-wire [7:0]  ay_soundB=8'b0;
-wire [7:0]  ay_soundC=8'b0;
-wire [7:0]  rs_soundA=8'b0;
-wire [7:0]  rs_soundB=8'b0;
-wire [7:0]  rs_soundC=8'b0;
-wire        ay_rden = 1'b0;
-assign      ay_odata = 8'hFF;
+assign rs_soundA=8'b0;
+assign rs_soundB=8'b0;
+assign rs_soundC=8'b0;
 `endif
-
-
 
 //////////////////
 // Special keys //

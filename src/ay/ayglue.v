@@ -1,4 +1,4 @@
-module ayglue(clk, ce, reset_n, address, data, wren, rden, q, soundA,soundB,soundC, odataoe);
+module ayglue(clk, ce, reset_n, address, data, wren, rden, q, soundA,soundB,soundC);
 input 			clk;
 input			ce;
 input			reset_n;
@@ -7,14 +7,12 @@ input [7:0]		data;
 input			wren;
 input			rden;
 output reg[7:0]	q;
-output			odataoe;
 
 output[7:0]	soundA;
 output[7:0]	soundB;
 output[7:0]	soundC;
 
 wire [7:0] 	odata;
-wire 		odataoe;
 
 
 reg [2:0] ctl;	// {I_BDIR,I_BC2,I_BC1}
