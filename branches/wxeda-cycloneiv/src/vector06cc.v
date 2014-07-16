@@ -518,8 +518,8 @@ wire [3:0]  tv_chroma;
 wire [3:0]  tv_cvbs;
 wire [7:0]  tv_test;
 
-reg[3:0] bib[14:0];
-always @(posedge ce6) {bib[14],bib[13],bib[12],bib[11],bib[10],bib[9],bib[8],bib[7],bib[6],bib[5],bib[4],bib[3],bib[2],bib[1],bib[0]}<={bib[13],bib[12],bib[11],bib[10],bib[9],bib[8],bib[7],bib[6],bib[5],bib[4],bib[3],bib[2],bib[1],bib[0],video_border_index};
+wire[3:0] border_idx_delayed;
+border_delay#14(.clk(clk24), .ce(ce6), .i_borderindex(video_border_index), .o_delayed(border_idx_delayed));
 
 video vidi(.clk24(clk24), .ce12(ce12), .ce6(ce6), .ce6x(ce6x), .clk4fsc(clkpal4FSC), .video_slice(video_slice), .pipe_ab(pipe_ab),
            .mode512(video_mode512), 
@@ -536,7 +536,7 @@ video vidi(.clk24(clk24), .ce12(ce12), .ce6(ce6), .ce6x(ce6x), .clk4fsc(clkpal4F
            .realcolor_out(realcolor),
            .retrace(retrace),
            .video_scroll_reg(video_scroll_reg),
-           .border_idx(bib[14]),
+           .border_idx(border_idx_delayed),
            //.testpin(GPIO_0[12:9]),
            .tv_sync(tv_sync),
            .tv_luma(tv_luma),
