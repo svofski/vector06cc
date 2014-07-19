@@ -29,7 +29,7 @@ def pal_calculate(clk,subcarrier,anglesteps,accu_bits):
 pal_calculate(24,4.43361875,8,32)
 
 
-Fmclk=300e6
+Fmclk=150e6
 Fsc=4433618.750
 width=32
 
