@@ -507,14 +507,14 @@ wire vga_hs;
 
 
 `ifdef WITH_TV
-wire [1:0]      tv_mode = {2'b11};
+wire [1:0]      tv_mode = {KEY[3], 1'b1};
 `else
 wire [1:0]      tv_mode = {2'b00};
 `endif
 
 wire        tv_sync;
-wire [3:0]  tv_luma;
-wire [3:0]  tv_chroma;
+wire [4:0]  tv_luma;
+wire [4:0]  tv_chroma;
 wire [3:0]  tv_cvbs;
 wire [7:0]  tv_test;
 
@@ -582,14 +582,14 @@ wire [3:0] tv_out;
 `endif
 
 `ifdef WITH_SVIDEO
-    reg [4:0] luma_pwm;
-    reg [4:0] chroma_pwm;
+    reg [5:0] luma_pwm;
+    reg [5:0] chroma_pwm;
     always @(posedge clk_color_mod) begin
-        luma_pwm <= luma_pwm[3:0] + tv_luma[3:0];
-        chroma_pwm <= chroma_pwm[3:0] + tv_chroma[3:0];
+        luma_pwm <= luma_pwm[4:0] + tv_luma[4:0];
+        chroma_pwm <= chroma_pwm[4:0] + tv_chroma[4:0];
     end
-    assign VGA_G[0] = luma_pwm[4];
-    assign VGA_G[1] = chroma_pwm[4];
+    assign VGA_G[0] = luma_pwm[5];
+    assign VGA_G[1] = chroma_pwm[5];
 `endif
 
 `ifdef WITH_COMPOSITE 
@@ -597,9 +597,15 @@ wire [3:0] tv_out;
     assign VGA_G[5:2] = tv_out;
     assign VGA_B[4:1] = tv_out; 
 `else
+`ifdef WITH_VGA
     assign VGA_R[4:1] = video_r;
     assign VGA_G[5:2] = video_g;
     assign VGA_B[4:1] = video_b; 
+`else
+    assign VGA_R[4:1] = 4'b0;
+    assign VGA_G[5:2] = 4'b0;
+    assign VGA_B[4:1] = 4'b0; 
+`endif    
 `endif
 
 assign VGA_VS= vga_vs;
