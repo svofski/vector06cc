@@ -315,22 +315,19 @@ always @* begin
     end
 end
 
-wire [4:0] cvbs_unclamped = V_REF + tvY + tv_chroma;
-wire [3:0] cvbs_clamped = cvbs_unclamped[4] ? 4'hF : cvbs_unclamped[3:0];
+wire [5:0] cvbs_unclamped = V_REF + tvY[4:0] - $signed(tv_chroma[4:1]);
+wire [4:0] cvbs_clamped = cvbs_unclamped[4:0];
 
 wire [4:0] luma_unclamped = V_REF + tvY;
-//wire [3:0] luma_clamped = luma_unclamped[4] ? 4'hF : luma_unclamped[3:0];
 wire [4:0] luma_clamped = luma_unclamped[4:0];
 
-//wire [5:0] chroma_unclamped =  16 + tv_chroma;
-//wire [4:0] chroma_clamped = $unsigned(chroma_unclamped[4:0]);
 wire [4:0] chroma_clamped;
 chroma_shift(.chroma_in(tv_chroma), .chroma_out(chroma_clamped));
 
 always @* 
     casex ({tv_sync,tv_colorburst,tv_blank})
     3'b0xx: tv_cvbs <= V_SYNC;
-    3'b111: tv_cvbs <= tv_sin[7] ? (V_REF-1) : (V_REF+1); 
+    3'b111: tv_cvbs <= V_REF + 2 - tv_sin[7:6]; 
     3'b101: tv_cvbs <= V_REF;
     default:tv_cvbs <= cvbs_clamped; 
     endcase
@@ -345,7 +342,7 @@ always @*
 always @* 
     casex ({tv_sync,tv_colorburst,tv_blank})
     3'b0xx: tv_chroma_o <= 16;
-    3'b111: tv_chroma_o <= 12 + tv_sin[7:5];//[7] ? (16-4) : (16+4); 
+    3'b111: tv_chroma_o <= 12 + tv_sin[7:5]; 
     3'b101: tv_chroma_o <= 16;
     default:tv_chroma_o <= chroma_clamped; 
     endcase

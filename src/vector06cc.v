@@ -507,7 +507,7 @@ wire vga_hs;
 
 
 `ifdef WITH_TV
-wire [1:0]      tv_mode = {KEY[3], 1'b1};
+wire [1:0]      tv_mode = {~KEY[2], 1'b1};
 `else
 wire [1:0]      tv_mode = {2'b00};
 `endif
@@ -515,7 +515,7 @@ wire [1:0]      tv_mode = {2'b00};
 wire        tv_sync;
 wire [4:0]  tv_luma;
 wire [4:0]  tv_chroma;
-wire [3:0]  tv_cvbs;
+wire [4:0]  tv_cvbs;
 wire [7:0]  tv_test;
 
 wire[3:0] border_idx_delayed;
@@ -570,10 +570,10 @@ wire [3:0] tv_out;
 
 `ifdef WITH_COMPOSITE
     `ifdef COMPOSITE_PWM
-        reg [4:0] cvbs_pwm;
+        reg [5:0] cvbs_pwm;
         always @(posedge clk_color_mod)
-            cvbs_pwm <= cvbs_pwm[3:0] + tv_cvbs[3:0];
-        assign tv_out = {4{cvbs_pwm[4]}};
+            cvbs_pwm <= cvbs_pwm[4:0] + tv_cvbs[4:0];
+        assign tv_out = {4{cvbs_pwm[5]}};
     `else
         assign tv_out = tv_luma[3:0];
     `endif
