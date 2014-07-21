@@ -54,11 +54,17 @@
 `define WITH_KEYBOARD
 `define WITH_VI53
 `define WITH_AY
+//`define WITH_RSOUND
 `define WITH_FLOPPY
 `define WITH_OSD
 //`define WITH_DE1_JTAG
 //`define JTAG_AUTOHOLD
 `define FLOPPYLESS_HAX	// set FDC odata to $00 when compiling without floppy
+`define WITH_TV         // WXEDA board has too few resources to switch modes in runtime
+`define WITH_COMPOSITE  // output composite video on VGA pins
+//`define COMPOSITE_PWM   // use sigma-delta modulator on composite video out
+`define WITH_SVIDEO 
+`define WITH_VGA
 
 module vector06cc(CLOCK_24,CLOCK_27, clk50mhz, KEY[3:0], LEDr[9:0], LEDg[7:0], SW[9:0], HEX0, HEX1, HEX2, HEX3, 
 		////////////////////	SRAM Interface		////////////////
@@ -207,6 +213,7 @@ wire mreset = !mreset_n;
 wire clk24, clkAudio, clkpal4FSC;
 wire ce12, ce6, ce6x, ce3, vi53_timer_ce, video_slice, pipe_ab;
 wire clk60;
+wire clk_color_mod;
 clockster clockmaker(
 	.clk(CLOCK_24), 
 	.clk50(clk50mhz),
@@ -220,7 +227,8 @@ clockster clockmaker(
 	.pipe_ab(pipe_ab), 
 	.ce1m5(vi53_timer_ce),
 	.clkpalFSC(clkpal4FSC),
-	.clk60(clk60)
+	.clk60(clk60),
+    .clk_color_mod(clk_color_mod),
 	);
 	
 assign AUD_XCK = clkAudio;
@@ -536,12 +544,13 @@ wire vga_hs;
 wire [1:0]		tv_mode = {SW[4], SW[5]};
 
 wire 		tv_sync;
-wire [7:0] 	tv_luma;
-wire [7:0]	tv_chroma;
+wire [4:0]  tv_luma;
+wire [4:0]  tv_chroma;
+wire [4:0]  tv_cvbs;
 wire [7:0]  tv_test;
 
-reg[3:0] bib[14:0];
-always @(posedge ce6) {bib[14],bib[13],bib[12],bib[11],bib[10],bib[9],bib[8],bib[7],bib[6],bib[5],bib[4],bib[3],bib[2],bib[1],bib[0]}<={bib[13],bib[12],bib[11],bib[10],bib[9],bib[8],bib[7],bib[6],bib[5],bib[4],bib[3],bib[2],bib[1],bib[0],video_border_index};
+wire[3:0] border_idx_delayed;
+border_delay#14(.clk(clk24), .ce(ce6), .i_borderindex(video_border_index), .o_delayed(border_idx_delayed));
 
 video vidi(.clk24(clk24), .ce12(ce12), .ce6(ce6), .ce6x(ce6x), .clk4fsc(clkpal4FSC), .video_slice(video_slice), .pipe_ab(pipe_ab),
 		   .mode512(video_mode512), 
@@ -558,11 +567,12 @@ video vidi(.clk24(clk24), .ce12(ce12), .ce6(ce6), .ce6x(ce6x), .clk4fsc(clkpal4F
 		   .realcolor_out(realcolor),
 		   .retrace(retrace),
 		   .video_scroll_reg(video_scroll_reg),
-		   .border_idx(bib[14]),
-		   .testpin(GPIO_0[12:9]),
+           .border_idx(border_idx_delayed),
+		   //.testpin(GPIO_0[12:9]),
 		   .tv_sync(tv_sync),
 		   .tv_luma(tv_luma),
-		   .tv_chroma(tv_chroma),
+           .tv_chroma_o(tv_chroma),
+           .tv_cvbs(tv_cvbs),
 		   .tv_test(tv_test),
 		   .tv_mode(tv_mode),
 		   .tv_osd_fg(osd_fg),
@@ -583,23 +593,15 @@ palette_ram paletteram(.address(paletteram_adr),
                        .wren(video_palette_wren_delayed), 
                        .q(realcolor2buf));
 
-reg [3:0] video_r;
-reg [3:0] video_g;
-reg [3:0] video_b;
-
-assign GPIO_1[29:26] = tv_luma[3:0];
-
-assign VGA_R = tv_mode[0] ? tv_luma[3:0] : video_r;
-assign VGA_G = tv_mode[0] ? tv_luma[3:0] : video_g;
-assign VGA_B = tv_mode[0] ? tv_luma[3:0] : video_b;
-assign VGA_VS= vga_vs;
-assign VGA_HS= vga_hs;
-
 wire [1:0] 	lowcolor_b = {2{osd_active}} & {realcolor[7],1'b0};
 wire 		lowcolor_g = osd_active & realcolor[5];
 wire 		lowcolor_r = osd_active & realcolor[2];
 
 wire [7:0] 	overlayed_colour = osd_active ? osd_colour : realcolor;
+
+reg [3:0] video_r;
+reg [3:0] video_g;
+reg [3:0] video_b;
 
 always @(posedge clk24) begin
 	video_r <= {overlayed_colour[2:0], lowcolor_r};
@@ -607,6 +609,13 @@ always @(posedge clk24) begin
 	video_b <= {overlayed_colour[7:6], lowcolor_b};
 end
 
+videomod(.clk_color_mod(clk_color_mod),
+    .tv_mode(tv_mode),
+    .video_r(video_r), .video_g(video_g), .video_b(video_b), .vga_hs(vga_hs), .vga_vs(vga_vs),
+    .tv_cvbs(tv_cvbs), .tv_luma(tv_luma), .tv_chroma(tv_chroma),
+    .VGA_HS(VGA_HS), .VGA_VS(VGA_VS),
+    .VGA_R(VGA_R), .VGA_G(VGA_G), .VGA_B(VGA_B),
+    .S_VIDEO_Y(GPIO_0[10]), .S_VIDEO_C(GPIO_0[11]));
 
 ///////////
 // RST38 //
@@ -834,15 +843,15 @@ I82C55 vv55pu(
 
 	vv55pu_pa_in,
 	vv55pu_pa_out,
-	vv55pu_pa_oe_n,				//
+    vv55pu_pa_oe_n,
 
-	vv55pu_pb_in,					//
+    vv55pu_pb_in,
 	vv55pu_pb_out,
-	vv55pu_pb_oe_n,				//
+    vv55pu_pb_oe_n,
 
 	vv55pu_pc_in,
 	vv55pu_pc_out,
-	vv55pu_pc_oe_n,				//
+    vv55pu_pc_oe_n,
 
 	mreset, 	// active 1
 
@@ -1023,7 +1032,7 @@ wire[7:0]		osd_q = osd_rq + 8'd32;
 `ifdef WITH_OSD
 textmode osd(
 	.clk(clk24),
-	.ce(tv_mode[0] ? ce6 : 1'b1),
+    .ce(tv_mode[0] ? ce12 : 1'b1),
 	.vsync(osd_vsync),
 	.hsync(osd_hsync),
 	.pixel(osd_fg),
@@ -1046,12 +1055,13 @@ assign osd_rq  = 0;
 ////////
 wire [7:0]	ay_odata;
 
+wire [7:0]  ay_soundA,ay_soundB,ay_soundC;
+wire [7:0]  rs_soundA,rs_soundB,rs_soundC;
+
 `ifdef WITH_AY
 wire		ay_sel = portmap_device == 3'b101 && address_bus_r[1] == 0; // only ports $14 and $15
 wire		ay_wren = ~WR_n & io_write & ay_sel;
 wire		ay_rden = io_read & ay_sel;
-wire [7:0]	ay_soundA,ay_soundB,ay_soundC;
-wire [7:0]	rs_soundA,rs_soundB,rs_soundC;
 
 reg [3:0] aycectr;
 always @(posedge clk24) if (aycectr<14) aycectr <= aycectr + 1'd1; else aycectr <= 0;
@@ -1068,8 +1078,16 @@ ayglue shrieker(
 				.soundA(ay_soundA),
 				.soundB(ay_soundB),
 				.soundC(ay_soundC),
-				.cs(1'b1)
 				);				
+`else
+assign ay_soundA=8'b0;
+assign ay_soundB=8'b0;
+assign ay_soundC=8'b0;
+assign ay_rden = 1'b0;
+assign ay_odata = 8'hFF;
+`endif
+
+`ifdef WITH_RSOUND
 
 ym2149 rsound(
   .DI(RSdataIn),
@@ -1085,17 +1103,10 @@ ym2149 rsound(
   .CLK(clk24)
   );				
 `else
-wire [7:0]	ay_soundA=8'b0;
-wire [7:0]	ay_soundB=8'b0;
-wire [7:0]	ay_soundC=8'b0;
-wire [7:0]	rs_soundA=8'b0;
-wire [7:0]	rs_soundB=8'b0;
-wire [7:0]	rs_soundC=8'b0;
-wire		ay_rden = 1'b0;
-assign		ay_odata = 8'hFF;
+assign rs_soundA=8'b0;
+assign rs_soundB=8'b0;
+assign rs_soundC=8'b0;
 `endif
-
-
 
 //////////////////
 // Special keys //
