@@ -63,6 +63,7 @@
 //`define WITH_COMPOSITE  // output composite video on VGA pins
 //`define COMPOSITE_PWM   // use sigma-delta modulator on composite video out
 `define WITH_SVIDEO 
+`define WITH_VGA
 
 module vector06cc(CLK48, 
     KEY[3:0], 
@@ -527,7 +528,7 @@ video vidi(.clk24(clk24), .ce12(ce12), .ce6(ce6), .ce6x(ce6x), .clk4fsc(clkpal4F
            .vdata2(vdata2),
            .vdata3(vdata3),
            .vdata4(vdata4),
-            .SRAM_ADDR(VIDEO_A), 
+           .SRAM_ADDR(VIDEO_A), 
 
            .hsync(vga_hs), .vsync(vga_vs), 
            .osd_hsync(osd_hsync), .osd_vsync(osd_vsync),
@@ -562,60 +563,15 @@ palette_ram paletteram(.address(paletteram_adr),
                        .wren(video_palette_wren_delayed), 
                        .q(realcolor2buf));
 
-reg [3:0] video_r;
-reg [3:0] video_g;
-reg [3:0] video_b;
-
-wire [3:0] tv_out;
-
-`ifdef WITH_COMPOSITE
-    `ifdef COMPOSITE_PWM
-        reg [5:0] cvbs_pwm;
-        always @(posedge clk_color_mod)
-            cvbs_pwm <= cvbs_pwm[4:0] + tv_cvbs[4:0];
-        assign tv_out = {4{cvbs_pwm[5]}};
-    `else
-        assign tv_out = tv_luma[3:0];
-    `endif
-`else
-    assign tv_out = 4'b0;
-`endif
-
-`ifdef WITH_SVIDEO
-    reg [5:0] luma_pwm;
-    reg [5:0] chroma_pwm;
-    always @(posedge clk_color_mod) begin
-        luma_pwm <= luma_pwm[4:0] + tv_luma[4:0];
-        chroma_pwm <= chroma_pwm[4:0] + tv_chroma[4:0];
-    end
-    assign VGA_G[0] = luma_pwm[5];
-    assign VGA_G[1] = chroma_pwm[5];
-`endif
-
-`ifdef WITH_COMPOSITE 
-    assign VGA_R[4:1] = tv_out;
-    assign VGA_G[5:2] = tv_out;
-    assign VGA_B[4:1] = tv_out; 
-`else
-`ifdef WITH_VGA
-    assign VGA_R[4:1] = video_r;
-    assign VGA_G[5:2] = video_g;
-    assign VGA_B[4:1] = video_b; 
-`else
-    assign VGA_R[4:1] = 4'b0;
-    assign VGA_G[5:2] = 4'b0;
-    assign VGA_B[4:1] = 4'b0; 
-`endif    
-`endif
-
-assign VGA_VS= vga_vs;
-assign VGA_HS= vga_hs;
-
 wire [1:0]  lowcolor_b = {2{osd_active}} & {realcolor[7],1'b0};
 wire        lowcolor_g = osd_active & realcolor[5];
 wire        lowcolor_r = osd_active & realcolor[2];
 
 wire [7:0]  overlayed_colour = osd_active ? osd_colour : realcolor;
+
+reg [3:0] video_r;
+reg [3:0] video_g;
+reg [3:0] video_b;
 
 always @(posedge clk24) begin
     video_r <= {overlayed_colour[2:0], lowcolor_r};
@@ -623,6 +579,12 @@ always @(posedge clk24) begin
     video_b <= {overlayed_colour[7:6], lowcolor_b};
 end
 
+videomod(.clk_color_mod(clk_color_mod),
+    .video_r(video_r), .video_g(video_g), .video_b(video_b), .vga_hs(vga_hs), .vga_vs(vga_vs),
+    .tv_cvbs(tv_cvbs), .tv_luma(tv_luma), .tv_chroma(tv_chroma),
+    .VGA_HS(VGA_HS), .VGA_VS(VGA_VS),
+    .VGA_R(VGA_R[4:1]), .VGA_G(VGA_G[5:2]), .VGA_B(VGA_B[4:1]),
+    .S_VIDEO_Y(VGA_G[0]), .S_VIDEO_C(VGA_G[1]));
 
 ///////////
 // RST38 //
