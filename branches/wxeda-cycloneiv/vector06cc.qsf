@@ -59,7 +59,6 @@ set_global_assignment -name OUTPUT_IO_TIMING_FAR_END_VMEAS "HALF SIGNAL SWING" -
 set_global_assignment -name CYCLONEII_RESERVE_NCEO_AFTER_CONFIGURATION "USE AS REGULAR IO"
 set_global_assignment -name POWER_PRESET_COOLING_SOLUTION "23 MM HEAT SINK WITH 200 LFPM AIRFLOW"
 set_global_assignment -name POWER_BOARD_THERMAL_MODEL "NONE (CONSERVATIVE)"
-set_global_assignment -name SLD_FILE "D:/users/svo/projects/chinese-fpga-borat/0-example_test_nios/stp_auto_stripped.stp"
 
 set_location_assignment PIN_90 -to KEY[0]
 set_location_assignment PIN_91 -to KEY[1]

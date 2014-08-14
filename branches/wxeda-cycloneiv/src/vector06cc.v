@@ -170,7 +170,6 @@ wire mreset = !mreset_n;
 wire clk24, clkAudio, clkpal4FSC;
 wire ce12, ce6, ce6x, ce3, vi53_timer_ce, video_slice, pipe_ab;
 wire clk60;
-wire clk300;
 wire clk_color_mod;
 
 clockster clockmaker(
@@ -186,7 +185,6 @@ clockster clockmaker(
     .ce1m5(vi53_timer_ce),
     .clkpalFSC(clkpal4FSC),
     .clk60(clk60),
-    .clk300(clk300),
     .clk_color_mod(clk_color_mod),
     );
     
