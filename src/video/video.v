@@ -11,6 +11,8 @@
 //
 // Author: Viacheslav Slavinsky, http://sensi.org/~svo
 // 
+// Modified by Ivan Gorodetsky
+//
 // Design File: video.v
 //
 // Video subsystem: 
@@ -36,13 +38,12 @@ module video(
  
     mode512,            // 1 == 512 pixels/line mode
     
-//  SRAM_DQ,            // SRAM data bus (input)
     vdata,
     vdata2,
     vdata3,
     vdata4,
     
-    SRAM_ADDR,          // SRAM address, output
+    SRAM_ADDR,          // vram address, output
 
     hsync,              // VGA hsync
     vsync,              // VGA vsync
@@ -52,7 +53,9 @@ module video(
     
     coloridx,           // output:  palette ram address
     realcolor_in,       // input:   real colour value from palette ram
-    realcolor_out,      // output:  real colour value --> vga
+	 video_r,
+	 video_g,
+	 video_b,
     retrace,            // output:  out of scan area, for interrupt request
     video_scroll_reg,   // input:   line where display starts
     border_idx,         // input:   border colour index
@@ -85,7 +88,6 @@ input           pipe_ab;
 input           mode512;            // 1 for 512x256 video mode
 
 // RAM access
-//input [7:0]   SRAM_DQ;
 input[31:0] vdata;
 input[31:0] vdata2;
 input[31:0] vdata3;
@@ -99,7 +101,9 @@ output          osd_hsync;
 output          osd_vsync;
 output [3:0]    coloridx;
 input  [7:0]    realcolor_in;
-output [7:0]    realcolor_out;
+output [3:0] video_r=tv_mode[1]?tv_Pr:vgavideo_r;
+output [3:0] video_g=tv_mode[1]?tv_Y:vgavideo_g;
+output [3:0] video_b=tv_mode[1]?tv_Pb:vgavideo_b;
 output          retrace;
 
 input  [7:0]    video_scroll_reg;
@@ -137,10 +141,12 @@ wire            tvhs, tvhs2, tvvs;
 
 assign tvhs = tvhs2 | fb_row[0];
 
+wire YPbPrvsync;
 vga_refresh     refresher(
                             .clk24(clk24),
                             .hsync(hsync),
                             .vsync(vsync),
+									 .YPbPrvsync(YPbPrvsync),
                             .videoActive(videoActive),
                             .bordery(bordery),
                             .retrace(retrace),
@@ -151,7 +157,6 @@ vga_refresh     refresher(
                             .tvvs(tvvs),
                         );
 
-
 framebuffer     winrar(
                             .clk24(clk24),
                             .ce12(ce12),
@@ -160,7 +165,6 @@ framebuffer     winrar(
                             .fb_row(fb_row[8:0]),
                             .hsync(hsync),
 
-//                          .SRAM_DQ(SRAM_DQ),
                             .vdata(vdata),
                             .vdata2(vdata2),
                             .vdata3(vdata3),
@@ -192,16 +196,57 @@ end
 
 // coloridx is an output port, address of colour in the palette ram
 assign coloridx = border ? border_idx : xcoloridx;
-
-// realcolor_out what actually goes to VGA DAC
+wire [7:0] realcolor_out;
 assign realcolor_out = videoActive ? (wren_line1 ? rc_b : rc_a) : 8'b0;
-
-
 wire [7:0] rc_a;
 wire [7:0] rc_b;
-
 wire wren_line1 = fb_row[1];
 wire wren_line2 = ~fb_row[1];
+
+wire [1:0]  vgalowcolor_b = {2{tv_osd_on}} & {realcolor_out[7],1'b0};
+wire        vgalowcolor_g = tv_osd_on & realcolor_out[5];
+wire        vgalowcolor_r = tv_osd_on & realcolor_out[2];
+
+wire [7:0]  vgaoverlayed_colour = tv_osd_on ? osd_colour : realcolor_out;
+reg [3:0] vgavideo_r;
+reg [3:0] vgavideo_g;
+reg [3:0] vgavideo_b;
+always @(posedge clk24) begin
+    vgavideo_r <= {vgaoverlayed_colour[2:0], vgalowcolor_r};
+    vgavideo_g <= {vgaoverlayed_colour[5:3], vgalowcolor_g};
+    vgavideo_b <= {vgaoverlayed_colour[7:6], vgalowcolor_b};
+end
+
+parameter Y_REF  = 4'd2;
+parameter PbPr_REF  = 4'd8;
+wire[11:0] tv_Y_=8'd69*vgavideo_r+8'd135*vgavideo_g+8'd26*vgavideo_b;
+wire[11:0] tv_Pb_={PbPr_REF,8'b0}-8'd39*vgavideo_r-8'd77*vgavideo_g+8'd116*vgavideo_b;
+wire[11:0] tv_Pr_={PbPr_REF,8'b0}+8'd115*vgavideo_r-8'd96*vgavideo_g-8'd19*vgavideo_b;
+reg[3:0] tv_Y,tv_Pb,tv_Pr;
+always @(tv_mode==2'b10)
+	casex({YPbPrvsync,hsync,videoActive})//576p
+	3'b0xx:begin
+	tv_Y <= V_SYNC;
+	tv_Pb <=PbPr_REF;
+	tv_Pr <=PbPr_REF;
+	end
+	3'b10x:begin
+	tv_Y <= V_SYNC;
+	tv_Pb <=PbPr_REF;
+	tv_Pr <=PbPr_REF;
+	end
+	3'b111:begin
+	tv_Y <=tv_Y_[7]?Y_REF+tv_Y_[11:8]+1:Y_REF+tv_Y_[11:8];
+	tv_Pb <=tv_Pb_[7]?tv_Pb_[11:8]+1:tv_Pb_[11:8];
+	tv_Pr <=tv_Pr_[7]?tv_Pr_[11:8]+1:tv_Pr_[11:8];
+	end
+	3'b110:begin
+	tv_Y <= Y_REF;
+	tv_Pb <=PbPr_REF;
+	tv_Pr <=PbPr_REF;
+	end
+	endcase
+
 
 reg reset_line;
 always @(posedge clk24) begin

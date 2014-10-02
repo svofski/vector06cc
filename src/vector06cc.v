@@ -29,15 +29,19 @@
 //                      10: RAM disk test pins
 //                      11: WR_n, io_stack, SRAM_ADDR[17:15] (RAM disk page)
 //
-//  SW4         1 = PAL field phase alternate (should be on for normal tv's)
-//  SW5         1 = CVBS composite output on VGA R,G,B pins 
-//                  (connect them together and feed to tv)
+//	 SW5:SW4		
+//					 00: VGA
+//					 01: Component YPbPr 576p50 on VGA G,B,R pins
+//					 10&11: CVBS composite output on VGA R,G,B pins
+//                  	  (connect them together and feed to tv)
+//					 10: PAL without field phase alternate
+//					 11: PAL field phase alternate (should be on for normal tv's)
 //
 //  SW6         unused
 //  SW7         unused
 //
 //              These must be both "1" for normal operation:
-//  KEY2:SW8                00: single-clock, tap clock by KEY[1]
+//  KEY2:SW8        00: single-clock, tap clock by KEY[1]
 //                  01: warp mode: between 6 and 12 MHz
 //                  10: slow clock, code is executed at eyeballable speed
 //                  11: normal Vector-06C speed, full compatibility mode
@@ -564,7 +568,9 @@ video vidi(.clk24(clk24), .ce12(ce12), .ce6(ce6), .ce6x(ce6x), .clk4fsc(clkpal4F
             .osd_hsync(osd_hsync), .osd_vsync(osd_vsync),
             .coloridx(coloridx),
             .realcolor_in(realcolor2buf),
-            .realcolor_out(realcolor),
+				.video_r(video_r),
+				.video_g(video_g),
+				.video_b(video_b),
             .retrace(retrace),
             .video_scroll_reg(video_scroll_reg),
             .border_idx(border_idx_delayed),
@@ -581,7 +587,7 @@ video vidi(.clk24(clk24), .ce12(ce12), .ce6(ce6), .ce6x(ce6x), .clk4fsc(clkpal4F
             .rdvid(rdvid)
             );
 wire rdvid;
-            
+
 wire [7:0] realcolor;       // this truecolour value fetched from buffer directly to display
 wire [7:0] realcolor2buf;   // this truecolour value goes into the scan doubler buffer
 
@@ -593,21 +599,9 @@ palette_ram paletteram(.address(paletteram_adr),
                        .wren(video_palette_wren_delayed), 
                        .q(realcolor2buf));
 
-wire [1:0]  lowcolor_b = {2{osd_active}} & {realcolor[7],1'b0};
-wire        lowcolor_g = osd_active & realcolor[5];
-wire        lowcolor_r = osd_active & realcolor[2];
-
-wire [7:0]  overlayed_colour = osd_active ? osd_colour : realcolor;
-
-reg [3:0] video_r;
-reg [3:0] video_g;
-reg [3:0] video_b;
-
-always @(posedge clk24) begin
-    video_r <= {overlayed_colour[2:0], lowcolor_r};
-    video_g <= {overlayed_colour[5:3], lowcolor_g};
-    video_b <= {overlayed_colour[7:6], lowcolor_b};
-end
+wire [3:0] video_r;
+wire [3:0] video_g;
+wire [3:0] video_b;
 
 videomod(.clk_color_mod(clk_color_mod),
     .tv_mode(tv_mode),
