@@ -10,6 +10,8 @@
 // An open implementation of Vector-06C home computer
 //
 // Author: Viacheslav Slavinsky, http://sensi.org/~svo
+//
+// Modified by Ivan Gorodetsky
 // 
 // Design File: vga_refresh.v
 //
@@ -25,10 +27,11 @@
 
 `default_nettype none
 
-module vga_refresh(clk24, hsync, vsync, videoActive, bordery, retrace, video_scroll_reg, fb_row, fb_row_count, tvhs, tvvs, tvx, tvy);
+module vga_refresh(clk24, hsync, vsync, YPbPrvsync, videoActive, bordery, retrace, video_scroll_reg, fb_row, fb_row_count, tvhs, tvvs, tvx, tvy);
 input			clk24;
 output			hsync;
 output			vsync;
+output			YPbPrvsync;
 output			videoActive;
 output	reg		bordery;
 output 			retrace;
@@ -54,6 +57,7 @@ wire videoActive = videoActiveX & videoActiveY;
 assign retrace = !videoActiveY;
 assign hsync = !(scanxx_state == state2);
 assign vsync = !(scanyy_state == state2);
+assign YPbPrvsync = !((scanyy_state == state1)&&(scanyy>10'd10));
 
 //assign tvhs = !((tvx > (0)) && (tvx < (96)));
 assign tvhs = !(tvx > 800-96);
