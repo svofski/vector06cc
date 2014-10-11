@@ -59,8 +59,8 @@
 `define WITH_VI53
 `define WITH_AY
 `define WITH_RSOUND
-`define WITH_FLOPPY
-`define WITH_OSD
+`define WITH_FLOPPY	// disable for START1200
+`define WITH_OSD		// disable for START1200
 //`define WITH_DE1_JTAG
 //`define JTAG_AUTOHOLD
 `define FLOPPYLESS_HAX  // set FDC odata to $00 when compiling without floppy
@@ -69,6 +69,7 @@
 //`define COMPOSITE_PWM   // use sigma-delta modulator on composite video out
 `define WITH_SVIDEO     
 `define WITH_VGA
+//`define START1200			// compile without floppy (not enough memory in cyclone II)
 
 module vector06cc(CLOCK_24,CLOCK_27, clk50mhz, KEY[3:0], LEDr[9:0], LEDg[7:0], SW[9:0], HEX0, HEX1, HEX2, HEX3, 
         ////////////////////    SRAM Interface      ////////////////
@@ -445,18 +446,32 @@ end
 //////////////
 // MEMORIES //
 //////////////
+`ifdef START1200
+reg disable_rom2;
+always @(posedge clk24)
+	if (~RESET_n) disable_rom2<=1'b0;
+	else if ((address_bus_r==8'h0C)&io_write&~WR_n) disable_rom2<=1'b1;
+bootrom1200 (.address(A[12:0]),.clock(clk24),.q(ROM_DO));
+`else
+bootrom (.address(A[10:0]),.clock(clk24),.q(ROM_DO));
+`endif
 
 wire[7:0] ROM_DO;
-bootrom bootrom(.address(A[10:0]),.clock(clk24),.q(ROM_DO));
-
 reg [7:0] address_bus_r;    // registered address for i/o
 
 reg rom_access;
 always @(posedge clk24) begin
+`ifdef START1200
+	 if (disable_rom|disable_rom2)
+		  rom_access <= 1'b0;
+	 else
+		  rom_access <= A < 8192;
+`else
     if (disable_rom)
         rom_access <= 1'b0;
     else
         rom_access <= A < 2048;
+`endif		  
 end
 
 assign DI=DI_;
@@ -573,7 +588,12 @@ video vidi(.clk24(clk24), .ce12(ce12), .ce6(ce6), .ce6x(ce6x), .clk4fsc(clkpal4F
 				.video_b(video_b),
             .retrace(retrace),
             .video_scroll_reg(video_scroll_reg),
+`ifdef START1200
+            .border_idx(4'b0),
+`else
             .border_idx(border_idx_delayed),
+`endif
+				
             //.testpin(GPIO_0[12:9]),
             .tv_sync(tv_sync),
             .tv_luma(tv_luma),
@@ -591,14 +611,21 @@ wire rdvid;
 wire [7:0] realcolor;       // this truecolour value fetched from buffer directly to display
 wire [7:0] realcolor2buf;   // this truecolour value goes into the scan doubler buffer
 
+`ifdef START1200
+wire[7:0] color1200;
+palette_rom (
+							  .address({video_mode512,video_border_index,retrace?4'b0:coloridx}), 
+                       .clock(clk24),
+                       .q(color1200));
+assign {realcolor2buf[7:4],realcolor2buf[2:1],realcolor2buf[3],realcolor2buf[0]}={~color1200[5:0],2'b00};
+`else
 wire [3:0] paletteram_adr = (retrace/*|video_palette_wren*/) ? video_border_index : coloridx;
-
-palette_ram paletteram(.address(paletteram_adr), 
+palette_ram (.address(paletteram_adr), 
                        .data(video_palette_value), 
                        .inclock(clk24), .outclock(clk24), 
                        .wren(video_palette_wren_delayed), 
                        .q(realcolor2buf));
-
+`endif
 wire [3:0] video_r;
 wire [3:0] video_g;
 wire [3:0] video_b;
