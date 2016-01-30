@@ -76,8 +76,8 @@ always @(posedge clk12) begin
 		pulses_sample[0] <= m04 + m14 + m24/* + m34*/;
 		sum <= pulses_sample[0] + pulses_sample[1] + pulses_sample[2] + pulses_sample[3];
 	end
-	ma_pulseL <= {sum[7:2],7'b0}+{m34,8'b0}+{ay_soundC,4'b0}+{ay_soundB,3'b0}+{rs_soundC,4'b0}+{rs_soundB,3'b0}+{covox,4'b0};
-	ma_pulseR <= {sum[7:2],7'b0}+{m34,8'b0}+{ay_soundA,4'b0}+{ay_soundB,3'b0}+{rs_soundA,4'b0}+{rs_soundB,3'b0}+{covox,4'b0};
+	ma_pulseL <= {sum[7:1],7'b0}+{m34,8'b0}+{ay_soundC,4'b0}+{ay_soundB,3'b0}+{rs_soundC,4'b0}+{rs_soundB,3'b0}+{covox,4'b0};
+	ma_pulseR <= {sum[7:1],7'b0}+{m34,8'b0}+{ay_soundA,4'b0}+{ay_soundB,3'b0}+{rs_soundA,4'b0}+{rs_soundB,3'b0}+{covox,4'b0};
 end
 
 audio_io audioio(oAUD_BCK,oAUD_DATA,oAUD_LRCK,iAUD_ADCDAT,oAUD_ADCLRCK,clk12,reset_n,
