@@ -131,7 +131,8 @@ begin
 		D_PATH_CTRL	:	LUT_DATA	<=	16'h0A06;
 		POWER_ON	:	LUT_DATA	<=	16'h0C00;
 		SET_FORMAT	:	LUT_DATA	<=	16'h0E13;//LRP=1, DSP Mode, 16-bit
-		SAMPLE_CTRL	:	LUT_DATA	<=	16'h1001;//48 kHz,250fs,USB mode
+//		SAMPLE_CTRL	:	LUT_DATA	<=	16'h1001;//48 kHz,250fs,USB mode
+		SAMPLE_CTRL	:	LUT_DATA	<=	16'h1000; //48 kHz,256fs,Normal mode 		
 		SET_ACTIVE	:	LUT_DATA	<=	16'h1201;
 		default		:	LUT_DATA	<=	16'h0000;
 	endcase

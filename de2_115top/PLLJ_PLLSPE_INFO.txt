@@ -1,0 +1,5 @@
+PLL_Name	vector06cc:comb_3|clockster:clockmaker|mclk24mhz:vector_xtal|altpll:altpll_component|pll
+PLLJITTER	47
+PLLSPEmax	84
+PLLSPEmin	-53
+

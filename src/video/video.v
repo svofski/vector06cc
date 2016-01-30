@@ -372,7 +372,8 @@ chroma_shift(.chroma_in(tv_chroma), .chroma_out(chroma_clamped));
 always @* 
     casex ({tv_sync,tv_colorburst,tv_blank})
     3'b0xx: tv_cvbs <= V_SYNC;
-    3'b111: tv_cvbs <= V_REF + 2 - tv_sin[7:6]; 
+//    3'b111: tv_cvbs <= V_REF + 2 - tv_sin[7:6]; 
+    3'b111: tv_cvbs <= V_REF + 4 - tv_sin[7:5];
     3'b101: tv_cvbs <= V_REF;
     default:tv_cvbs <= cvbs_clamped; 
     endcase
@@ -578,4 +579,4 @@ endmodule
 
 
 
-// $Id$
+// $Id: video.v 433 2014-10-02 13:20:17Z ivagorRetrocomp@gmail.com $

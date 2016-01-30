@@ -43,8 +43,9 @@ module audio_io(
 				pulsesR,
 				linein);				
 
-parameter	REF_CLK			=	12000000;	//	12	MHz
-parameter	SAMPLE_RATE		=	48000;		//	48		kHz
+parameter	REF_CLK			=	12288000;	//	12.288	MHz 
+//parameter	REF_CLK			=	12000000;	//	12	MHz
+parameter	SAMPLE_RATE		=	48000;		//	48		kHz - work for 48 and 8 kHz
 parameter	DATA_WIDTH		=	16;			//	16		Bits
 parameter	CHANNEL_NUM		=	2;			//	Dual Channel
 

@@ -21,12 +21,18 @@
 
 `default_nettype none
 
-module clockster(clk, clk50, clk24, clkAudio, ce12, ce6, ce6x, ce3, video_slice, pipe_ab, ce1m5, 
-    clkpalFSC, clk60, clk_color_mod);
-input  [1:0]    clk;
+module clockster(
+						clk50,
+						clk24, clkAudio, ce12, ce6, ce6x, ce3, video_slice, pipe_ab, ce1m5, 
+						clkpalFSC,
+						clk48, clk96,
+						clk_color_mod);
 input           clk50;
-output clk24;
-output clkAudio = qce12;
+output clk24=clkdiv[3];
+output clk48=clkdiv[2];
+output clk96=clkdiv[1];
+//output clkAudio = qce12;
+output clkAudio=aud_phase[23];
 output ce12 = qce12;
 output ce6 = qce6;
 output ce6x = qce6x;
@@ -34,39 +40,40 @@ output ce3 = qce3;
 output video_slice = qvideo_slice;
 output pipe_ab = qpipe_ab;
 output ce1m5 = qce1m5;
-output clkpalFSC;
-output clk60;
-output clk_color_mod;
+output clkpalFSC=pal_phase[23];
+output clk_color_mod=clk384;
 
 reg[5:0] ctr;
 reg[4:0] initctr;
 
 reg qce12, qce6, qce6x, qce3, qce3v, qvideo_slice, qpipe_ab, qce1m5;
+wire clk384;
 
-wire lock;
+mclk24mhz vector_xtal(clk50, clk384);
 
-wire clk300;
-
-mclk24mhz vector_xtal(clk50, clk24, clk300, clk60, lock);
-
-colorpll(.inclk0(clk[0]), .c0(clk_color_mod));
-
-// Derive clock for PAL subcarrier: 4x 4.43361875
-`define PHACC_WIDTH 32
-//`define PHACC_DELTA 253896634 
-//`define PHACC_DELTA 507793268
-`define PHACC_DELTA 1015586535
+// pal*16=70.9379 MHz from 383.3333 MHz
+`define PHACC_WIDTH 24
+`define PHACC_DELTA 3104715
 
 reg [`PHACC_WIDTH-1:0] pal_phase;
 wire [`PHACC_WIDTH-1:0] pal_phase_next;
 assign pal_phase_next = pal_phase + `PHACC_DELTA;
-reg palclkreg;
 
-always @(posedge clk300) begin
+reg [3:0] clkdiv;
+always @(posedge clk384) begin
     pal_phase <= pal_phase_next;
+	 clkdiv<=clkdiv+1;
 end
 
-ayclkdrv clkbufpalfsc(pal_phase[`PHACC_WIDTH-1], clkpalFSC);
+// 12.288 MHz from 383.3333 MHz
+`define PHACC_AUD 537805
+reg [`PHACC_WIDTH-1:0] aud_phase;
+wire [`PHACC_WIDTH-1:0] aud_phase_next;
+assign aud_phase_next = aud_phase + `PHACC_AUD;
+
+always @(posedge clk384) begin
+    aud_phase <= aud_phase_next;
+end
 
 always @(posedge clk24) begin
     if (initctr != 3) begin

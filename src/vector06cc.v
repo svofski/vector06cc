@@ -59,8 +59,8 @@
 `define WITH_VI53
 `define WITH_AY
 `define WITH_RSOUND
-`define WITH_FLOPPY	// disable for START1200
-`define WITH_OSD		// disable for START1200
+`define WITH_FLOPPY	// disable for START1200 and PK6128 on DE1
+`define WITH_OSD		// disable for START1200 and PK6128 on DE1
 //`define WITH_DE1_JTAG
 //`define JTAG_AUTOHOLD
 `define FLOPPYLESS_HAX  // set FDC odata to $00 when compiling without floppy
@@ -69,7 +69,8 @@
 //`define COMPOSITE_PWM   // use sigma-delta modulator on composite video out
 `define WITH_SVIDEO     
 `define WITH_VGA
-//`define START1200			// compile without floppy (not enough memory in cyclone II)
+//`define START1200			// for DE1 compile without floppy (not enough memory in cyclone II)
+//`define PK6128			// for DE1 compile without floppy (not enough memory in cyclone II)
 
 module vector06cc(CLOCK_24,CLOCK_27, clk50mhz, KEY[3:0], LEDr[9:0], LEDg[7:0], SW[9:0], HEX0, HEX1, HEX2, HEX3, 
         ////////////////////    SRAM Interface      ////////////////
@@ -134,6 +135,7 @@ module vector06cc(CLOCK_24,CLOCK_27, clk50mhz, KEY[3:0], LEDr[9:0], LEDg[7:0], S
         // TEST PIN
         GPIO_0,
         GPIO_1,
+		  clk96
 );
 input [1:0]     CLOCK_24;
 input [1:0]     CLOCK_27;
@@ -210,6 +212,7 @@ input           UART_RXD;
 
 output [12:0]   GPIO_0;
 output [35:0]   GPIO_1;
+output clk96;
 
 
 // CLOCK SETUP
@@ -217,10 +220,9 @@ wire mreset_n = KEY[0] & ~kbd_key_blkvvod;
 wire mreset = !mreset_n;
 wire clk24, clkAudio, clkpal4FSC;
 wire ce12, ce6, ce6x, ce3, vi53_timer_ce, video_slice, pipe_ab;
-wire clk60;
+wire clk48;
 wire clk_color_mod;
 clockster clockmaker(
-    .clk(CLOCK_24), 
     .clk50(clk50mhz),
     .clk24(clk24), 
     .clkAudio(clkAudio), 
@@ -232,11 +234,12 @@ clockster clockmaker(
     .pipe_ab(pipe_ab), 
     .ce1m5(vi53_timer_ce),
     .clkpalFSC(clkpal4FSC),
-    .clk60(clk60),
+    .clk48(clk48),
+    .clk96(clk96),
     .clk_color_mod(clk_color_mod),
     );
     
-assign AUD_XCK = clkAudio;
+//assign AUD_XCK = clkAudio;
 wire tape_input;
 soundcodec soundnik(
                     .clk12(clkAudio),
@@ -297,7 +300,7 @@ always @*
     3'bx1x:
         cpu_ce <= (slowclock == 0) & ce3;
     3'bxx1:
-        cpu_ce <= ~ce12&~memcpubusy&~memvidbusy&~video_slice_my;
+        cpu_ce <= ce3;
     3'b000:
         cpu_ce <= ce3;
     endcase
@@ -408,7 +411,11 @@ wire halt_ack;
 wire WRN_CPUCE = WR_n | ~cpu_ce;
 
 `ifdef WITH_CPU
-    T8080se CPU(RESET_n, clk24, cpu_ce, READY, HOLD, INT, INTE, DBIN, SYNC, VAIT, HLDA, WR_n, A, DI, DO);
+`ifdef PK6128
+	T8080se CPU(~(~RESET_n|~reset_soft_n), clk24, cpu_ce, READY, HOLD, INT, INTE, DBIN, SYNC, VAIT, HLDA, WR_n, A, DI, DO);
+`else
+   T8080se CPU(RESET_n, clk24, cpu_ce, READY, HOLD, INT, INTE, DBIN, SYNC, VAIT, HLDA, WR_n, A, DI, DO);
+`endif
 wire inta_n;
     
     assign ram_read = status_word[7];
@@ -453,7 +460,33 @@ always @(posedge clk24)
 	else if ((address_bus_r==8'h0C)&io_write&~WR_n) disable_rom2<=1'b1;
 bootrom1200 (.address(A[12:0]),.clock(clk24),.q(ROM_DO));
 `else
-bootrom (.address(A[10:0]),.clock(clk24),.q(ROM_DO));
+	`ifdef PK6128
+	reg disable_rom2=1'b0;
+	reg reset_soft_n=1'b1;
+	reg[1:0] vidpage=2'h1;
+	wire[1:0] mempage=ram_read?{A16r,A15r}:{A16w,A15w};
+	reg[7:0] mempage_port=8'h0;
+	wire A16r=A[15]?mempage_port[1]:mempage_port[3];
+	wire A15r=A[15]?(mempage_port[1]?~mempage_port[0]:1'b1):(mempage_port[3]?mempage_port[2]:1'b0);
+	wire A16w=A[15]?mempage_port[5]:mempage_port[7];
+	wire A15w=A[15]?(mempage_port[5]?~mempage_port[4]:1'b1):(mempage_port[7]?mempage_port[6]:1'b0);
+	always @(posedge clk24)
+	if (~RESET_n) {disable_rom2,reset_soft_n,vidpage,mempage_port}<={4'b0101,8'h0};
+	else if ((address_bus_r==8'h0F)&io_write&~WR_n) {disable_rom2,reset_soft_n}<=2'b10;
+	else if ((address_bus_r==8'h0D)&io_write&~WR_n)
+	 case(DO&8'b00000011)
+	 2'h0:vidpage<=2'h1;
+	 2'h1:vidpage<=2'h0;
+	 2'h2:vidpage<=2'h3;
+	 2'h3:vidpage<=2'h2;
+	 endcase
+	else if ((address_bus_r==8'h0E)&io_write&~WR_n) mempage_port<=DO;
+	else reset_soft_n<=1'b1;	
+
+	rom6128 (.address(A[13:0]),.clock(clk24),.q(ROM_DO));
+	`else
+	bootrom (.address(A[10:0]),.clock(clk24),.q(ROM_DO));
+	`endif
 `endif
 
 wire[7:0] ROM_DO;
@@ -467,11 +500,14 @@ always @(posedge clk24) begin
 	 else
 		  rom_access <= A < 8192;
 `else
-    if (disable_rom)
-        rom_access <= 1'b0;
-    else
-        rom_access <= A < 2048;
-`endif		  
+	`ifdef PK6128
+	if (disable_rom|disable_rom2) rom_access <= 1'b0;
+   else rom_access <= A < 16384;
+	`else
+	if (disable_rom) rom_access <= 1'b0;
+   else rom_access <= A < 2048;
+	`endif
+`endif
 end
 
 assign DI=DI_;
@@ -492,12 +528,12 @@ reg[31:0] rdvidreg;
 always @(posedge clk24) rdvidreg={rdvidreg[30:0],rdvid};
 
 
-assign DRAM_CLK=clk60;                  //  SDRAM Clock
+assign DRAM_CLK=clk48;                  //  SDRAM Clock
 assign DRAM_CKE=1;                      //  SDRAM Clock Enable
 wire[15:0] dramout,dramout2;
 wire memcpubusy,memvidbusy,rdcpu_finished;
 SDRAM_Controller ramd(
-    .clk(clk60),                        //  Clock 60 MHz
+    .clk(clk48),                        //  Clock 60 MHz
     .reset(~RESET_n),                   //  System reset
     .DRAM_DQ(DRAM_DQ),                  //  SDRAM Data bus 16 Bits
     .DRAM_ADDR(DRAM_ADDR),              //  SDRAM Address bus 12 Bits
@@ -509,7 +545,13 @@ SDRAM_Controller ramd(
     .DRAM_CS_N(DRAM_CS_N),              //  SDRAM Chip Select
     .DRAM_BA_0(DRAM_BA_0),              //  SDRAM Bank Address 0
     .DRAM_BA_1(DRAM_BA_1),              //  SDRAM Bank Address 1
+
+`ifdef PK6128
+	 .iaddr((rdvidreg[9])?{vidpage,VIDEO_A[12:0],2'b00}:{mempage,A[12:0],A[14:13]}),
+`else
     .iaddr((rdvidreg[9])?{4'b0001,VIDEO_A[12:0],2'b00}:{ramdisk_page,A[15],A[12:0],A[14:13]}),
+`endif
+
     .idata(DO),
     .rd(ram_read&DBIN&~rom_access),
     .we_n(ram_write_n|io_write|WR_n), 
@@ -934,7 +976,11 @@ wire iports_palette_sel = address_bus[1:0] == 2'b00;        // not used <- must 
 reg [3:0] palette_wr_sim;
 
 always @(posedge clk24) begin
-    if (iports_write & ~WR_n & cpu_ce) begin
+`ifdef PK6128
+	if ((address_bus_r==8'h0C)&io_write&~WR_n&cpu_ce) begin
+`else
+	if (iports_write & ~WR_n & cpu_ce) begin
+`endif
         video_palette_value <= DO;
         palette_wr_sim <= 3;
     end 
@@ -1078,11 +1124,13 @@ wire [7:0]  ay_odata;
 
 wire [7:0]  ay_soundA,ay_soundB,ay_soundC;
 wire [7:0]  rs_soundA,rs_soundB,rs_soundC;
+wire        ay_rden;
+
 
 `ifdef WITH_AY
 wire        ay_sel = portmap_device == 3'b101 && address_bus_r[1] == 0; // only ports $14 and $15
 wire        ay_wren = ~WR_n & io_write & ay_sel;
-wire        ay_rden = io_read & ay_sel;
+assign		ay_rden = io_read & ay_sel;
 
 reg [3:0] aycectr;
 always @(posedge clk24) if (aycectr<14) aycectr <= aycectr + 1'd1; else aycectr <= 0;

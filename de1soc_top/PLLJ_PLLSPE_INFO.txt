@@ -1,0 +1,10 @@
+PLL_Name	vector06cc:comb_3|clockster:clockmaker|mclk24mhz:vector_xtal|altpll:altpll_component|altpll_im22:auto_generated|generic_pll1~FRACTIONAL_PLL
+PLLJITTER	33
+PLLSPEmax	100
+PLLSPEmin	-100
+
+PLL_Name	vector06cc:comb_3|clockster:clockmaker|mclk24mhz:vector_xtal|altpll:altpll_component|altpll_im22:auto_generated|generic_pll1~PLL_OUTPUT_COUNTER
+PLLJITTER	NA
+PLLSPEmax	NA
+PLLSPEmin	NA
+
