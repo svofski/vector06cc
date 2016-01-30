@@ -307,6 +307,7 @@ module readhelper(input clk, input ce, input rden, input cwset, input latch_e, i
 reg [2:0] read_state;
 reg	[15:0] latched_q;
 reg read_msb;
+reg [7:0] lsbPrev;
 
 wire [7:0] r_lsb = rl_mode == 2'b10 ? counter_q[15:8] : counter_q[7:0];
 wire [7:0] r_msb = rl_mode == 2'b01 ? counter_q[7:0]  : counter_q[15:8];
@@ -314,13 +315,15 @@ wire [7:0] r_msb = rl_mode == 2'b01 ? counter_q[7:0]  : counter_q[15:8];
 
 always @*
 	case (read_msb)
-	0:	q <= read_state == 0 ? r_lsb : latched_q[7:0];
+	0:	q <= read_state == 0 ? lsbPrev : latched_q[7:0];
 	1: 	q <= read_state == 0 ? r_msb : latched_q[15:8];
 	endcase
 
 always @(posedge clk)
 	if (cwset && latch_e) latched_q <= counter_q;
 
+always @(posedge ce)	lsbPrev <= r_lsb;
+	
 always @(posedge clk)
 	if (ce) begin
 		if (cwset) begin
@@ -358,6 +361,7 @@ module pit8253_downcounter(clk, ce, halfmode, autoreload, o, d, wren, q, nextout
 	output [15:0] nextout = next;
 
 reg  [15:0] counter;
+reg  [15:0] counterPrev;
 
 reg wrlatch;
 
@@ -368,8 +372,10 @@ assign q = counter;
 always @(posedge clk) begin
 	if (wren) begin
 		counter <= d;
+		counterPrev <= d;
 	end else if (ce) begin
 		counter <= (autoreload & ~|next) ? d : next;
+		counterPrev <= counter;
 	end
 end
 
