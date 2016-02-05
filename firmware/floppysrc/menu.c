@@ -78,8 +78,8 @@ static void switch_state(void);
 static void draw_fsel(void);
 static void fsel_showselection(uint8_t on);
 static void fsel_getselected(char *file);
-void aboot_anim();
-void aboot_show();
+void aboot_anim(void);
+void aboot_show(void);
 
 uint8_t menu_busy(uint8_t status) {
     char *text;
@@ -94,6 +94,7 @@ uint8_t menu_busy(uint8_t status) {
     }
     osd_gotoxy(0, 7);
     osd_puts(text);
+	return 0;
 }
 
 uint8_t menu_dispatch(uint8_t tick) {

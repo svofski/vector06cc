@@ -35,6 +35,7 @@ all: smart.log $(PROJECT).asm.rpt $(PROJECT).sta.rpt
 clean:
 	rm -f src
 	rm -rf *.rpt *.chg smart.log *.htm *.eqn *.pin *.sof *.pof db incremental_db reports *.qpf *.qsf
+	make -C ../firmware clean
 
 map: smart.log $(PROJECT).map.rpt
 fit: smart.log $(PROJECT).fit.rpt
@@ -58,7 +59,10 @@ STA_ARGS =
 
 STAMP = echo done >
 
-$(PROJECT).map.rpt: map.chg ../src
+../disk.hex:
+	make -C ../firmware
+
+$(PROJECT).map.rpt: map.chg ../src ../disk.hex
 	ln -fs ../src .
 	quartus_map $(PROJECT).qpf
 	$(STAMP) fit.chg
