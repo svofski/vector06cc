@@ -5,6 +5,8 @@
 # Settings File (.qsf)
 ###################################################################
 
+TARGET=wxeda
+
 PROJECT = vector06cc
 TOP_LEVEL_ENTITY = vector06cc
 ASSIGNMENT_FILES = $(PROJECT).qpf $(PROJECT).qsf
@@ -34,7 +36,8 @@ all: smart.log $(PROJECT).asm.rpt $(PROJECT).sta.rpt
 
 clean:
 	rm -f src
-	rm -rf *.rpt *.chg smart.log *.htm *.eqn *.pin *.sof *.pof db incremental_db reports *.qpf *.qsf
+	rm -rf *.rpt *.chg smart.log *.htm *.eqn *.pin *.sof *.pof db incremental_db reports *.qpf *.qsf *.summary *.jdi *.smsg *.txt
+	make -C ../firmware clean
 
 map: smart.log $(PROJECT).map.rpt
 fit: smart.log $(PROJECT).fit.rpt
@@ -48,7 +51,8 @@ smart: smart.log
 
 MAP_ARGS = --read_settings_files=on $(addprefix --source=,$(SRCS)) -l ../src -l ../src/altmodules -l ../src/DE1 -l ../src/T80
 
-FIT_ARGS = --part=$(PART) --read_settings_files=on
+#FIT_ARGS = --part=$(PART) --read_settings_files=on
+FIT_ARGS = --read_settings_files=on
 ASM_ARGS =
 STA_ARGS =
 
@@ -58,7 +62,10 @@ STA_ARGS =
 
 STAMP = echo done >
 
-$(PROJECT).map.rpt: map.chg ../src
+../disk.hex:
+	make -C ../firmware
+
+$(PROJECT).map.rpt: map.chg ../src ../disk.hex
 	ln -fs ../src .
 	quartus_map $(PROJECT).qpf
 	$(STAMP) fit.chg
@@ -84,8 +91,8 @@ smart.log: $(ASSIGNMENT_FILES)
 $(ASSIGNMENT_FILES):
 	#quartus_sh --prepare -f $(FAMILY) -t $(TOP_LEVEL_ENTITY) $(PROJECT)
 	#-cat $(BOARDFILE) >> $(PROJECT).qsf
-	cp ../$(PROJECT).qsf .
-	cp ../$(PROJECT).qpf .
+	cp ../project/$(TARGET)/$(PROJECT).qsf .
+	cp ../project/$(TARGET)/$(PROJECT).qpf .
 map.chg:
 	$(STAMP) map.chg
 fit.chg:
