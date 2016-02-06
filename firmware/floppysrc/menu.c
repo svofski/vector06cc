@@ -78,22 +78,23 @@ static void switch_state(void);
 static void draw_fsel(void);
 static void fsel_showselection(uint8_t on);
 static void fsel_getselected(char *file);
-void aboot_anim();
-void aboot_show();
+void aboot_anim(void);
+void aboot_show(void);
 
 uint8_t menu_busy(uint8_t status) {
-	char *text;
-	switch (status) {
-		case 0:	text = state == STATE_ABOOT2 ? TXT_MENU_ABOOTHALP : TXT_MENU_HALP;
-				break;
-		case 1: text = TXT_MENU_BUSY;
-				break;
-		case 2: text = TXT_MENU_INSERT;
-				menu_init();
-				break;
-	}
-	osd_gotoxy(0, 7);
-	osd_puts(text);
+    char *text;
+    switch (status) {
+        case 0: text = state == STATE_ABOOT2 ? TXT_MENU_ABOOTHALP : TXT_MENU_HALP;
+                break;
+        case 1: text = TXT_MENU_BUSY;
+                break;
+        case 2: text = TXT_MENU_INSERT;
+                menu_init();
+                break;
+    }
+    osd_gotoxy(0, 7);
+    osd_puts(text);
+	return 0;
 }
 
 uint8_t menu_dispatch(uint8_t tick) {
@@ -395,10 +396,10 @@ void aboot_show() {
 }
 
 void aboot_anim() {
-	uint8_t i;
-	
-	for (i = 0; i < 3; i++) {
-		osd_gotoxy(28, i+3); osd_puts(dude[waverseq[dude_seqno]*3+i]);
-	}
-	dude_seqno = (dude_seqno + 1) % 16;
+    uint8_t i;
+    
+    for (i = 0; i < 3; i++) {
+        osd_gotoxy(28, i+3); osd_puts(dude[waverseq[dude_seqno]*3+i]);
+    }
+    dude_seqno = (dude_seqno + 1) % 16;
 }

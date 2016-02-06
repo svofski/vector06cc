@@ -1,7 +1,6 @@
-SHELL=cmd.exe
-C65=cc65
-A65=ca65
-L65=ld65
+C65=../cc65/bin/cc65
+A65=../cc65/bin/ca65
+L65=../cc65/bin/ld65
 
 #CINC=c:\usr\lib\cc65\include
 #AINC=c:\usr\lib\cc65\asminc
@@ -20,13 +19,13 @@ CFLAGS=-Os -t none -T --cpu 6502
 all:	disk
 
 disk:	$(OBJS)
-	$(L65) -C vector.lc lib/vector.o $(OBJS) lib/vector.lib -o disk.bin -m disk.map
-	bin2hex disk.bin
-	copy disk.hex ..\..\workbench\floppy\src
-	copy disk.hex ..\..
+	$(L65) -C vector.lc $(OBJS) ../cc65/lib/vector.lib -o disk.bin -m disk.map
+	#bin2hex disk.bin disk.hex
+	objcopy -Ibinary -Oihex disk.bin disk.hex
+	cp disk.hex ../..
 
 clean:
-	rm $(OBJS) $(ASSS) disk.bin disk.map disk.hex
+	rm -f $(OBJS) $(ASSS) disk.bin disk.map disk.hex ../../disk.hex
 
 %.s:	%.c
 	$(C65) $(CFLAGS) -I $(AINC) -I $(CINC) $<

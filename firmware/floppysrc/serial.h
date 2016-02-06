@@ -31,7 +31,7 @@
 
 void ser_putc(char c);
 void ser_puts(char *s);
-void ser_nl();
+void ser_nl(void);
 void print_hex(BYTE b);
 void print_buff(BYTE *Buffer);
 
@@ -39,7 +39,7 @@ void print_buff(BYTE *Buffer);
 
 #define ser_putc(c) {}
 #define ser_puts(s) {}
-#define ser_nl() {}
+#define ser_nl(void) {}
 #define print_hex(b) {}
 #define print_buff(Buffer) {}
 

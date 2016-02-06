@@ -58,7 +58,7 @@ FIL	file1;
 #define DELAY_RELOAD 128
 
 uint8_t blink(void);
-uint8_t slave();;
+uint8_t slave(void);
 
 uint8_t thrall(char *imagefile, uint8_t *buffer) {
 	uint8_t first = 0;
@@ -101,7 +101,7 @@ uint8_t thrall(char *imagefile, uint8_t *buffer) {
 }
 
 // thrall forever
-uint8_t slave() {
+uint8_t slave(void) {
 	uint8_t result;
 	uint8_t t1;
 	uint8_t cmd;
