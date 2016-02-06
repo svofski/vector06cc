@@ -1,7 +1,7 @@
 // ====================================================================
 //                         VECTOR-06C FPGA REPLICA
 //
-// 				 Copyright (C) 2007,2008 Viacheslav Slavinsky
+//               Copyright (C) 2007,2008 Viacheslav Slavinsky
 //
 // This core is distributed under modified BSD license. 
 // For complete licensing information see LICENSE.TXT.
@@ -18,6 +18,10 @@
 // Audio interface between raw audio pulses from 8253, tape i/o and
 // sound codec. Includes simple moving average filter for all but
 // tape signals.
+//
+// This is a version for boards that have no audio codec. WXEDA board.
+//
+// Sigma-Delta modulated output on o_pwm
 //
 // --------------------------------------------------------------------
 
@@ -91,4 +95,13 @@ always @(posedge clk12) begin
     if (line8in > 128-HYST) tapein <= 1'b1; 
 end
 
+reg [PWM_WIDTH:0] delta_sigma_accu;
+   
+always @(posedge clk24)  
+    if (delta_sigma_ce)
+        delta_sigma_accu <= delta_sigma_accu[PWM_WIDTH - 1:0] + mixed[15:15 - (PWM_WIDTH - 1)];
+  
+always
+    o_pwm <= delta_sigma_accu[PWM_WIDTH];
+  
 endmodule

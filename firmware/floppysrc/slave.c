@@ -1,7 +1,7 @@
 // ====================================================================
 //                         VECTOR-06C FPGA REPLICA
 //
-//              Copyright (C) 2007-2014, Viacheslav Slavinsky
+//               Copyright (C) 2007, 2008 Viacheslav Slavinsky
 //
 // This code is distributed under modified BSD license. 
 // For complete licensing information see LICENSE.TXT.
@@ -60,8 +60,6 @@ FIL	file1;
 uint8_t blink(void);
 uint8_t slave(void);
 
-
-// Main loop
 uint8_t thrall(char *imagefile, uint8_t *buffer) {
 	uint8_t first = 0;
 	uint8_t result;
@@ -94,9 +92,7 @@ uint8_t thrall(char *imagefile, uint8_t *buffer) {
 			if (result != FR_OK) break;
 			
 			fdd_load(&file1, &fddimage, buffer);
-
-			slave();
-
+			slave(buffer);
 		} while(0);
 		menu_busy(2);
 		menu_dispatch(0);

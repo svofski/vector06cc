@@ -146,7 +146,7 @@ vga_refresh     refresher(
                             .clk24(clk24),
                             .hsync(hsync),
                             .vsync(vsync),
-									 .YPbPrvsync(YPbPrvsync),
+							.YPbPrvsync(YPbPrvsync),
                             .videoActive(videoActive),
                             .bordery(bordery),
                             .retrace(retrace),

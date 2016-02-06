@@ -26,20 +26,20 @@ def pal_calculate(clk,subcarrier,anglesteps,accu_bits):
 
 
 #pal_calculate(24,4.43361875,4,32)
-pal_calculate(24,4.43361875,8,32)
+pal_calculate(24,4.43361875,16,32)
 
 
-Fmclk=150e6
+Fmclk=300e6
 Fsc=4433618.750
 width=32
 
-dPhase=8*Fsc/Fmclk*2**width
+dPhase=16*Fsc/Fmclk*2**width
 
 print "Fmclk=%f" % Fmclk
 print "Fsc=%f" % Fsc
 print "Phase accumulator width = %d" % width
 print "delta phase=%d" % int(round(dPhase))
-print "expected 8*Fsc=%f, Fsc=%f" % (dPhase*Fmclk/2**width, dPhase*Fmclk/2**width/8)
+print "expected 16*Fsc=%f, Fsc=%f" % (dPhase*Fmclk/2**width, dPhase*Fmclk/2**width/8)
 
 Fsc=14000000
 width=16
