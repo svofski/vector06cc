@@ -38,7 +38,7 @@ typedef struct {
 	uint8_t	*buffer;
 } FDDImage;
 
-uint8_t fdd_clearerror();
+uint8_t fdd_clearerror(void);
 uint8_t fdd_load(FIL* file, FDDImage *fdd, uint8_t* bufptr);
 uint8_t fdd_seek(FDDImage *fdd, uint8_t side, uint8_t track, uint8_t sector);
 //uint8_t fdd_nextbyte(FDDImage* fdd);

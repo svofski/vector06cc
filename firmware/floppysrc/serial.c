@@ -35,7 +35,7 @@ void ser_puts(char *s) {
 	}
 }
 
-void ser_nl() {
+void ser_nl(void) {
 	ser_putc('\r');
 	ser_putc('\n');
 }
