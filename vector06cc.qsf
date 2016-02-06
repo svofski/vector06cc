@@ -379,8 +379,8 @@ set_global_assignment -name VERILOG_FILE src/osd/textmode.v
 set_global_assignment -name VERILOG_FILE src/osd/chargen.v
 set_global_assignment -name VERILOG_FILE src/osd/screenbuffer.v
 set_global_assignment -name VERILOG_FILE src/altmodules/ayclkdrv.v
-set_global_assignment -name VERILOG_FILE bootrom.v
-set_global_assignment -name QIP_FILE bootrom.qip
+set_global_assignment -name VERILOG_FILE src/altmodules/bootrom.v
+set_global_assignment -name QIP_FILE src/altmodules/bootrom.qip
 set_global_assignment -name VERILOG_FILE src/border_delay.v
 set_global_assignment -name VERILOG_FILE src/video/videomod.v
 set_global_assignment -name CDF_FILE reports/vector06cc.cdf
