@@ -1,0 +1,221 @@
+# -------------------------------------------------------------------------- #
+#
+# Copyright (C) 1991-2011 Altera Corporation
+# Your use of Altera Corporation's design tools, logic functions 
+# and other software and tools, and its AMPP partner logic 
+# functions, and any output files from any of the foregoing 
+# (including device programming or simulation files), and any 
+# associated documentation or information are expressly subject 
+# to the terms and conditions of the Altera Program License 
+# Subscription Agreement, Altera MegaCore Function License 
+# Agreement, or other applicable license agreement, including, 
+# without limitation, that your use is for the sole purpose of 
+# programming logic devices manufactured by Altera and sold by 
+# Altera or its authorized distributors.  Please refer to the 
+# applicable agreement for further details.
+#
+# -------------------------------------------------------------------------- #
+#
+# Quartus II 64-Bit
+# Version 11.1 Build 259 01/25/2012 Service Pack 2 SJ Full Version
+# Date created = 21:16:47  May 22, 2013
+#
+# -------------------------------------------------------------------------- #
+#
+# Notes:
+#
+# 1) The default values for assignments are stored in the file:
+#		ESPIER_I_niosII_standard_assignment_defaults.qdf
+#    If this file doesn't exist, see file:
+#		assignment_defaults.qdf
+#
+# 2) Altera recommends that you do not modify this file. This
+#    file is updated automatically by the Quartus II software
+#    and any changes you make may be lost or overwritten.
+#
+# -------------------------------------------------------------------------- #
+
+
+set_global_assignment -name FAMILY "Cyclone IV E"
+set_global_assignment -name DEVICE EP4CE6E22C8
+set_global_assignment -name TOP_LEVEL_ENTITY vector06cc
+set_global_assignment -name ORIGINAL_QUARTUS_VERSION "11.1 SP2"
+set_global_assignment -name PROJECT_CREATION_TIME_DATE "21:16:47  MAY 22, 2013"
+set_global_assignment -name LAST_QUARTUS_VERSION "13.0 SP1"
+set_global_assignment -name MIN_CORE_JUNCTION_TEMP 0
+set_global_assignment -name MAX_CORE_JUNCTION_TEMP 85
+set_global_assignment -name ERROR_CHECK_FREQUENCY_DIVISOR 1
+set_global_assignment -name STRATIX_DEVICE_IO_STANDARD "2.5 V"
+set_global_assignment -name USE_CONFIGURATION_DEVICE OFF
+set_global_assignment -name CRC_ERROR_OPEN_DRAIN OFF
+set_global_assignment -name RESERVE_DATA0_AFTER_CONFIGURATION "USE AS REGULAR IO"
+set_global_assignment -name RESERVE_DATA1_AFTER_CONFIGURATION "USE AS REGULAR IO"
+set_global_assignment -name RESERVE_FLASH_NCE_AFTER_CONFIGURATION "USE AS REGULAR IO"
+set_global_assignment -name RESERVE_DCLK_AFTER_CONFIGURATION "USE AS REGULAR IO"
+set_global_assignment -name OUTPUT_IO_TIMING_NEAR_END_VMEAS "HALF VCCIO" -rise
+set_global_assignment -name OUTPUT_IO_TIMING_NEAR_END_VMEAS "HALF VCCIO" -fall
+set_global_assignment -name OUTPUT_IO_TIMING_FAR_END_VMEAS "HALF SIGNAL SWING" -rise
+set_global_assignment -name OUTPUT_IO_TIMING_FAR_END_VMEAS "HALF SIGNAL SWING" -fall
+set_global_assignment -name CYCLONEII_RESERVE_NCEO_AFTER_CONFIGURATION "USE AS REGULAR IO"
+set_global_assignment -name POWER_PRESET_COOLING_SOLUTION "23 MM HEAT SINK WITH 200 LFPM AIRFLOW"
+set_global_assignment -name POWER_BOARD_THERMAL_MODEL "NONE (CONSERVATIVE)"
+
+set_location_assignment PIN_90 -to KEY[0]
+set_location_assignment PIN_91 -to KEY[1]
+set_location_assignment PIN_88 -to KEY[2]
+set_location_assignment PIN_89 -to KEY[3]
+
+
+set_location_assignment PIN_100 -to VGA_HS
+set_location_assignment PIN_101 -to VGA_VS
+set_location_assignment PIN_120 -to VGA_R[0]
+set_location_assignment PIN_121 -to VGA_R[1]
+set_location_assignment PIN_124 -to VGA_R[2]
+set_location_assignment PIN_125 -to VGA_R[3]
+set_location_assignment PIN_126 -to VGA_R[4]
+set_location_assignment PIN_111 -to VGA_G[0]
+set_location_assignment PIN_112 -to VGA_G[1]
+set_location_assignment PIN_113 -to VGA_G[2]
+set_location_assignment PIN_114 -to VGA_G[3]
+set_location_assignment PIN_115 -to VGA_G[4]
+set_location_assignment PIN_119 -to VGA_G[5]
+set_location_assignment PIN_103 -to VGA_B[0]
+set_location_assignment PIN_104 -to VGA_B[1]
+set_location_assignment PIN_105 -to VGA_B[2]
+set_location_assignment PIN_106 -to VGA_B[3]
+set_location_assignment PIN_110 -to VGA_B[4]
+
+set_location_assignment PIN_3 -to SD_DAT3
+set_location_assignment PIN_2 -to SD_CMD
+set_location_assignment PIN_1 -to SD_CLK
+set_location_assignment PIN_141 -to SD_DAT
+
+set_location_assignment PIN_98 -to PS2_DAT
+set_location_assignment PIN_99 -to PS2_CLK
+set_location_assignment PIN_87 -to UART_RXD
+set_location_assignment PIN_86 -to UART_TXD
+
+set_location_assignment PIN_30 -to DRAM_DQ[0]
+set_location_assignment PIN_28 -to DRAM_DQ[1]
+set_location_assignment PIN_32 -to DRAM_DQ[2]
+set_location_assignment PIN_31 -to DRAM_DQ[3]
+set_location_assignment PIN_33 -to DRAM_DQ[4]
+set_location_assignment PIN_34 -to DRAM_DQ[5]
+set_location_assignment PIN_38 -to DRAM_DQ[6]
+set_location_assignment PIN_39 -to DRAM_DQ[7]
+set_location_assignment PIN_58 -to DRAM_DQ[8]
+set_location_assignment PIN_55 -to DRAM_DQ[9]
+set_location_assignment PIN_54 -to DRAM_DQ[10]
+set_location_assignment PIN_53 -to DRAM_DQ[11]
+set_location_assignment PIN_52 -to DRAM_DQ[12]
+set_location_assignment PIN_51 -to DRAM_DQ[13]
+set_location_assignment PIN_50 -to DRAM_DQ[14]
+set_location_assignment PIN_49 -to DRAM_DQ[15]
+set_location_assignment PIN_77 -to DRAM_ADDR[0]
+set_location_assignment PIN_80 -to DRAM_ADDR[1]
+set_location_assignment PIN_83 -to DRAM_ADDR[2]
+set_location_assignment PIN_84 -to DRAM_ADDR[3]
+set_location_assignment PIN_72 -to DRAM_ADDR[4]
+set_location_assignment PIN_71 -to DRAM_ADDR[5]
+set_location_assignment PIN_70 -to DRAM_ADDR[6]
+set_location_assignment PIN_69 -to DRAM_ADDR[7]
+set_location_assignment PIN_68 -to DRAM_ADDR[8]
+set_location_assignment PIN_67 -to DRAM_ADDR[9]
+set_location_assignment PIN_76 -to DRAM_ADDR[10]
+set_location_assignment PIN_66 -to DRAM_ADDR[11]
+set_location_assignment PIN_65 -to DRAM_ADDR[12]
+set_location_assignment PIN_43 -to DRAM_WE_N
+set_location_assignment PIN_44 -to DRAM_CAS_N
+set_location_assignment PIN_46 -to DRAM_RAS_N
+set_location_assignment PIN_60 -to DRAM_CLK
+set_location_assignment PIN_64 -to DRAM_CKE
+set_location_assignment PIN_74 -to DRAM_CS_N
+set_location_assignment PIN_73 -to DRAM_BA_0
+set_location_assignment PIN_75 -to DRAM_BA_1
+set_location_assignment PIN_42 -to DRAM_LDQM
+set_location_assignment PIN_59 -to DRAM_UDQM
+
+set_location_assignment PIN_85 -to BEEP
+
+set_location_assignment PIN_127 -to ADCLK
+set_location_assignment PIN_128 -to ADDAT
+set_location_assignment PIN_129 -to ADCSn
+
+set_location_assignment PIN_144 -to SVIDEO_Y
+set_location_assignment PIN_143 -to SVIDEO_C
+
+set_location_assignment PIN_133 -to DS_EN1
+set_location_assignment PIN_135 -to DS_EN3
+set_location_assignment PIN_136 -to DS_EN2
+set_location_assignment PIN_137 -to DS_EN4
+
+set_global_assignment -name DEVICE_FILTER_PACKAGE TQFP
+
+
+
+set_global_assignment -name PARTITION_NETLIST_TYPE SOURCE -section_id Top
+set_global_assignment -name PARTITION_FITTER_PRESERVATION_LEVEL PLACEMENT_AND_ROUTING -section_id Top
+set_global_assignment -name PARTITION_COLOR 16764057 -section_id Top
+set_location_assignment PIN_24 -to CLK48
+set_global_assignment -name VERILOG_FILE src/vector06cc.v
+set_global_assignment -name VERILOG_FILE src/DE1/SDRAM_Controller.v
+set_global_assignment -name VECTOR_WAVEFORM_FILE clk50mhz.vwf
+set_global_assignment -name VERILOG_FILE src/floppy/floppy.v
+set_global_assignment -name VERILOG_FILE src/floppy/floppyram.v
+set_global_assignment -name VHDL_FILE src/floppy/uart/txd.vhd
+set_global_assignment -name VERILOG_FILE src/floppy/wd1793.v
+set_global_assignment -name VERILOG_FILE src/floppy/floppyrom.v
+set_global_assignment -name VERILOG_FILE src/floppy/ram512x8a.v
+set_global_assignment -name VERILOG_FILE src/floppy/ram1024x8a.v
+set_global_assignment -name VERILOG_FILE src/floppy/spi.v
+set_global_assignment -name VERILOG_FILE src/floppy/dma_rw.v
+set_global_assignment -name VERILOG_FILE src/floppy/timer100hz.v
+set_global_assignment -name VHDL_FILE src/floppy/65c02/cpu65xx_en.vhd
+set_global_assignment -name VERILOG_FILE src/ramdisk/kvaz.v
+set_global_assignment -name VERILOG_FILE src/clockster.v
+set_global_assignment -name VERILOG_FILE src/singleclockster.v
+set_global_assignment -name VERILOG_FILE src/oneshot.v
+set_global_assignment -name VERILOG_FILE src/specialkeys.v
+set_global_assignment -name VERILOG_FILE src/video/video.v
+set_global_assignment -name VERILOG_FILE src/video/framebuffer.v
+set_global_assignment -name VERILOG_FILE src/video/shiftreg2.v
+set_global_assignment -name VERILOG_FILE src/video/rambuffer.v
+set_global_assignment -name VERILOG_FILE src/video/vga_refresh.v
+set_global_assignment -name VHDL_FILE src/i82c55/i82c55.vhd
+set_global_assignment -name VERILOG_FILE src/i8253/8253.v
+set_global_assignment -name VERILOG_FILE src/keyboard/scan2matrix.v
+set_global_assignment -name VERILOG_FILE src/keyboard/ps2k.v
+set_global_assignment -name VERILOG_FILE src/keyboard/vectorkeys.v
+set_global_assignment -name VERILOG_FILE src/altmodules/mclk24mhz.v
+set_global_assignment -name VERILOG_FILE src/altmodules/palette_ram.v
+set_global_assignment -name VERILOG_FILE src/wxeda/soundcodec.v
+set_global_assignment -name VHDL_FILE src/T80/T80.vhd
+set_global_assignment -name VHDL_FILE src/T80/T80_ALU.vhd
+set_global_assignment -name VHDL_FILE src/T80/T80_MCode.vhd
+set_global_assignment -name VHDL_FILE src/T80/T80_Pack.vhd
+set_global_assignment -name VHDL_FILE src/T80/T80_Reg.vhd
+set_global_assignment -name VHDL_FILE src/T80/T8080se.vhd
+set_global_assignment -name VHDL_FILE src/T80/T80sef.vhd
+set_global_assignment -name VERILOG_FILE src/jtag/jtag_top.v
+set_global_assignment -name VERILOG_FILE src/ay/ayglue.v
+set_global_assignment -name VHDL_FILE src/ay/ay8910.vhd
+set_global_assignment -name VHDL_FILE src/ay/ym2149.vhd
+set_global_assignment -name VERILOG_FILE src/osd/textmode.v
+set_global_assignment -name VERILOG_FILE src/osd/chargen.v
+set_global_assignment -name VERILOG_FILE src/osd/screenbuffer.v
+set_global_assignment -name VERILOG_FILE src/altmodules/ayclkdrv.v
+set_global_assignment -name VERILOG_FILE src/altmodules/bootrom.v
+set_global_assignment -name QIP_FILE src/altmodules/bootrom.qip
+set_global_assignment -name QIP_FILE src/wxeda/wxeda_clocks.qip
+set_global_assignment -name VERILOG_FILE src/wxeda/tlc549c.v
+set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to BEEP
+set_global_assignment -name QIP_FILE src/wxeda/colorclock.qip
+set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to VGA_G[1]
+set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to VGA_G[2]
+set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to VGA_G[3]
+set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to VGA_G[4]
+set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to VGA_G[5]
+set_global_assignment -name VERILOG_FILE src/border_delay.v
+set_global_assignment -name QIP_FILE src/video/multadd.qip
+set_global_assignment -name VERILOG_FILE src/video/videomod.v
+set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
