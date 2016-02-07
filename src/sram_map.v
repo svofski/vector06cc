@@ -19,13 +19,15 @@
 
 `default_nettype none
 
-module sram_map(SRAM_ADDR, SRAM_DQ, SRAM_WE_N, SRAM_UB_N, SRAM_LB_N, memwr_n, abus, dout, din, ramdisk_page, 
+module sram_map(SRAM_ADDR, SRAM_DQ, SRAM_WE_N, SRAM_UB_N, SRAM_LB_N, 
+                set_dq_to_dout, memwr_n, abus, dout, din, ramdisk_page, 
 				jtag_addr, jtag_din, jtag_do, jtag_jtag, jtag_nwe);
 output [17:0] 	SRAM_ADDR;
 inout  reg[15:0] 	SRAM_DQ;
 output 			SRAM_WE_N;
 output 			SRAM_UB_N;
 output 			SRAM_LB_N;
+input           set_dq_to_dout;
 input			memwr_n;
 input  [15:0]	abus;
 input  [7:0]	dout;
@@ -46,7 +48,7 @@ assign SRAM_WE_N = jtag_jtag ? jtag_nwe : memwr_n;
 always 
 	if (jtag_jtag & ~jtag_nwe) 
 		SRAM_DQ[15:0] <= jtag_din;
-	else if (~memwr_n)
+	else if (set_dq_to_dout)
 		SRAM_DQ[15:0] <= abus[0] ? {dout, 8'bZZZZZZZZ} : {8'bZZZZZZZZ, dout};
 	else
 		SRAM_DQ[15:0] <= 16'bZZZZZZZZZZZZZZZZ;
