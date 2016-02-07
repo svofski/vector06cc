@@ -83,9 +83,9 @@ module bootrom (
 		altsyncram_component.clock_enable_input_a = "BYPASS",
 		altsyncram_component.clock_enable_output_a = "BYPASS",
 `ifdef NO_PLI
-		altsyncram_component.init_file = "../src/zagr512.rif"
+		altsyncram_component.init_file = "../../src/zagr512.rif"
 `else
-		altsyncram_component.init_file = "../src/zagr512.hex"
+		altsyncram_component.init_file = "../../src/zagr512.hex"
 `endif
 ,
 		altsyncram_component.intended_device_family = "Cyclone II",
