@@ -92,7 +92,7 @@ uint8_t thrall(char *imagefile, uint8_t *buffer) {
 			if (result != FR_OK) break;
 			
 			fdd_load(&file1, &fddimage, buffer);
-			slave(buffer);
+			slave();
 		} while(0);
 		menu_busy(2);
 		menu_dispatch(0);

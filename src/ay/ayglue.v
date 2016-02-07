@@ -1,4 +1,4 @@
-module ayglue(clk, ce, reset_n, address, data, wren, rden, q, soundA,soundB,soundC,odataoe);
+module ayglue(clk, ce, reset_n, address, data, wren, rden, q, soundA,soundB,soundC);
 input 			clk;
 input			ce;
 input			reset_n;

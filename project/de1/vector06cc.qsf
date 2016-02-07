@@ -325,7 +325,7 @@ set_location_assignment PIN_M5 -to DRAM_UDQM
 set_location_assignment PIN_R8 -to DRAM_WE_N
 set_global_assignment -name ALLOW_POWER_UP_DONT_CARE OFF
 set_global_assignment -name SYNTH_TIMING_DRIVEN_SYNTHESIS OFF
-set_global_assignment -name VERILOG_FILE src/vector06cc.v
+set_global_assignment -name VERILOG_FILE src/DE1/vector06cc.v
 set_global_assignment -name VERILOG_FILE src/DE1/SDRAM_Controller.v
 set_global_assignment -name VECTOR_WAVEFORM_FILE clk50mhz.vwf
 set_global_assignment -name VERILOG_FILE src/floppy/floppy.v
@@ -340,11 +340,11 @@ set_global_assignment -name VERILOG_FILE src/floppy/dma_rw.v
 set_global_assignment -name VERILOG_FILE src/floppy/timer100hz.v
 set_global_assignment -name VHDL_FILE src/floppy/65c02/cpu65xx_en.vhd
 set_global_assignment -name VERILOG_FILE src/ramdisk/kvaz.v
-set_global_assignment -name VERILOG_FILE src/clockster.v
+set_global_assignment -name VERILOG_FILE src/DE1/clockster.v
 set_global_assignment -name VERILOG_FILE src/singleclockster.v
 set_global_assignment -name VERILOG_FILE src/oneshot.v
 set_global_assignment -name VERILOG_FILE src/specialkeys.v
-set_global_assignment -name VERILOG_FILE src/video/video.v
+set_global_assignment -name VERILOG_FILE src/DE1/video/video.v
 set_global_assignment -name VERILOG_FILE src/video/framebuffer.v
 set_global_assignment -name VERILOG_FILE src/video/shiftreg2.v
 set_global_assignment -name VERILOG_FILE src/video/rambuffer.v
@@ -382,7 +382,7 @@ set_global_assignment -name VERILOG_FILE src/altmodules/ayclkdrv.v
 set_global_assignment -name VERILOG_FILE src/altmodules/bootrom.v
 set_global_assignment -name QIP_FILE src/altmodules/bootrom.qip
 set_global_assignment -name VERILOG_FILE src/border_delay.v
-set_global_assignment -name VERILOG_FILE src/video/videomod.v
+set_global_assignment -name VERILOG_FILE src/DE1/video/videomod.v
 set_global_assignment -name CDF_FILE reports/vector06cc.cdf
 set_global_assignment -name QIP_FILE src/DE1/colorpll.qip
 set_global_assignment -name QIP_FILE src/altmodules/palette_rom.qip

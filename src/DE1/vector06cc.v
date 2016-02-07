@@ -189,11 +189,6 @@ output          AUD_XCK;
 output          AUD_ADCLRCK;            //  Audio CODEC ADC LR Clock
 input           AUD_ADCDAT;             //  Audio CODEC ADC Data
 
-////////////////////    SD Card Interface   ////////////////////////
-input           SD_DAT;                 //  SD Card Data            (MISO)
-output          SD_DAT3;                //  SD Card Data 3          (CSn)
-output          SD_CMD;                 //  SD Card Command Signal  (MOSI)
-output          SD_CLK;                 //  SD Card Clock           (SCK)
 
 input           PS2_CLK;
 input           PS2_DAT;
@@ -289,28 +284,10 @@ always @(posedge clk24)
     default: {singleclock_enabled, slowclock_enabled, warpclock_enabled} = 3'b000;
     endcase
 
-always
-    {singleclock_enabled, slowclock_enabled, warpclock_enabled} = 3'b000;
-    
-`ifdef WTFARP
-always @(posedge clk24) 
-//  case ({SW[9],SW[8]})//svofski
-    case ({swkey2,SW[8]})
-            // both down = tap on key 1
-    2'b00:  {singleclock_enabled, slowclock_enabled, warpclock_enabled} = 3'b100;
-            // both up = regular
-    2'b11:  {singleclock_enabled, slowclock_enabled, warpclock_enabled} = 3'b000;
-            // down/up == warp
-    2'b01:  {singleclock_enabled, slowclock_enabled, warpclock_enabled} = 3'b001;
-            // up/down = slow
-    2'b10:  {singleclock_enabled, slowclock_enabled, warpclock_enabled} = 3'b010;
-    default: {singleclock_enabled, slowclock_enabled, warpclock_enabled} = 3'b000;
-    endcase
-`endif
 wire regular_clock_enabled = !slowclock_enabled & !singleclock_enabled & !breakpoint_condition;
 wire singleclock;
 
-//singleclockster keytapclock(clk24, singleclock_enabled, KEY[1], singleclock);
+singleclockster keytapclock(clk24, singleclock_enabled, KEY[1], singleclock);
 
 reg cpu_ce;
 always @* 
@@ -379,8 +356,7 @@ end
 /////////////////
 // DEBUG PINS  //
 /////////////////
-//assign GPIO_0[8:0] = {clk24, ce12, ce6, ce3, vi53_timer_ce, video_slice, clkpal4FSC, 1'b1, tv_test[0]};
-//assign GPIO_0[7:0] = {clk24, ce12, ce6, ce3, vi53_timer_ce, video_slice, clkpal4FSC, clk60};
+assign GPIO_0[8:0] = {clk24, ce12, ce6, ce3, vi53_timer_ce, video_slice, clkpal4FSC, 1'b1, tv_test[0]};
 
 /////////////////
 // CPU SECTION //
@@ -404,9 +380,13 @@ wire [7:0] DO;
 
 
 reg[7:0] status_word;
+
 reg[9:0] gledreg;
 
-wire [1:0] sw23 = {1'b0, 1'b0};
+assign LEDr[7:0] = SW[0] == 0 ? DI : SW[1] == 0 ? DO : gledreg[7:0];
+assign LEDr[9:8] = gledreg[9:8];
+//assign LEDg = SW[2] ? status_word : {vv55int_pb_out[3:0],video_palette_value[3:0]};
+wire [1:0] sw23 = {SW[3],SW[2]};
 
 wire [7:0] kbd_keystatus = {kbd_mod_rus, kbd_key_shift, kbd_key_ctrl, kbd_key_rus, kbd_key_blksbr};
 
@@ -845,7 +825,7 @@ always @* vv55int_pc_in[3:0] <= 4'b1111;
 
 
 ///////////////////////
-// vv55 #2, PU       //
+// vv55 #2, PU          //
 ///////////////////////
 
 wire        vv55pu_sel = portmap_device == 3'b001;

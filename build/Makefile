@@ -1,11 +1,6 @@
-###################################################################
-# Project Configuration: 
-# 
-# Specify the name of the design (project) and the Quartus II
-# Settings File (.qsf)
-###################################################################
+# Possible targets: de1 wxeda
 
-TARGET ?= wxeda
+TARGET ?= de1
 
 PROJECT = vector06cc
 TOP_LEVEL_ENTITY = vector06cc
@@ -17,27 +12,16 @@ export TCLLIBPATH := \
     $(QUARTUS_DIR)/quartus/common/tcl/packages/tcllib-1.11/cmdline/ \
     $(QUARTUS_DIR)/quartus/linux/tcl8.5/msgcat/
 
-###################################################################
-# Part, Family, Boardfile DE1 or DE2
-FAMILY = "Cyclone II"
-PART = EP2C20F484C7
-BOARDFILE = DE2Pins
-###################################################################
-
-###################################################################
-# Main Targets
-#
-# all: build everything
-# clean: remove output files and database
-# program: program your device with the compiled design
-###################################################################
-
 all: smart.log $(PROJECT).asm.rpt $(PROJECT).sta.rpt 
 
-clean:
+firmware-clean:
+	make -C ../firmware clean
+
+hdl-clean:
 	rm -f src
 	rm -rf *.rpt *.chg smart.log *.htm *.eqn *.pin *.sof *.pof db incremental_db reports *.qpf *.qsf *.summary *.jdi *.smsg *.txt
-	make -C ../firmware clean
+
+clean:	hdl-clean firmware-clean
 
 map: smart.log $(PROJECT).map.rpt
 fit: smart.log $(PROJECT).fit.rpt

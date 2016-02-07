@@ -157,7 +157,7 @@ set_global_assignment -name PARTITION_NETLIST_TYPE SOURCE -section_id Top
 set_global_assignment -name PARTITION_FITTER_PRESERVATION_LEVEL PLACEMENT_AND_ROUTING -section_id Top
 set_global_assignment -name PARTITION_COLOR 16764057 -section_id Top
 set_location_assignment PIN_24 -to CLK48
-set_global_assignment -name VERILOG_FILE src/vector06cc.v
+set_global_assignment -name VERILOG_FILE src/wxeda/vector06cc.v
 set_global_assignment -name VERILOG_FILE src/DE1/SDRAM_Controller.v
 set_global_assignment -name VECTOR_WAVEFORM_FILE clk50mhz.vwf
 set_global_assignment -name VERILOG_FILE src/floppy/floppy.v
@@ -172,11 +172,11 @@ set_global_assignment -name VERILOG_FILE src/floppy/dma_rw.v
 set_global_assignment -name VERILOG_FILE src/floppy/timer100hz.v
 set_global_assignment -name VHDL_FILE src/floppy/65c02/cpu65xx_en.vhd
 set_global_assignment -name VERILOG_FILE src/ramdisk/kvaz.v
-set_global_assignment -name VERILOG_FILE src/clockster.v
+set_global_assignment -name VERILOG_FILE src/wxeda/clockster.v
 set_global_assignment -name VERILOG_FILE src/singleclockster.v
 set_global_assignment -name VERILOG_FILE src/oneshot.v
 set_global_assignment -name VERILOG_FILE src/specialkeys.v
-set_global_assignment -name VERILOG_FILE src/video/video.v
+set_global_assignment -name VERILOG_FILE src/wxeda/video/video.v
 set_global_assignment -name VERILOG_FILE src/video/framebuffer.v
 set_global_assignment -name VERILOG_FILE src/video/shiftreg2.v
 set_global_assignment -name VERILOG_FILE src/video/rambuffer.v
@@ -217,5 +217,5 @@ set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to VGA_G[4]
 set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to VGA_G[5]
 set_global_assignment -name VERILOG_FILE src/border_delay.v
 set_global_assignment -name QIP_FILE src/video/multadd.qip
-set_global_assignment -name VERILOG_FILE src/video/videomod.v
+set_global_assignment -name VERILOG_FILE src/wxeda/video/videomod.v
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top

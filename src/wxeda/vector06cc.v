@@ -532,9 +532,6 @@ video vidi(.clk24(clk24), .ce12(ce12), .ce6(ce6), .ce6x(ce6x), .clk4fsc(clkpal4F
             .osd_hsync(osd_hsync), .osd_vsync(osd_vsync),
             .coloridx(coloridx),
             .realcolor_in(realcolor2buf),
-				.video_r(video_r),
-				.video_g(video_g),
-				.video_b(video_b),
             .retrace(retrace),
             .video_scroll_reg(video_scroll_reg),
 `ifdef START1200
@@ -574,7 +571,7 @@ palette_ram (.address(paletteram_adr),
                        .inclock(clk24), .outclock(clk24), 
                        .wren(video_palette_wren_delayed), 
                        .q(realcolor2buf));
-
+`endif
 wire [1:0]  lowcolor_b = {2{osd_active}} & {realcolor[7],1'b0};
 wire        lowcolor_g = osd_active & realcolor[5];
 wire        lowcolor_r = osd_active & realcolor[2];
