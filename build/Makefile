@@ -1,4 +1,4 @@
-# Possible targets: de1 wxeda
+# Possible targets: de1 de1sram wxeda
 
 TARGET ?= de1
 

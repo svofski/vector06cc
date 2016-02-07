@@ -281,12 +281,12 @@ set_global_assignment -name VERILOG_FILE src/floppy/timer100hz.v
 set_global_assignment -name VHDL_FILE src/floppy/65c02/cpu65xx_en.vhd
 set_global_assignment -name VERILOG_FILE src/ramdisk/kvaz.v
 set_global_assignment -name VERILOG_FILE src/lpm_rom0.v
-set_global_assignment -name VERILOG_FILE src/clockster.v
+set_global_assignment -name VERILOG_FILE src/de1sram/clockster.v
 set_global_assignment -name VERILOG_FILE src/sram_map.v
 set_global_assignment -name VERILOG_FILE src/singleclockster.v
 set_global_assignment -name VERILOG_FILE src/oneshot.v
 set_global_assignment -name VERILOG_FILE src/specialkeys.v
-set_global_assignment -name VERILOG_FILE src/video/video.v
+set_global_assignment -name VERILOG_FILE src/de1sram/video/video.v
 set_global_assignment -name VERILOG_FILE src/de1sram/video/framebuffer.v
 set_global_assignment -name VERILOG_FILE src/video/shiftreg2.v
 set_global_assignment -name VERILOG_FILE src/video/rambuffer.v
@@ -305,8 +305,8 @@ set_global_assignment -name VERILOG_FILE src/DE1/CMD_Decode.v
 set_global_assignment -name VERILOG_FILE src/DE1/I2C_Controller.v
 set_global_assignment -name VERILOG_FILE src/DE1/CLK_LOCK.v
 set_global_assignment -name VERILOG_FILE src/DE1/SEG7_LUT.v
-set_global_assignment -name VERILOG_FILE src/DE1/audio_io.v
-set_global_assignment -name VERILOG_FILE src/DE1/soundcodec.v
+set_global_assignment -name VERILOG_FILE src/de1sram/audio_io.v
+set_global_assignment -name VERILOG_FILE src/de1sram/soundcodec.v
 set_global_assignment -name VHDL_FILE src/T80/T80.vhd
 set_global_assignment -name VHDL_FILE src/T80/T80_ALU.vhd
 set_global_assignment -name VHDL_FILE src/T80/T80_MCode.vhd
@@ -315,7 +315,7 @@ set_global_assignment -name VHDL_FILE src/T80/T80_Reg.vhd
 set_global_assignment -name VHDL_FILE src/T80/T8080se.vhd
 set_global_assignment -name VHDL_FILE src/T80/T80sef.vhd
 set_global_assignment -name VERILOG_FILE src/jtag/jtag_top.v
-set_global_assignment -name VERILOG_FILE src/ay/ayglue.v
+set_global_assignment -name VERILOG_FILE src/de1sram/ay/ayglue.v
 set_global_assignment -name VHDL_FILE src/ay/YM2149_linmix.vhd
 set_global_assignment -name VERILOG_FILE src/osd/textmode.v
 set_global_assignment -name VERILOG_FILE src/osd/chargen.v
