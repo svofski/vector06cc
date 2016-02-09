@@ -282,7 +282,7 @@ set_global_assignment -name VHDL_FILE ../../src/floppy/65c02/cpu65xx_en.vhd
 set_global_assignment -name VERILOG_FILE ../../src/ramdisk/kvaz.v
 set_global_assignment -name VERILOG_FILE ../../src/lpm_rom0.v
 set_global_assignment -name VERILOG_FILE ../../src/de1sram/clockster.v
-set_global_assignment -name VERILOG_FILE ../../src/sram_map.v
+set_global_assignment -name VERILOG_FILE ../../src/de1sram/sram_map.v
 set_global_assignment -name VERILOG_FILE ../../src/singleclockster.v
 set_global_assignment -name VERILOG_FILE ../../src/oneshot.v
 set_global_assignment -name VERILOG_FILE ../../src/specialkeys.v
