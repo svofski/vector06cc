@@ -1,4 +1,4 @@
-This page contains constantly updated project notes. Also see ArchitecturalOverview.
+This page contains constantly updated project notes. Also see [ArchitecturalOverview](ArchitecturalOverview.md).
 
 # Contents #
 
@@ -28,6 +28,7 @@ PS/2 driver, `ps2k.v` is very basic and provides no possibility to send commands
 The matrix itself is simulated rather physically, see `rowbits` assignment in `vectorkeys.v`. This ensures proper emulation but, of course, is far from being compact or elegant. Ideally, keymatrix should be made a RAM block and rowbits would then be updated sequentially. Unfortunately, to make this possible, the main state machine with all logic would have to be slightly rewritten.
 
 Special keys on the keyboard:
+
 |**F11**|БЛК+ВВОД|сброс ПК с подключением ПЗУ загрузчика. Программа в загрузчике отслеживает состояние клавиш при старте и удерживая F1, F2, F1+F2 можно принудительно выбирать загрузку с кассеты, квазидиска или дискеты|
 |:------|:--------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 |**F12**|БЛК+СБР|запуск загруженной программы. При нажатии на эту клавишу, отключается ПЗУ загрузчика и осуществляется сброс процессора, который начинает исполнять программу в ОЗУ с адреса $0000|
@@ -51,6 +52,7 @@ See also: [Техническое описание](Technical_Description.md)
 _Aka kvaz, квазидиск_.
 
 Same SRAM chip is used for main memory and for the RAM disk. The complete memory map can be laid out approximately like this (addresses given in byte mode, divide by 2 for physical figures):
+
 |00000|Main RAM|
 |:----|:-------|
 |10000|Ramdisk page 0|
@@ -103,6 +105,7 @@ Also see Technical\_Description for Vector-06C port map, [Секреты Век�
 -
 ### CPU I/O Ports ###
 Ports start at memory location $E000:
+
 |E000|MMC\_A: bit0 = SD\_DAT3/CS|
 |:---|:-------------------------|
 |E001|SPDR: SPI data register, same as in AVR|
