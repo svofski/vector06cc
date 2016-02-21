@@ -5,7 +5,7 @@ This page contains constantly updated project notes. Also see ArchitecturalOverv
 
 # Clock Distribution #
 
-![http://vector06cc.googlecode.com/svn/trunk/doc/clocks-2.png](http://vector06cc.googlecode.com/svn/trunk/doc/clocks-2.png)
+![https://raw.githubusercontent.com/svofski/vector06cc/master/doc/clocks-2.png](https://raw.githubusercontent.com/svofski/vector06cc/master/doc/clocks-2.png)
 
 Clock distribution:
   * clk24 is the master clock, also VGA pixel clock
@@ -144,7 +144,7 @@ One serious behavioural difference between the emulator and the real thing: norm
 However, if the software sends another command before the first one started to be processed, the machine will enter `STATE_DEAD` with all error bits set, `oCPU_REQUEST` set to `CPU_REQUEST_FAIL`, sector register will contain the last written command, the track will contain 0, 0 DRQ, BUSY in the MSB and the last machine state in LSB. wtf line will be set high, which in turn should lock the host computer CPU forever in the vicinity of the offending instruction. A crude, but useful debugging measure.
 
 ### WD1793 State Diagram ###
-![http://vector06cc.googlecode.com/svn/trunk/doc/wd_statemachine.png](http://vector06cc.googlecode.com/svn/trunk/doc/wd_statemachine.png)
+![https://raw.githubusercontent.com/svofski/vector06cc/master/doc/wd_statemachine.png](https://raw.githubusercontent.com/svofski/vector06cc/master/doc/wd_statemachine.png)
 
 Notes:
   * `ABORT` state not shown for clarity. Any state has a transition to `ABORT` thanks to $D0 command and it exits into `ENDCOMMAND` state.
