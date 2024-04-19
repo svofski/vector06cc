@@ -17,17 +17,17 @@
 //
 // --------------------------------------------------------------------
 
-`default_nettype none
+//`default_nettype none
 
 module rambuffer(clk, cerd, cewr, wren, resetrd, resetwr, din, dout);
-	input 		clk;
-	input 		cerd;
-	input 		cewr;
-	input 		wren;
-	input 		resetrd;
-	input 		resetwr;
-	input [7:0] din;
-	output reg[7:0] dout;
+	input wire 		clk;
+	input wire 		cerd;
+	input wire 		cewr;
+	input wire 		wren;
+	input wire 		resetrd;
+	input wire 		resetwr;
+	input wire [7:0]        din;
+	output reg [7:0]        dout;
 
 reg [7:0] pixelram[1023:0];
 
@@ -47,12 +47,12 @@ end
 endmodule
 
 module rdwrctr(clk, ce, reset, q);
-input clk;
-input ce;
-input reset;
-output [9:0] q;
+input  wire clk;
+input  wire ce;
+input  wire reset;
+output reg  [9:0] q;
 
-/*
+
 always @(posedge clk) begin
 	if (ce) begin
 		if (reset) 
@@ -61,10 +61,10 @@ always @(posedge clk) begin
 			q <= q + 1'b1;
 	end
 end
-*/
-lpm_counter ctr(.clock(clk), .clk_en(ce), .aclr(reset), .q(q));
-defparam ctr.LPM_WIDTH = 10,
-		 ctr.LPM_DIRECTION = "UP";
+
+//lpm_counter ctr(.clock(clk), .clk_en(ce), .aclr(reset), .q(q));
+//defparam ctr.LPM_WIDTH = 10,
+//		 ctr.LPM_DIRECTION = "UP";
 
 endmodule
 

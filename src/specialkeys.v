@@ -22,14 +22,14 @@
 
 
 module specialkeys(clk, cpu_ce, reset_n, key_blksbr, key_osd, osd_command, o_disable_rom, o_blksbr_reset, o_osd);
-input 		clk;
-input		cpu_ce;
-input		reset_n;
-input		key_blksbr;
-input		key_osd;
-input [7:0] osd_command;		// {F11,F12,HOLD}
+input wire 		clk;
+input wire		cpu_ce;
+input wire		reset_n;
+input wire		key_blksbr;
+input wire		key_osd;
+input wire [7:0] osd_command;		// {F11,F12,HOLD}
 output	reg	o_disable_rom;
-output		o_blksbr_reset;
+output wire     o_blksbr_reset;
 output	reg	o_osd;
 
 // BLK+SBR

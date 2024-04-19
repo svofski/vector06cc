@@ -15,10 +15,10 @@
 //
 // --------------------------------------------------------------------
 
-`default_nettype none
+//`default_nettype none
 
-module border_delay(input clk, input ce, input[3:0] i_borderindex, output[3:0] o_delayed);
-parameter DELAY;
+module border_delay(input wire clk, input wire ce, input wire[3:0] i_borderindex, output wire[3:0] o_delayed);
+parameter DELAY = 10;
     reg[DELAY-1:0] bob[3:0];
     always @(posedge clk)
         if (ce)

@@ -1,0 +1,51 @@
+<?xml version="1" encoding="UTF-8"?>
+<GAO_CONFIG>
+    <Version>3.0</Version>
+    <Mode>Lite</Mode>
+    <AoCore_Lite index="0" sample_clock="clk24" trig_type="0" capture_amount="1024" implemention="0" input_register_enabled="0" capture_init_data_enabled="0" module_name="vector06cc">
+        <SignalList>
+            <Bus name="A[15:0]">
+                <Signal>A[15]</Signal>
+                <Signal>A[14]</Signal>
+                <Signal>A[13]</Signal>
+                <Signal>A[12]</Signal>
+                <Signal>A[11]</Signal>
+                <Signal>A[10]</Signal>
+                <Signal>A[9]</Signal>
+                <Signal>A[8]</Signal>
+                <Signal>A[7]</Signal>
+                <Signal>A[6]</Signal>
+                <Signal>A[5]</Signal>
+                <Signal>A[4]</Signal>
+                <Signal>A[3]</Signal>
+                <Signal>A[2]</Signal>
+                <Signal>A[1]</Signal>
+                <Signal>A[0]</Signal>
+            </Bus>
+            <Bus name="sram_data_in[7:0]">
+                <Signal>sram_data_in[7]</Signal>
+                <Signal>sram_data_in[6]</Signal>
+                <Signal>sram_data_in[5]</Signal>
+                <Signal>sram_data_in[4]</Signal>
+                <Signal>sram_data_in[3]</Signal>
+                <Signal>sram_data_in[2]</Signal>
+                <Signal>sram_data_in[1]</Signal>
+                <Signal>sram_data_in[0]</Signal>
+            </Bus>
+            <Signal>ce3</Signal>
+            <Signal>memcpubusy_rd</Signal>
+            <Signal>DBIN</Signal>
+            <Bus name="DI[7:0]">
+                <Signal>DI[7]</Signal>
+                <Signal>DI[6]</Signal>
+                <Signal>DI[5]</Signal>
+                <Signal>DI[4]</Signal>
+                <Signal>DI[3]</Signal>
+                <Signal>DI[2]</Signal>
+                <Signal>DI[1]</Signal>
+                <Signal>DI[0]</Signal>
+            </Bus>
+        </SignalList>
+    </AoCore_Lite>
+    <GAO_ID>0101101110001000</GAO_ID>
+</GAO_CONFIG>

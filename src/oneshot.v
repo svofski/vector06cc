@@ -19,9 +19,9 @@
 
 module oneshot(clk, ce, trigger, q);
 parameter CLOCKS = 8'd16;
-input 		clk;
-input 		ce;
-input 		trigger;
+input wire		clk;
+input wire		ce;
+input wire		trigger;
 output reg 	q;
 
 reg [8:0] n_shot;
@@ -43,10 +43,10 @@ endmodule
 
 module oneshot_non_retriggerable(clk, ce, trigger, reset, q);
 parameter CLOCKS = 8'd16;
-input 		clk;
-input 		ce;
-input 		trigger;
-input       reset;
+input wire		clk;
+input wire		ce;
+input wire		trigger;
+input wire      reset;
 output reg 	q;
 
 reg [8:0] n_shot;
