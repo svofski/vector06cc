@@ -19,12 +19,13 @@
 
 module oneshot(clk, ce, trigger, q);
 parameter CLOCKS = 8'd16;
-input wire		clk;
-input wire		ce;
-input wire		trigger;
-output reg 	q;
+input clk;
+input ce;
+input trigger;
+output reg q;
 
-reg [8:0] n_shot;
+//reg [8:0] n_shot;
+reg [$clog2(CLOCKS+1)+1:0] n_shot;
 reg trigsample;
 
 always @(posedge clk) begin

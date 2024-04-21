@@ -1,4 +1,4 @@
-`default_nettype none
+//`default_nettype none
 
 // ====================================================================
 //                         VECTOR-06C FPGA REPLICA
@@ -11,7 +11,7 @@
 //
 // An open implementation of Vector-06C home computer
 //
-// Author: Viacheslav Slavinsky, http://sensi.org/~svo
+// Author: Viacheslav Slavinsky
 // 
 // Design File: specialkeys.v
 //
@@ -22,15 +22,15 @@
 
 
 module specialkeys(clk, cpu_ce, reset_n, key_blksbr, key_osd, osd_command, o_disable_rom, o_blksbr_reset, o_osd);
-input wire 		clk;
-input wire		cpu_ce;
-input wire		reset_n;
-input wire		key_blksbr;
-input wire		key_osd;
-input wire [7:0] osd_command;		// {F11,F12,HOLD}
-output	reg	o_disable_rom;
-output wire     o_blksbr_reset;
-output	reg	o_osd;
+input clk;
+input cpu_ce;
+input reset_n;
+input key_blksbr;
+input key_osd;
+input  [7:0] osd_command;		// {F11,F12,HOLD}
+output	reg o_disable_rom;
+output wire o_blksbr_reset;
+output	reg o_osd;
 
 // BLK+SBR
 reg		rst0toggle = 0;

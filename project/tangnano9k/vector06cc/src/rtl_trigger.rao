@@ -2,7 +2,7 @@
 <GAO_CONFIG>
     <Version>3.0</Version>
     <Mode>Standard</Mode>
-    <AoCore index="0" sample_clock="clk_psram" trig_type="0" storage_depth="4096" window_num="1" capture_amount="4096" implementation="0" trigger_pos="2000" module_name="vector06cc" force_trigger_by_falling_edge="false">
+    <AoCore index="0" sample_clock="clk24" trig_type="0" storage_depth="4096" window_num="1" capture_amount="4096" implementation="0" trigger_pos="2000" module_name="vector06cc" force_trigger_by_falling_edge="false">
         <SignalList>
             <Signal>ce3</Signal>
             <Signal>cpu_m1</Signal>
@@ -34,35 +34,16 @@
                 <Signal>DI[1]</Signal>
                 <Signal>DI[0]</Signal>
             </Bus>
-            <Bus name="DO[7:0]">
-                <Signal>DO[7]</Signal>
-                <Signal>DO[6]</Signal>
-                <Signal>DO[5]</Signal>
-                <Signal>DO[4]</Signal>
-                <Signal>DO[3]</Signal>
-                <Signal>DO[2]</Signal>
-                <Signal>DO[1]</Signal>
-                <Signal>DO[0]</Signal>
-            </Bus>
             <Signal>SYNC</Signal>
             <Signal>CPU/STACK</Signal>
-            <Signal>io_stack_long</Signal>
-            <Signal>io_stack</Signal>
-            <Signal>io_stack_pre</Signal>
-            <Signal>psram_rd_vid</Signal>
-            <Signal>mem_ctrl/read</Signal>
-            <Signal>mem_ctrl/write</Signal>
-            <Signal>rdcpu_finished</Signal>
-            <Signal>psram_busy</Signal>
-            <Signal>ram_read_pre</Signal>
-            <Signal>ram_read</Signal>
-            <Signal>rom_access</Signal>
-            <Signal>memcpubusy</Signal>
-            <Signal>memvidbusy</Signal>
-            <Signal>mem_ctrl/rdv_later</Signal>
-            <Signal>mem_ctrl/write_later</Signal>
-            <Signal>psram_wr_cpu_pre</Signal>
-            <Signal>ram_write_n</Signal>
+            <Signal>vidi/mode512</Signal>
+            <Signal>RESET_n</Signal>
+            <Signal>BUTTON</Signal>
+            <Signal>button_debounced</Signal>
+            <Signal>io_read</Signal>
+            <Signal>vv55int_sel</Signal>
+            <Signal>vv55int_rd_n</Signal>
+            <Signal>vv55int_oe_n</Signal>
         </SignalList>
         <Triggers>
             <Trigger index="0">
@@ -120,6 +101,8 @@
                         <Signal>A[1]</Signal>
                         <Signal>A[0]</Signal>
                     </Bus>
+                    <Signal>cpu_m1</Signal>
+                    <Signal>ded_3ded</Signal>
                 </SignalList>
             </Trigger>
             <Trigger index="8">
@@ -129,7 +112,7 @@
             </Trigger>
             <Trigger index="9">
                 <SignalList>
-                    <Signal>DBIN</Signal>
+                    <Signal>video_mode512</Signal>
                 </SignalList>
             </Trigger>
             <Trigger index="10">
@@ -137,11 +120,20 @@
                     <Signal>mem_ctrl/write</Signal>
                 </SignalList>
             </Trigger>
-            <Trigger index="11"/>
+            <Trigger index="11">
+                <SignalList>
+                    <Signal>int_request</Signal>
+                </SignalList>
+            </Trigger>
             <Trigger index="12"/>
             <Trigger index="13"/>
             <Trigger index="14"/>
-            <Trigger index="15"/>
+            <Trigger index="15">
+                <SignalList>
+                    <Signal>ded_3ded</Signal>
+                    <Signal>vv55int/opb_r[4]</Signal>
+                </SignalList>
+            </Trigger>
         </Triggers>
         <MatchUnits>
             <MatchUnit index="0" enabled="1" match_type="1" counter_enable="0" counter_width="2" counter="2" countinuous="0" func="0" value0="R" value1="0" trigger="0"/>
@@ -151,19 +143,19 @@
             <MatchUnit index="4" enabled="1" match_type="1" counter_enable="0" counter_width="2" counter="2" countinuous="0" func="0" value0="R" value1="0" trigger="4"/>
             <MatchUnit index="5" enabled="1" match_type="1" counter_enable="0" counter_width="2" counter="2" countinuous="0" func="0" value0="R" value1="0" trigger="5"/>
             <MatchUnit index="6" enabled="1" match_type="1" counter_enable="0" counter_width="2" counter="2" countinuous="0" func="0" value0="R" value1="0" trigger="6"/>
-            <MatchUnit index="7" enabled="1" match_type="0" counter_enable="0" counter_width="2" counter="2" countinuous="0" func="0" value0="0000000000000000" value1="0000000000000000" trigger="7"/>
+            <MatchUnit index="7" enabled="1" match_type="0" counter_enable="1" counter_width="4" counter="2" countinuous="1" func="0" value0="000000011000000011" value1="000000000000000000" trigger="7"/>
             <MatchUnit index="8" enabled="1" match_type="0" counter_enable="0" counter_width="2" counter="2" countinuous="0" func="0" value0="1" value1="0" trigger="8"/>
             <MatchUnit index="9" enabled="1" match_type="0" counter_enable="0" counter_width="2" counter="2" countinuous="0" func="0" value0="1" value1="0" trigger="9"/>
             <MatchUnit index="10" enabled="1" match_type="0" counter_enable="0" counter_width="2" counter="2" countinuous="0" func="0" value0="1" value1="0" trigger="10"/>
-            <MatchUnit index="11" enabled="0" match_type="0" counter_enable="0" counter_width="2" counter="2" countinuous="0" func="0" value0="" value1=""/>
+            <MatchUnit index="11" enabled="1" match_type="1" counter_enable="0" counter_width="2" counter="2" countinuous="0" func="0" value0="R" value1="0" trigger="11"/>
             <MatchUnit index="12" enabled="0" match_type="0" counter_enable="0" counter_width="2" counter="2" countinuous="0" func="0" value0="" value1=""/>
             <MatchUnit index="13" enabled="0" match_type="0" counter_enable="0" counter_width="2" counter="2" countinuous="0" func="0" value0="" value1=""/>
             <MatchUnit index="14" enabled="0" match_type="0" counter_enable="0" counter_width="2" counter="2" countinuous="0" func="0" value0="" value1=""/>
-            <MatchUnit index="15" enabled="0" match_type="0" counter_enable="0" counter_width="2" counter="2" countinuous="0" func="0" value0="" value1=""/>
+            <MatchUnit index="15" enabled="1" match_type="1" counter_enable="0" counter_width="2" counter="2" countinuous="0" func="0" value0="1F" value1="00" trigger="15"/>
         </MatchUnits>
         <Expressions type="Static">
-            <Expression>M0&amp;M7</Expression>
+            <Expression>M15</Expression>
         </Expressions>
     </AoCore>
-    <GAO_ID>0010011110010001</GAO_ID>
+    <GAO_ID>1101000010101000</GAO_ID>
 </GAO_CONFIG>

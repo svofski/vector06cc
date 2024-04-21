@@ -136,9 +136,6 @@ always @(posedge clk) begin
 
             if ((read_combined | write_combined) & rdv)
                 rdv_later <= rdv;
-            //write_later <= write;             // "queue" up write request, if any
-            //rdv_later <= rdv;
-            //read_later <= read;     
 
             ram_cs_n <= 0;
             ck_e <= 1;
@@ -166,11 +163,6 @@ always @(posedge clk) begin
         if (wait_for_rd_data && (rwds_in_ris ^ rwds_in_fal)) begin     // sample rwds falling edge to get a word / \_
             dout <= {dq_in_ris, dq_in_fal};
             wait_for_rd_data <= 0;
-            //wait_for_rd_data2 <= 1;
-            //
-            //ram_cs_n <= 1;
-            //ck_e <= 0;
-            //state <= IDLE_ST;
 
             if (memvidbusy) 
                 wait_for_rd_data2 <= 1;   // read second word

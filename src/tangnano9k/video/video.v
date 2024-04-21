@@ -75,54 +75,54 @@ parameter V_SYNC = 0;
 parameter V_REF  = 8;
 
 // input clocks
-input wire          clk24;
-input wire          ce12;
-input wire          ce6;
-input wire          ce6x;
-input wire          video_slice;
-input wire          pipe_ab;
+input           clk24;
+input           ce12;
+input           ce6;
+input           ce6x;
+input           video_slice;
+input           pipe_ab;
 
-input wire          mode512;          // 1 for 512x256 video mode
+input           mode512;          // 1 for 512x256 video mode
 
 // RAM access
-input wire [31:0]   vdata;
-output wire [15:0]  SRAM_ADDR;
+input [31:0]   vdata;
+output [15:0]  SRAM_ADDR;
 
 // video outputs
-output wire         hsync;
-output wire         vsync;
-output wire         lcd_clk_o;
-output wire         lcd_den_o;
+output          hsync;
+output          vsync;
+output          lcd_clk_o;
+output          lcd_den_o;
 
 output              osd_hsync;
 output              osd_vsync;
-output wire [3:0]   coloridx;
-input  wire [7:0]   realcolor_in;
-output wire [7:0]   realcolor_out;
-output wire         retrace;
+output  [3:0]   coloridx;
+input   [7:0]   realcolor_in;
+output  [7:0]   realcolor_out;
+output          retrace;
 
-input wire [7:0]    video_scroll_reg;
-input wire [3:0]    border_idx;
+input  [7:0]    video_scroll_reg;
+input  [3:0]    border_idx;
 
 // tv
-input wire          clk4fsc;
-input wire [1:0]    tv_mode;        // tv_mode[1] = alternating fields
+input           clk4fsc;
+input  [1:0]    tv_mode;        // tv_mode[1] = alternating fields
                                     // tv_mode[0] = tv mode
-output wire         tv_sync;
+output tv_sync;
 output reg[7:0]     tv_luma;        // CVBS output, TV sync included
 output reg[7:0]     tv_chroma_o;
 output reg[7:0]     tv_cvbs;
-output wire [7:0]   tv_test;
+output [7:0]   tv_test;
 
 reg signed [7:0]    tv_chroma;
 
 // test pins
-output wire [3:0]   testpin;
+output [3:0]   testpin;
 
-input wire          tv_osd_fg;
-input wire          tv_osd_bg;
-input wire          tv_osd_on;
-output wire         rdvid_o;
+input tv_osd_fg;
+input tv_osd_bg;
+input tv_osd_on;
+output rdvid_o;
 
 wire bordery;               // y-border active, from module vga_refresh
 wire borderx;               // x-border active, from module framebuffer
@@ -176,9 +176,17 @@ reg     [3:0] xcoloridx;
 // It's possible to switch to @(posedge) and if(ce6x), which goes ahead of ce6x by 1/8
 // but then there's a little problem with TV out, because it's unbuffered: 
 // leftmost column gets half-pixels from the right column. 
-always @(negedge clk24) begin
+//
+// 2024: on tang nano 9k negedge fails to latch the right colors in time (capture
+// ce12, ce6, xcoloridx to see). 
+reg [1:0] switch;
+always @(posedge clk24)
+    switch <= switch + 1;
+
+always @(posedge clk24) begin 
     if (mode512) begin
-        if (ce6)
+        //if (ce6)
+        if (switch[1])
             xcoloridx <= {coloridx_modeless[3], coloridx_modeless[2], 2'b00};
         else
             xcoloridx <= {2'b00, coloridx_modeless[1], coloridx_modeless[0]};

@@ -73,13 +73,13 @@ module vector06cc(
     input wire BUTTON,
 
 
-	output	wire		LCD_CLK,
-	output	wire		LCD_HSYNC,
-	output	wire		LCD_VSYNC,
-	output	wire 		LCD_DEN,
-	output	wire [4:0]	LCD_R,
-	output	wire [5:0]	LCD_G,
-	output	wire [4:0]	LCD_B,
+    output	wire		LCD_CLK,
+    output	wire		LCD_HSYNC,
+    output	wire		LCD_VSYNC,
+    output	wire 		LCD_DEN,
+    output	wire [4:0]	LCD_R,
+    output	wire [5:0]	LCD_G,
+    output	wire [4:0]	LCD_B,
 
 
     //////////////////    SD Card Interface   ////////////////////////
@@ -324,14 +324,23 @@ wire inta_n;
 
 wire cpu_m1 = SYNC & DO[5];
 always @(posedge clk24) begin
+    //if (cpu_ce) begin
+    //    if (WR_n == 0) gledreg[7:0] <= DO;
+    //    if (SYNC) begin
+    //        status_word <= DO;
+    //    end 
+    //    
+    //    address_bus_r <= address_bus[7:0];
+    //end
     if (cpu_ce) begin
         if (WR_n == 0) gledreg[7:0] <= DO;
         if (SYNC) begin
             status_word <= DO;
         end 
-        
-        address_bus_r <= address_bus[7:0];
     end
+        
+    if (SYNC)
+        address_bus_r <= address_bus[7:0];
 end
 
 //always @(posedge clk24)
@@ -365,6 +374,44 @@ always @(posedge clk24) begin
     else
         rom_access <= A < 2048;
 end
+
+//
+// painful debug stuff
+//--------------fml--------------
+//
+
+reg [7:0] prev_opcode, opcode;
+reg [9:0] opcode_addr, prev_opcode_addr;
+reg breakfuck;
+reg ded_3ded;
+
+always @(posedge clk24)
+begin
+    if (~SYS_RESETN)
+        ded_3ded <= 1'b0;
+
+    breakfuck <= 0;
+
+
+    if (cpu_m1 && cpu_ce)
+    begin
+        prev_opcode <= opcode;
+        prev_opcode_addr <= opcode_addr;
+
+        opcode <= DI;
+        opcode_addr <= A;
+
+        if (A == 16'h3ded)
+            ded_3ded <= 1'b1;
+    end
+    if (prev_opcode == 8'hc2 && prev_opcode_addr == 10'h03ec && opcode != 8'h77)
+        breakfuck <= 1;
+
+end
+
+//
+//--------------fml--------------
+//
 
 assign DI=DI_;
 reg[7:0] DI_;
@@ -440,7 +487,7 @@ always @(posedge clk24)
 reg[63:0] rdvidreg;
 always @(posedge clk_psram) rdvidreg={rdvidreg[62:0],rdvid};
 
-wire psram_rd_vid = rdvidreg[30]; //rdvidreg[0]; // 6 almost there! but oblitterated ded, 5 snail ded
+wire psram_rd_vid = rdvidreg[30]; 
 
 
 // ---------- haltmode write access ----------------
@@ -704,7 +751,6 @@ palette_ram ru2tru(
     .reset(1'b0),                     //input reset
     .wre(video_palette_wren_delayed)  //input wre
 );
-//assign realcolor2buf = {paletteram_adr,paletteram_adr};
 
 `endif
 
@@ -765,7 +811,9 @@ always @(posedge clk24) begin
     if (~int_rq_hist & int_rq_tick & INTE) 
         int_request <= 1;
     
-    if (interrupt_ack)
+    //if (interrupt_ack)
+    //    int_request <= 0;
+    if ((int_request & ~int_rq_tick) | interrupt_ack)
         int_request <= 0;
 end
 
@@ -880,6 +928,8 @@ wire [7:0]  vv55int_pa_out;
 wire [7:0]  vv55int_pb_out;
 wire [7:0]  vv55int_pc_out;
 
+
+`ifdef OLD_82C55
 wire vv55int_pa_oe_n;
 wire vv55int_pb_oe_n;
 wire vv55int_pc_oe_n;
@@ -910,6 +960,23 @@ I82C55 vv55int(
     
     cpu_ce,
     clk24);
+`else
+assign vv55int_oe_n = vv55int_cs_n;
+k580vv55 vv55int(
+    .reset(mreset),
+    .clk_sys(clk24),
+    .addr(vv55int_addr),
+    .we_n(vv55int_wr_n | vv55int_cs_n),
+    .idata(vv55int_idata),
+    .odata(vv55int_odata),
+    .ipa(vv55int_pa_in),
+    .opa(vv55int_pa_out),
+    .ipb(vv55int_pb_in),
+    .opb(vv55int_pb_out),
+    .ipc(vv55int_pc_in),
+    .opc(vv55int_pc_out));
+
+`endif
 
 always @(posedge clk24) begin
     // port B
@@ -1221,6 +1288,38 @@ assign rs_soundC=8'b0;
 assign RSdataOut = 8'b0;
 `endif
 
+// button debounce
+
+//wire button_debounced;
+//oneshot #(16'hffff) button_debounce(clk24, cpu_ce, ~BUTTON, button_debounced);
+reg [23:0] debounce_ctr;
+reg        debounce_on;
+reg        button_debounced;
+always @(posedge clk24)
+begin
+    if (~SYS_RESETN)
+        {debounce_on, button_debounced} <= 2'b00;
+    else
+    if (vi53_timer_ce) begin
+      button_debounced <= 1'b0;
+      if (!debounce_on)
+      begin
+          if (~BUTTON)
+          begin
+              debounce_ctr <= 24'hffffff;
+              debounce_on <= 1'b1;
+              button_debounced <= 1'b1;
+          end
+      end
+      else
+      begin
+          debounce_ctr <= debounce_ctr - 1'b1;
+          if (debounce_ctr == 0)
+              debounce_on <= 1'b0;
+      end
+    end
+end
+
 //////////////////
 // Special keys //
 //////////////////
@@ -1233,7 +1332,7 @@ specialkeys skeys(
                 .clk(clk24), 
                 .cpu_ce(cpu_ce),
                 .reset_n(mreset_n), 
-                .key_blksbr(BUTTON == 1'b0 || kbd_key_blksbr == 1'b1 || osd_command_f12), 
+                .key_blksbr(button_debounced || kbd_key_blksbr == 1'b1 || osd_command_f12), 
                 .key_osd(kbd_key_scrolllock),
                 .o_disable_rom(disable_rom),
                 .o_blksbr_reset(blksbr_reset_pulse),

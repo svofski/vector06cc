@@ -9,7 +9,7 @@
 //
 // An open implementation of Vector-06C home computer
 //
-// Author: Viacheslav Slavinsky, http://sensi.org/~svo
+// Author: Viacheslav Slavinsky
 // 
 // Design File: framebuffer.v
 //

@@ -50,17 +50,6 @@ reg[4:0] initctr;
 
 reg qce12, qce6, qce6x, qce3, qce3v, qvideo_slice, qpipe_ab, qce1m5;
 
-
-//Gowin_rPLL_48p24 your_momma(
-//    .clkout(clk48), //output clkout
-//    .clkoutp(clk48p), //output clkoutp
-//    .clkoutd(clk24), //output clkoutd
-//    .clkin(clk27), //input clkin
-//    .psda(4'b0000), //input [3:0] psda
-//    .dutyda(4'b0000), //input [3:0] dutyda
-//    .fdly(4'b0000) //input [3:0] fdly
-//);
-
 Gowin_rPLL48p24 your_momma(
     .clkout(clk48), //output clkout
     .clkoutp(clk48p), //output clkoutp

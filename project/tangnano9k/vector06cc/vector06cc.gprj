@@ -13,6 +13,7 @@
         <File path="C:/Gowin/projects/vector06cc/src/tangnano9k/bootrom/bootrom.v" type="file.verilog" enable="1"/>
         <File path="C:/Gowin/projects/vector06cc/src/tangnano9k/clockster.v" type="file.verilog" enable="1"/>
         <File path="C:/Gowin/projects/vector06cc/src/tangnano9k/gowin_rpll48p24/gowin_rpll48p24.v" type="file.verilog" enable="1"/>
+        <File path="C:/Gowin/projects/vector06cc/src/tangnano9k/k580vv55.v" type="file.verilog" enable="1"/>
         <File path="C:/Gowin/projects/vector06cc/src/tangnano9k/multikvaz.v" type="file.verilog" enable="1"/>
         <File path="C:/Gowin/projects/vector06cc/src/tangnano9k/palette_ram/palette_ram.v" type="file.verilog" enable="1"/>
         <File path="C:/Gowin/projects/vector06cc/src/tangnano9k/psram/psram_controller.v" type="file.verilog" enable="1"/>
