@@ -8,7 +8,8 @@ module haltmode(
     output [21:0] addr_o,     // ram address
     output [7:0] data_o,      // data
     output wr_o,              // write ram[addr_o] <= data_o
-    output halt_o             // halt the cpu
+    output halt_o,            // halt the cpu
+    output [11:0] fkeys_o     // fkeys
 );
 
 localparam CLK_FRE = 24;
@@ -29,12 +30,25 @@ localparam ST_HALT = 3;
 localparam ST_RXHEX = 4;
 localparam ST_ERROR = 5;
 
+localparam ES_0 = 0;
+localparam ES_1 = 1;
+localparam ES_2 = 2;
+localparam ES_3 = 3;
+localparam ES_4 = 4;
+localparam ES_5 = 5;
+localparam ES_F11 = 6;
+localparam ES_F12 = 7;
+
 localparam HS_0 = 0;
 localparam HS_1 = 1;
 localparam HS_ERROR = 2;
 localparam HS_ECHO = 3;
 
-reg [3:0] state, state_p, state_h, state_hp;
+reg [3:0] state, state_p, state_h, state_hp, state_esc;
+
+reg [11:0] fkeys;
+
+assign fkeys_o = fkeys;
 
 uart_rx#
 (
@@ -99,9 +113,13 @@ begin
     begin
         state <= ST_INIT;
         state_h <= HS_0;
+        state_esc <= ES_0;
+        fkeys <= 0;
     end
     else
     begin
+        fkeys <= 0;
+
         if (state == ST_INIT) state <= ST_START;
         if (state == ST_START) state <= ST_RUN;    
 
@@ -114,13 +132,58 @@ begin
         if (rx_data_valid)
         begin
             state_h <= HS_ECHO;
-            case (rx_data)
-                8'd3: if (state == ST_RUN) 
+            if (state == ST_RUN)
+            begin
+                if (state_esc == ES_0)
+                    case (rx_data)
+                        8'd3: // ctrl-c breaks into halt-mode
+                        begin
+                            state <= ST_HALT;
+                            state_h <= HS_0;
+                        end
+                        8'd27:  // ESC
+                            state_esc <= ES_1;
+                    endcase
+                else if (state_esc == ES_1)
+                    case (rx_data)
+                        "[":      state_esc <= ES_2; // ESC[n~ F-key  (11~ == F1, 23~ =F11, 24~i =F12
+                        default:  state_esc <= ES_0; // unknown, reset
+                    endcase
+                else if (state_esc == ES_2)
                 begin
-                    state <= ST_HALT;
-                    state_h <= HS_0;
+                    case (rx_data)
+                        "2": state_esc <= ES_3;
+                        default: state_esc <= ES_0;
+                    endcase
                 end
-                "c": if (state == ST_HALT) state <= ST_RUN;
+                else if (state_esc == ES_3)
+                begin
+                    case (rx_data)
+                        "3": state_esc <= ES_F11;   // ESC[23~
+                        "4": state_esc <= ES_F12;   // ESC[24~
+                        default: state_esc <= ES_0;
+                    endcase
+                end
+                else if (state_esc == ES_F11)
+                begin
+                    if (rx_data == "~")
+                        fkeys[10] <= 1'b1;
+                    state_esc <= ES_0;
+                end
+                else if (state_esc == ES_F12)
+                begin
+                    if (rx_data == "~")
+                        fkeys[11] <= 1'b1;
+                    state_esc <= ES_0;
+                end
+                else
+                begin
+                    state_esc <= ES_0;
+                end
+            end
+            else // state == ST_HALT
+            case (rx_data)
+                "c": state <= ST_RUN;
             endcase
         end
     end
@@ -133,11 +196,11 @@ begin
     state_hp <= state_h;
     if (state != state_p || state_h != state_hp)
     begin
-        if (state == ST_INIT) `print("vector06cc debugger\n", STR);
+        if (state == ST_INIT) `print("vector06cc debug probe. F11/F12 reset/restart; ^c ihex upload\n", STR);
         if (state == ST_RUN) `print("Running...\n", STR);
         if (state == ST_HALT) 
         begin
-            if (state_h == HS_0) `print("Halted, press c to continue\n", STR);
+            if (state_h == HS_0) `print("Halt. Upload ihex, press c to continue\n", STR);
             // HS_1 keep quiet
             if (state_h == HS_ERROR) `print("Error\n", STR);
             if (state_h == HS_ECHO) `printc(rx_data == 8'd13 ? 8'd10 : rx_data);

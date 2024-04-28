@@ -834,7 +834,7 @@ wire        kbd_key_shift;
 wire        kbd_key_ctrl;
 wire        kbd_key_rus;
 wire        kbd_key_blksbr;
-wire        kbd_key_blkvvod = kbd_key_blkvvod_phy | osd_command_f11;
+wire        kbd_key_blkvvod = kbd_key_blkvvod_phy | osd_command_f11 | halt_command_f11;
 wire        kbd_key_blkvvod_phy;
 wire        kbd_key_scrolllock;
 wire [5:0]  kbd_keys_osd;
@@ -1335,11 +1335,14 @@ wire    scrollock_osd;
 wire    blksbr_reset_pulse;
 wire    disable_rom;
 
+wire    halt_command_f12;
+wire    halt_command_f11;
+
 specialkeys skeys(
                 .clk(clk24), 
                 .cpu_ce(cpu_ce),
                 .reset_n(mreset_n), 
-                .key_blksbr(button_debounced || kbd_key_blksbr == 1'b1 || osd_command_f12), 
+                .key_blksbr(button_debounced || kbd_key_blksbr == 1'b1 || osd_command_f12 || halt_command_f12), 
                 .key_osd(kbd_key_scrolllock),
                 .o_disable_rom(disable_rom),
                 .o_blksbr_reset(blksbr_reset_pulse),
@@ -1359,17 +1362,20 @@ wire [21:0] halt_addr;
 wire [7:0] halt_do;
 wire halt_wr;
 wire halt_halt;
+wire [11:0] halt_fkeys;
+
+assign halt_command_f11 = halt_fkeys[10];
+assign halt_command_f12 = halt_fkeys[11];
 
 haltmode debugger(.clk24(clk24), .rst_n(delayed_reset_n),
     .uart_rx(UART_RX), .uart_tx(UART_TX),
     .addr_o(halt_addr), .data_o(halt_do), .wr_o(halt_wr),
-    .halt_o(halt_halt)
+    .halt_o(halt_halt),
+    .fkeys_o(halt_fkeys)
 );
 
 always @(posedge clk24)
     LED[5:0] <= {cpu_m1, ~halt_addr[4:0]};
-
-
 
 `endif
 

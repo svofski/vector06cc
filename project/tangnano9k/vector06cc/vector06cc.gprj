@@ -41,7 +41,7 @@
         <File path="src/tangnano9k.cst" type="file.cst" enable="1"/>
         <File path="src/clocks_gao.gao" type="file.gao" enable="0"/>
         <File path="src/rtl_gao.rao" type="file.gao" enable="0"/>
-        <File path="src/rtl_trigger.rao" type="file.gao" enable="1"/>
+        <File path="src/rtl_trigger.rao" type="file.gao" enable="0"/>
         <File path="src/sigh.rao" type="file.gao" enable="0"/>
     </FileList>
 </Project>
