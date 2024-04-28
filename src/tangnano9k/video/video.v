@@ -57,6 +57,7 @@ module video(
     coloridx,           // output:  palette ram address
     realcolor_in,       // input:   real colour value from palette ram
     realcolor_out,      // output:  real colour value --> vga
+    bgr555_out,         // output:  bgr 555
     retrace,            // output:  out of scan area, for interrupt request
     video_scroll_reg,   // input:   line where display starts
     border_idx,         // input:   border colour index
@@ -104,6 +105,7 @@ output          osd_vsync;
 output  [3:0]   coloridx;
 input   [7:0]   realcolor_in;
 output  [7:0]   realcolor_out;
+output [14:0]   bgr555_out;
 output          retrace;
 
 input  [7:0]    video_scroll_reg;
@@ -424,6 +426,7 @@ wire [7:0] smallcolor_b = {read_b[14:13], read_b[9:7], read_b[4:2]};
 
 assign realcolor_out = videoActive ? (|wren_line_a ? smallcolor_a : smallcolor_b) : 8'b0;
 
+assign bgr555_out = videoActive ? (|wren_line_a ? read_a : read_b) : 8'b0;
 
 `endif
 
@@ -736,6 +739,8 @@ module chroma_shift(input wire [7:0] chroma_in, output reg [4:0] chroma_out);
 endmodule
 
 
+// dumb mix = a + b + c + d
+// input components are bgr233, output mix is bgr555
 module mix4(input clk, input [7:0] a, input [7:0] b, input [7:0] c, input [7:0] d, output [14:0] mix);
 
 wire [4:0] rsum  = a[2:0] + b[2:0] + c[2:0] + d[2:0] + 1; 
@@ -748,13 +753,12 @@ assign mix = {bsum, gsum, rsum};
 endmodule
 
 
-// 3 stages
+// pipelined mix = a + b + c + d in 3 stages
+// input components are bgr233, output mix is bgr555
 // s1 = a + b
 // s2 = s1 + c
-// s3 = s2 + d    -- final
-
+// s3 = s2 + d + 1
 module pipmix4(input clk, input [7:0] a, input [7:0] b, input [7:0] c, input [7:0] d, output [14:0] mix);
-
 
 reg [4:0] rp [2:0];
 reg [4:0] gp [2:0];
@@ -773,9 +777,9 @@ begin
     dq[1] <= dq[0]; dq[0] <= d;
 
 
-    rp[0] <= a[2:0] + b[2:0];       // stage 0
-    rp[1] <= rp[0]  + cq[0][2:0];   // stage 1
-    rp[2] <= rp[1]  + dq[1][2:0] + 1'b1;   // stage 2
+    rp[0] <= a[2:0] + b[2:0];               // stage 0
+    rp[1] <= rp[0]  + cq[0][2:0];           // stage 1
+    rp[2] <= rp[1]  + dq[1][2:0] + 1'b1;    // stage 2
 
     gp[0] <= a[5:3] + b[5:3];
     gp[1] <= gp[0]  + cq[0][5:3];

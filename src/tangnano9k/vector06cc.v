@@ -660,6 +660,7 @@ wire rdvid;
 wire [7:0] realcolor;       // this truecolour value fetched from buffer directly to display
 wire [7:0] realcolor2buf;   // this truecolour value goes into the scan doubler buffer
 
+wire [14:0] bgr555;
 
 video vidi(.clk24(clk24), 
             .ce12(ce12), 
@@ -681,6 +682,7 @@ video vidi(.clk24(clk24),
             .coloridx(coloridx),
             .realcolor_in(realcolor2buf),
             .realcolor_out(realcolor),      // TODO: add this line to other versions, it was lost!
+            .bgr555_out(bgr555),            // same as realcolor_out but 5:5:5 components
             .retrace(retrace),
             .video_scroll_reg(video_scroll_reg),
 `ifdef START1200
@@ -786,9 +788,13 @@ assign LCD_CLK = video_lcd_clk;
 assign LCD_DEN = video_lcd_den;
 assign LCD_HSYNC = vga_hs;
 assign LCD_VSYNC = vga_vs;
-assign LCD_R[4:1] = video_r;
-assign LCD_G[5:2] = video_g;
-assign LCD_B[4:1] = video_b;
+// FIX this for OSD!
+//assign LCD_R[4:1] = video_r;
+//assign LCD_G[5:2] = video_g;
+//assign LCD_B[4:1] = video_b;
+assign LCD_R[4:0] = bgr555[4:0];
+assign LCD_G[5:1] = bgr555[9:5];
+assign LCD_B[4:0] = bgr555[14:10];
 
 `endif
 ///////////
