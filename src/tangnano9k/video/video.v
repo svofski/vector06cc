@@ -26,11 +26,15 @@
 
 //`default_nettype none
 
+//`define SCAN_2_1
+`define SCAN_5_3
+
 module video(
     clk24,               // clock 24mhz
     ce12,               // 12mhz clock enable for vga-scan (buffer->vga)
     ce6,                // 6mhz  clock enable for pal-scan (ram->buffer)
     ce6x,
+    reset_n,
     video_slice,        // video time slice, not cpu time
     pipe_ab,            // pipe_ab for register pipeline
  
@@ -79,6 +83,7 @@ input           clk24;
 input           ce12;
 input           ce6;
 input           ce6x;
+input           reset_n;
 input           video_slice;
 input           pipe_ab;
 
@@ -94,8 +99,8 @@ output          vsync;
 output          lcd_clk_o;
 output          lcd_den_o;
 
-output              osd_hsync;
-output              osd_vsync;
+output          osd_hsync;
+output          osd_vsync;
 output  [3:0]   coloridx;
 input   [7:0]   realcolor_in;
 output  [7:0]   realcolor_out;
@@ -112,7 +117,7 @@ output tv_sync;
 output reg[7:0]     tv_luma;        // CVBS output, TV sync included
 output reg[7:0]     tv_chroma_o;
 output reg[7:0]     tv_cvbs;
-output [7:0]   tv_test;
+output [7:0]        tv_test;
 
 reg signed [7:0]    tv_chroma;
 
@@ -138,12 +143,23 @@ wire    [3:0] coloridx_modeless;
 
 assign tvhs = tvhs2 | fb_row[0];
 
+// gated signals for line 6
+wire hsync_raw, vsync_raw;
+reg hsync_gate;
+reg clock_gate;
+assign hsync = hsync_raw | ~hsync_gate;
+assign vsync = vsync_raw;// & !(fb_row > 255 || fb_row <= 260);
+
+wire lcd_den_raw, lcd_clk_raw;
+assign lcd_den_o = lcd_den_raw & hsync_gate;
+assign lcd_clk_o = lcd_clk_raw & clock_gate;
+
 vga_refresh     refresher(
                             .clk24(clk24),
-                            .lcd_clk_o(lcd_clk_o),
-                            .lcd_den_o(lcd_den_o),
-                            .hsync(hsync),
-                            .vsync(vsync),
+                            .lcd_clk_o(lcd_clk_raw),
+                            .lcd_den_o(lcd_den_raw),
+                            .hsync(hsync_raw),
+                            .vsync(vsync_raw),
                             .videoActive(videoActive),
                             .bordery(bordery),
                             .retrace(retrace),
@@ -198,6 +214,15 @@ end
 // coloridx is an output port, address of colour in the palette ram
 assign coloridx = border ? border_idx : xcoloridx;
 
+
+reg reset_line;
+always @(posedge clk24) begin
+    reset_line <= fb_row[0] & !hsync;
+end
+
+
+`ifdef SCAN_2_1
+assign testpin = {reset_line, wren_line1, reset_line, mode512};
 // realcolor_out what actually goes to VGA DAC
 assign realcolor_out = videoActive ? (wren_line1 ? rc_b : rc_a) : 8'b0;
 
@@ -208,12 +233,12 @@ wire [7:0] rc_b;
 wire wren_line1 = fb_row[1];
 wire wren_line2 = ~fb_row[1];
 
-reg reset_line;
-always @(posedge clk24) begin
-    reset_line <= fb_row[0] & !hsync;
-end
+always @* hsync_gate <= 1'b1;
 
-assign testpin = {reset_line, wren_line1, reset_line, mode512};
+// probe by sabotage: <400 vsync breaks, <503 breaks <504 ok
+//always @* hsync_gate <= hsync_ctr < 504;
+
+always @* clock_gate <= 1'b1;
 
 rambuffer line1(.clk(clk24),
                 .cerd(1'b1),
@@ -234,6 +259,186 @@ rambuffer line2(.clk(clk24),
                 .din(realcolor_in),
                 .dout(rc_b)
                 );
+`endif
+
+`ifdef SCAN_5_3 
+
+reg [5:0] div6sr; // running 1 with period of 6 lines
+reg [4:0] div5sr; // running 1 with period of 5 lines
+reg [1:0] fb_row_r; // [0] = fast vga lines, [1] = slow v06c/tv lines
+
+reg wr_group;   // which group of 3 line buffers to write to
+
+wire [2:0] wren_line_a = div6sr[2:0];
+wire [2:0] wren_line_b = div6sr[5:3];
+wire [7:0] rc_a [2:0];
+wire [7:0] rc_b [2:0];
+
+always @(posedge clk24)
+begin
+    fb_row_r <= fb_row[1:0];
+
+    if (!vsync)
+    begin
+        div6sr <= 1'b1;   // write a/b 3 + 3 lines
+        div5sr <= 1'b1;   // read line
+    end
+
+    // fast read 5 lines, 6th linger
+    if (fb_row[0] != fb_row_r[0])
+        div5sr <= {div5sr[3:0], 1'b0};
+
+    // slow/write 6 lines
+    if (fb_row[1] != fb_row_r[1])
+    begin
+        div6sr <= {div6sr[4:0], div6sr[5]};
+        // reset read sr every 3 lines
+        if (div6sr[5] | div6sr[2])  // 1 moving to [0] or [3]
+            div5sr <= 1'b1;
+    end
+end
+
+// hsync_gate: 0, 1, 2, 3, 4 -> 1, 5 -> 0
+always @*
+    hsync_gate <= (|div5sr) | retrace | (hsync_ctr > 495);
+
+
+// produce 24 * 5/6 = 20 mhz average clock
+reg [5:0] div56;
+always @(posedge clk24)
+    if (~reset_n)
+        div56 <= 6'b1;
+    else
+        div56 <= {div56[4:0],div56[5]};
+
+// 5 out of 6
+always @*
+    clock_gate <= 1'b1; //~div56[5];
+
+wire cerd = clock_gate;   // 20 MHz 
+
+rambuffer line_a_0(.clk(clk24),
+                .cerd(cerd),
+                .cewr(ce12),
+                .wren(wren_line_a[0]),
+                .resetrd(!hsync),
+                .resetwr(reset_line),
+                .din(realcolor_in),
+                .dout(rc_a[0]));
+rambuffer line_a_1(.clk(clk24),
+                .cerd(cerd),
+                .cewr(ce12),
+                .wren(wren_line_a[1]),
+                .resetrd(!hsync),
+                .resetwr(reset_line),
+                .din(realcolor_in),
+                .dout(rc_a[1]));
+rambuffer line_a_2(.clk(clk24),
+                .cerd(cerd),
+                .cewr(ce12),
+                .wren(wren_line_a[2]),
+                .resetrd(!hsync),
+                .resetwr(reset_line),
+                .din(realcolor_in),
+                .dout(rc_a[2]));
+
+rambuffer line_b_0(.clk(clk24),
+                .cerd(cerd),
+                .cewr(ce12),
+                .wren(wren_line_b[0]),
+                .resetrd(!hsync),
+                .resetwr(reset_line),
+                .din(realcolor_in),
+                .dout(rc_b[0]));
+rambuffer line_b_1(.clk(clk24),
+                .cerd(cerd),
+                .cewr(ce12),
+                .wren(wren_line_b[1]),
+                .resetrd(!hsync),
+                .resetwr(reset_line),
+                .din(realcolor_in),
+                .dout(rc_b[1]));
+rambuffer line_b_2(.clk(clk24),
+                .cerd(cerd),
+                .cewr(ce12),
+                .wren(wren_line_b[2]),
+                .resetrd(!hsync),
+                .resetwr(reset_line),
+                .din(realcolor_in),
+                .dout(rc_b[2]));
+
+reg [14:0] read_a;
+reg [14:0] read_b;
+
+wire [14:0] amix [4:0];
+wire [14:0] bmix [4:0];
+
+// failburger
+pipmix4 ma1(clk24, rc_a[0], rc_a[0], rc_a[0], rc_a[0], bmix[0]);    
+pipmix4 ma2(clk24, rc_a[0], rc_a[0], rc_a[0], rc_a[1], bmix[1]);
+pipmix4 ma3(clk24, rc_a[1], rc_a[1], rc_a[1], rc_a[1], bmix[2]);
+pipmix4 ma4(clk24, rc_a[1], rc_a[1], rc_a[2], rc_a[2], bmix[3]);
+pipmix4 ma5(clk24, rc_a[2], rc_a[2], rc_a[2], rc_a[2], bmix[4]);
+                           
+pipmix4 mb1(clk24, rc_b[0], rc_b[0], rc_b[0], rc_b[0], amix[0]);    
+pipmix4 mb2(clk24, rc_b[0], rc_b[0], rc_b[0], rc_b[1], amix[1]);
+pipmix4 mb3(clk24, rc_b[1], rc_b[1], rc_b[1], rc_b[1], amix[2]);
+pipmix4 mb4(clk24, rc_b[1], rc_b[1], rc_b[2], rc_b[2], amix[3]);
+pipmix4 mb5(clk24, rc_b[2], rc_b[2], rc_b[2], rc_b[2], amix[4]);
+
+// fallback nothingburger                           
+//pipmix4 ma1(clk24, rc_a[0], rc_a[0], rc_a[0], rc_a[0], amix[0]);    
+//pipmix4 ma2(clk24, rc_a[1], rc_a[1], rc_a[1], rc_a[1], amix[1]);
+//pipmix4 ma3(clk24, rc_a[1], rc_a[1], rc_a[1], rc_a[1], amix[2]);
+//pipmix4 ma4(clk24, rc_a[2], rc_a[2], rc_a[2], rc_a[2], amix[3]);
+//pipmix4 ma5(clk24, rc_a[2], rc_a[2], rc_a[2], rc_a[2], amix[4]);
+//
+//pipmix4 mb1(clk24, rc_b[0], rc_b[0], rc_b[0], rc_b[0], bmix[0]);    
+//pipmix4 mb2(clk24, rc_b[1], rc_b[1], rc_b[1], rc_b[1], bmix[1]);
+//pipmix4 mb3(clk24, rc_b[1], rc_b[1], rc_b[1], rc_b[1], bmix[2]);
+//pipmix4 mb4(clk24, rc_b[2], rc_b[2], rc_b[2], rc_b[2], bmix[3]);
+//pipmix4 mb5(clk24, rc_b[2], rc_b[2], rc_b[2], rc_b[2], bmix[4]);
+
+always @*
+    casex (div5sr)
+        5'b00001: read_a <= amix[0];  // [0]                  3/3 0/3
+        5'b00010: read_a <= amix[1];  // [0]*0.4 + [1]*0.6    2/4 2/4
+        5'b00100: read_a <= amix[2];  // [1]*0.8 + [2]*0.2    3/4 1/4
+        5'b01000: read_a <= amix[3];  // [1]*0.2 + [2]*0.8    1/4 3/4
+        5'b10000: read_a <= amix[4];  // [2]*0.6 + [3]*0.4    2/4 2/4
+        default:  read_a <= 0;
+    endcase
+
+always @*
+    casex (div5sr)
+        5'b00001: read_b <= bmix[0];  // [0]
+        5'b00010: read_b <= bmix[1];  // [0]*0.4 + [1]*0.6
+        5'b00100: read_b <= bmix[2];  // [1]*0.8 + [2]*0.2
+        5'b01000: read_b <= bmix[3];  // [1]*0.2 + [2]*0.8
+        5'b10000: read_b <= bmix[4];  // [2]*0.6 + [3]*0.4
+        default:  read_b <= 0;
+    endcase
+
+wire [7:0] smallcolor_a = {read_a[14:13], read_a[9:7], read_a[4:2]};
+wire [7:0] smallcolor_b = {read_b[14:13], read_b[9:7], read_b[4:2]};
+
+assign realcolor_out = videoActive ? (|wren_line_a ? smallcolor_a : smallcolor_b) : 8'b0;
+
+
+`endif
+
+// hsync counter for debug /////////////////
+reg [9:0] hsync_ctr;
+reg hsync_rr;
+always @(posedge clk24)
+begin
+    hsync_rr <= hsync;
+    if (!hsync && hsync_rr) // negedge hsync
+        hsync_ctr <= hsync_ctr + 1'b1;
+    if (!vsync)
+        hsync_ctr <= 0;
+end
+////////////////////////////////////////////
                 
 // osd
 reg osd_vsync, osd_hsync;
@@ -531,7 +736,59 @@ module chroma_shift(input wire [7:0] chroma_in, output reg [4:0] chroma_out);
 endmodule
 
 
+module mix4(input clk, input [7:0] a, input [7:0] b, input [7:0] c, input [7:0] d, output [14:0] mix);
 
+wire [4:0] rsum  = a[2:0] + b[2:0] + c[2:0] + d[2:0] + 1; 
+wire [4:0] gsum  = a[5:3] + b[5:3] + c[5:3] + d[5:3] + 1;
+wire [3:0] bsum4 = a[7:6] + b[7:6] + c[7:6] + d[7:6] + 1;
+wire [4:0] bsum = {bsum4, 1'b0};
+
+assign mix = {bsum, gsum, rsum};
+
+endmodule
+
+
+// 3 stages
+// s1 = a + b
+// s2 = s1 + c
+// s3 = s2 + d    -- final
+
+module pipmix4(input clk, input [7:0] a, input [7:0] b, input [7:0] c, input [7:0] d, output [14:0] mix);
+
+
+reg [4:0] rp [2:0];
+reg [4:0] gp [2:0];
+reg [4:0] bp [2:0];
+
+reg [7:0] aq [1:0];
+reg [7:0] bq [1:0];
+reg [7:0] cq [1:0];
+reg [7:0] dq [1:0];
+
+always @(posedge clk)
+begin
+    aq[1] <= aq[0]; aq[0] <= a;
+    bq[1] <= bq[0]; bq[0] <= b;
+    cq[1] <= cq[0]; cq[0] <= c;
+    dq[1] <= dq[0]; dq[0] <= d;
+
+
+    rp[0] <= a[2:0] + b[2:0];       // stage 0
+    rp[1] <= rp[0]  + cq[0][2:0];   // stage 1
+    rp[2] <= rp[1]  + dq[1][2:0] + 1'b1;   // stage 2
+
+    gp[0] <= a[5:3] + b[5:3];
+    gp[1] <= gp[0]  + cq[0][5:3];
+    gp[2] <= gp[1]  + dq[1][5:3] + 1'b1;
+
+    bp[0] <= a[7:6] + b[7:6];
+    bp[1] <= bp[0]  + cq[0][7:6];
+    bp[2] <= bp[1]  + dq[1][7:6] + 1'b1;
+end
+
+assign mix = {bp[2][3:0],1'b0, gp[2], rp[2]};
+
+endmodule
 
 ////////////////////////////////////////////////////////////////////////////
 

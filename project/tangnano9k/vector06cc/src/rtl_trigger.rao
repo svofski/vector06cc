@@ -2,48 +2,31 @@
 <GAO_CONFIG>
     <Version>3.0</Version>
     <Mode>Standard</Mode>
-    <AoCore index="0" sample_clock="clk24" trig_type="0" storage_depth="4096" window_num="1" capture_amount="4096" implementation="0" trigger_pos="2000" module_name="vector06cc" force_trigger_by_falling_edge="false">
+    <AoCore index="0" sample_clock="ce6" trig_type="0" storage_depth="16384" window_num="1" capture_amount="16384" implementation="0" trigger_pos="2000" module_name="vector06cc" force_trigger_by_falling_edge="false">
         <SignalList>
-            <Signal>ce3</Signal>
-            <Signal>cpu_m1</Signal>
-            <Bus name="A[15:0]">
-                <Signal>A[15]</Signal>
-                <Signal>A[14]</Signal>
-                <Signal>A[13]</Signal>
-                <Signal>A[12]</Signal>
-                <Signal>A[11]</Signal>
-                <Signal>A[10]</Signal>
-                <Signal>A[9]</Signal>
-                <Signal>A[8]</Signal>
-                <Signal>A[7]</Signal>
-                <Signal>A[6]</Signal>
-                <Signal>A[5]</Signal>
-                <Signal>A[4]</Signal>
-                <Signal>A[3]</Signal>
-                <Signal>A[2]</Signal>
-                <Signal>A[1]</Signal>
-                <Signal>A[0]</Signal>
-            </Bus>
-            <Bus name="DI[7:0]">
-                <Signal>DI[7]</Signal>
-                <Signal>DI[6]</Signal>
-                <Signal>DI[5]</Signal>
-                <Signal>DI[4]</Signal>
-                <Signal>DI[3]</Signal>
-                <Signal>DI[2]</Signal>
-                <Signal>DI[1]</Signal>
-                <Signal>DI[0]</Signal>
-            </Bus>
-            <Signal>SYNC</Signal>
-            <Signal>CPU/STACK</Signal>
             <Signal>vidi/mode512</Signal>
-            <Signal>RESET_n</Signal>
-            <Signal>BUTTON</Signal>
-            <Signal>button_debounced</Signal>
-            <Signal>io_read</Signal>
-            <Signal>vv55int_sel</Signal>
-            <Signal>vv55int_rd_n</Signal>
-            <Signal>vv55int_oe_n</Signal>
+            <Signal>vidi/hsync_raw</Signal>
+            <Signal>vidi/hsync_gate</Signal>
+            <Signal>vidi/hsync</Signal>
+            <Signal>vidi/vsync</Signal>
+            <Bus name="vidi/refresher/scanyy_state[2:0]">
+                <Signal>vidi/refresher/scanyy_state[2]</Signal>
+                <Signal>vidi/refresher/scanyy_state[1]</Signal>
+                <Signal>vidi/refresher/scanyy_state[0]</Signal>
+            </Bus>
+            <Bus name="vidi/hsync_ctr[9:0]">
+                <Signal>vidi/hsync_ctr[9]</Signal>
+                <Signal>vidi/hsync_ctr[8]</Signal>
+                <Signal>vidi/hsync_ctr[7]</Signal>
+                <Signal>vidi/hsync_ctr[6]</Signal>
+                <Signal>vidi/hsync_ctr[5]</Signal>
+                <Signal>vidi/hsync_ctr[4]</Signal>
+                <Signal>vidi/hsync_ctr[3]</Signal>
+                <Signal>vidi/hsync_ctr[2]</Signal>
+                <Signal>vidi/hsync_ctr[1]</Signal>
+                <Signal>vidi/hsync_ctr[0]</Signal>
+            </Bus>
+            <Signal>retrace</Signal>
         </SignalList>
         <Triggers>
             <Trigger index="0">
@@ -127,7 +110,11 @@
             </Trigger>
             <Trigger index="12"/>
             <Trigger index="13"/>
-            <Trigger index="14"/>
+            <Trigger index="14">
+                <SignalList>
+                    <Signal>LCD_VSYNC</Signal>
+                </SignalList>
+            </Trigger>
             <Trigger index="15">
                 <SignalList>
                     <Signal>ded_3ded</Signal>
@@ -150,12 +137,12 @@
             <MatchUnit index="11" enabled="1" match_type="1" counter_enable="0" counter_width="2" counter="2" countinuous="0" func="0" value0="R" value1="0" trigger="11"/>
             <MatchUnit index="12" enabled="0" match_type="0" counter_enable="0" counter_width="2" counter="2" countinuous="0" func="0" value0="" value1=""/>
             <MatchUnit index="13" enabled="0" match_type="0" counter_enable="0" counter_width="2" counter="2" countinuous="0" func="0" value0="" value1=""/>
-            <MatchUnit index="14" enabled="0" match_type="0" counter_enable="0" counter_width="2" counter="2" countinuous="0" func="0" value0="" value1=""/>
+            <MatchUnit index="14" enabled="1" match_type="1" counter_enable="0" counter_width="2" counter="2" countinuous="0" func="0" value0="0" value1="0" trigger="14"/>
             <MatchUnit index="15" enabled="1" match_type="1" counter_enable="0" counter_width="2" counter="2" countinuous="0" func="0" value0="1F" value1="00" trigger="15"/>
         </MatchUnits>
         <Expressions type="Static">
-            <Expression>M15</Expression>
+            <Expression>M14</Expression>
         </Expressions>
     </AoCore>
-    <GAO_ID>1101000010101000</GAO_ID>
+    <GAO_ID>0111010101000110</GAO_ID>
 </GAO_CONFIG>
