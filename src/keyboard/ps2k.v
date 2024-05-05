@@ -17,8 +17,6 @@
 //
 // --------------------------------------------------------------------
 
-`default_nettype none
-
 module ps2k(
 	clk,
 	reset,
@@ -37,7 +35,9 @@ input ps2_data;
 input rden;
 output [7:0] q;
 output reg dsr;
-output overflow = watchdog;
+output overflow;
+
+assign overflow = watchdog;
 
 wire watchdog;
 reg watchdogtrig;

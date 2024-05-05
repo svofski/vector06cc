@@ -31,25 +31,25 @@
 //
 ////
 module framebuffer(clk24,ce12,ce_pixel,video_slice,pipe_abx,fb_row,hsync,vdata,SRAM_ADDR,coloridx,borderx,testpin,rdvid_o);
-input wire		clk24;
-input wire		ce12;
-input wire		ce_pixel;               // == ce6
-input wire		video_slice;
-input wire		pipe_abx;		// pipe a/b selector, from clockster
+input 		clk24;
+input 		ce12;
+input 		ce_pixel;               // == ce6
+input 		video_slice;
+input 		pipe_abx;		// pipe a/b selector, from clockster
 
-input wire[8:0]	        fb_row;
+input [8:0]     fb_row;
 
-input wire              hsync;
+input           hsync;
 
-input wire	[31:0]	vdata;
-output wire	[15:0]	SRAM_ADDR;
+input 	[31:0]	vdata;
+output  [15:0]	SRAM_ADDR;
 
-output wire	[3:0] 	coloridx;
-output wire	 	borderx;
+output 	[3:0] 	coloridx;
+output 	 	borderx;
 
-output wire	[5:0] 	testpin;
+output  [5:0] 	testpin;
 
-output wire             rdvid_o;
+output          rdvid_o;
 
 
 assign rdvid_o = wr[0];         // request 32-bit read when ax == 2'b00 
@@ -130,12 +130,12 @@ endmodule
 //
 ////
 module pipelinx(clk, ce, ab, writeplz, din, bout);
-input wire clk;
-input wire ce;
-input wire ab;
-input wire writeplz;
-input wire [7:0] din;
-output wire bout;
+input clk;
+input ce;
+input ab;
+input writeplz;
+input [7:0] din;
+output bout;
 
 wire bouta, boutb;
 wire n_ab = !ab;

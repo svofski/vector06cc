@@ -5,18 +5,18 @@
 //Part Number: GW1NR-LV9QN88PC6/I5
 //Device: GW1NR-9
 //Device Version: C
-//Created Time: Sun Apr 07 23:20:14 2024
+//Created Time: Mon May 06 00:49:21 2024
 
 module palette_ram (dout, clk, oce, ce, reset, wre, ad, din);
 
-output wire [7:0] dout;
-input  wire clk;
-input  wire oce;
-input  wire ce;
-input  wire reset;
-input  wire wre;
-input  wire [3:0] ad;
-input  wire [7:0] din;
+output [7:0] dout;
+input clk;
+input oce;
+input ce;
+input reset;
+input wre;
+input [3:0] ad;
+input [7:0] din;
 
 wire [23:0] sp_inst_0_dout_w;
 wire gw_gnd;
@@ -36,7 +36,7 @@ SP sp_inst_0 (
 );
 
 defparam sp_inst_0.READ_MODE = 1'b0;
-defparam sp_inst_0.WRITE_MODE = 2'b00;
+defparam sp_inst_0.WRITE_MODE = 2'b01;
 defparam sp_inst_0.BIT_WIDTH = 8;
 defparam sp_inst_0.BLK_SEL = 3'b000;
 defparam sp_inst_0.RESET_MODE = "SYNC";

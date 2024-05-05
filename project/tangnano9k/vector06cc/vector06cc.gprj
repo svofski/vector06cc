@@ -7,6 +7,10 @@
     <FileList>
         <File path="src/gowin_rpll72/gowin_rpll72.v" type="file.verilog" enable="1"/>
         <File path="C:/Gowin/projects/vector06cc/src/border_delay.v" type="file.verilog" enable="1"/>
+        <File path="C:/Gowin/projects/vector06cc/src/keyboard/ps2k.v" type="file.verilog" enable="1"/>
+        <File path="C:/Gowin/projects/vector06cc/src/keyboard/scan2matrix.v" type="file.verilog" enable="1"/>
+        <File path="C:/Gowin/projects/vector06cc/src/keyboard/vectorkeys.v" type="file.verilog" enable="0"/>
+        <File path="C:/Gowin/projects/vector06cc/src/keyboard/vectorkeys2.v" type="file.verilog" enable="1"/>
         <File path="C:/Gowin/projects/vector06cc/src/oneshot.v" type="file.verilog" enable="1"/>
         <File path="C:/Gowin/projects/vector06cc/src/ramdisk/kvaz.v" type="file.verilog" enable="1"/>
         <File path="C:/Gowin/projects/vector06cc/src/specialkeys.v" type="file.verilog" enable="1"/>
@@ -40,6 +44,7 @@
         <File path="C:/Gowin/projects/vector06cc/src/i82c55/i82c55.vhd" type="file.vhdl" enable="1"/>
         <File path="src/tangnano9k.cst" type="file.cst" enable="1"/>
         <File path="src/clocks_gao.gao" type="file.gao" enable="0"/>
+        <File path="src/framebuf.rao" type="file.gao" enable="1"/>
         <File path="src/rtl_gao.rao" type="file.gao" enable="0"/>
         <File path="src/rtl_trigger.rao" type="file.gao" enable="0"/>
         <File path="src/sigh.rao" type="file.gao" enable="0"/>

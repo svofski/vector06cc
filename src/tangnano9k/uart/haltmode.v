@@ -9,7 +9,9 @@ module haltmode(
     output [7:0] data_o,      // data
     output wr_o,              // write ram[addr_o] <= data_o
     output halt_o,            // halt the cpu
-    output [11:0] fkeys_o     // fkeys
+    output [11:0] fkeys_o,    // fkeys
+    output reg [7:0] scancode_o,  // scancode in raw mode
+    output reg scancode_ready_o  // valid scancode_o
 );
 
 localparam CLK_FRE = 24;
@@ -29,6 +31,7 @@ localparam ST_RUN = 2;
 localparam ST_HALT = 3;
 localparam ST_RXHEX = 4;
 localparam ST_ERROR = 5;
+localparam ST_RAW = 6;      // ST_RUN and receive keyboard scancodes over UART
 
 localparam ES_0 = 0;
 localparam ES_1 = 1;
@@ -119,6 +122,7 @@ begin
     else
     begin
         fkeys <= 0;
+        {scancode_o, scancode_ready_o} = 9'b0;
 
         if (state == ST_INIT) state <= ST_START;
         if (state == ST_START) state <= ST_RUN;    
@@ -140,6 +144,10 @@ begin
                         begin
                             state <= ST_HALT;
                             state_h <= HS_0;
+                        end
+                        8'd1: // ctrl-a switch into raw mode (forever?)
+                        begin
+                            state <= ST_RAW;
                         end
                         8'd27:  // ESC
                             state_esc <= ES_1;
@@ -181,10 +189,17 @@ begin
                     state_esc <= ES_0;
                 end
             end
-            else // state == ST_HALT
-            case (rx_data)
-                "c": state <= ST_RUN;
-            endcase
+            else if (state == ST_HALT)
+            begin
+                case (rx_data)
+                    "c": state <= ST_RUN;
+                endcase
+            end
+            else // ST_RAW
+            begin
+                scancode_o <= rx_data;
+                scancode_ready_o <= 1'b1;
+            end
         end
     end
 end
@@ -194,10 +209,8 @@ always @(posedge clk24)
 begin
     state_p <= state;
     state_hp <= state_h;
-    if (state != state_p || state_h != state_hp)
+    if (state != state_p || state_h != state_hp && state == ST_HALT)
     begin
-        if (state == ST_INIT) `print("vector06cc debug probe. F11/F12 reset/restart; ^c ihex upload\n", STR);
-        if (state == ST_RUN) `print("Running...\n", STR);
         if (state == ST_HALT) 
         begin
             if (state_h == HS_0) `print("Halt. Upload ihex, press c to continue\n", STR);
@@ -205,6 +218,12 @@ begin
             if (state_h == HS_ERROR) `print("Error\n", STR);
             if (state_h == HS_ECHO) `printc(rx_data == 8'd13 ? 8'd10 : rx_data);
         end
+    end
+    if (state != state_p)
+    begin
+        if (state == ST_INIT) `print("vector06cc debug probe. F11/F12 reset/restart, ^c upload, ^a raw\nRunning...\n", STR);
+        if (state == ST_RUN) `print("Running...\n", STR);
+        if (state == ST_RAW) `print("Raw keyboard mode. Reset button to exit.\n", STR);
     end
 end
 

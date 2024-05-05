@@ -37,29 +37,34 @@ wire [9:0] wraddr;
 rdwrctr c1(clk, cerd, resetrd, rdaddr);
 rdwrctr c2(clk, cewr, resetwr, wraddr);
 
-always @(posedge clk) begin
-	if (wren) begin
-		pixelram[wraddr] <= din;
-	end
-	dout <= pixelram[rdaddr];
+always @(posedge clk)
+begin
+    if (wren)
+        pixelram[wraddr] <= din;
+    dout <= pixelram[rdaddr];
 end
 
 endmodule
 
 module rdwrctr(clk, ce, reset, q);
-input  wire clk;
-input  wire ce;
-input  wire reset;
-output reg  [9:0] q;
+input  clk;
+input  ce;
+input  reset;
+output reg [9:0] q;
 
-
-always @(posedge clk) begin
-	if (ce) begin
-		if (reset) 
-			q <= 0;
-		else
-			q <= q + 1'b1;
-	end
+always @(posedge clk or posedge reset) 
+begin
+    if (reset)
+        q <= 0;
+    else if (ce)
+        q <= q + 1'b1;
+//    if (ce) 
+//    begin
+//        if (reset) 
+//            q <= 0;
+//        else
+//            q <= q + 1'b1;
+//    end
 end
 
 //lpm_counter ctr(.clock(clk), .clk_en(ce), .aclr(reset), .q(q));

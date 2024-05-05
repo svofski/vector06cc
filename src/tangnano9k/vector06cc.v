@@ -49,23 +49,7 @@
 
 //`default_nettype none
 
-// Undefine following for smaller/faster builds
-`define WITH_CPU            
-//`define WITH_KEYBOARD
-//`define WITH_VI53
-//`define WITH_AY
-//`define WITH_RSOUND
-//`define WITH_FLOPPY
-//`define WITH_OSD
-//`define WITH_SDRAM
-`define WITH_PSRAM      // Tang Nano 9K GW1N-NR9 Q88P
-`define FLOPPYLESS_HAX  // set FDC odata to $00 when compiling without floppy
-//`define WITH_TV         // WXEDA board has too few resources to switch modes in runtime
-//`define WITH_COMPOSITE  // output composite video on VGA pins
-//`define COMPOSITE_PWM   // use sigma-delta modulator on composite video out
-//`define WITH_SVIDEO 
-`define WITH_VGA
-`define WITH_SERIAL_PROBE
+`include "config.v"
 
 module vector06cc(
     input wire XTAL_27MHZ,
@@ -519,7 +503,6 @@ wire [21:0] halt_a_mangled =
 
 wire [21:0] cpu_a_mangled = {ramdisk_addr,A[15],A[12:0],A[14:13]};
 
-// this is wrong because rdvid address can be used with halt_wr
 wire [21:0] psram_addr = 
     halt_halt ? halt_a_mangled :
     psram_rd_vid ? {4'b0001,VIDEO_A[12:0],2'b00} : cpu_a_mangled;
@@ -592,7 +575,6 @@ always @(negedge rdcpu_finished)
 
 
 reg[31:0] vdata;
-//always @(negedge memvidbusy_rd)vdata<={dramout2,dramout};
 always @(negedge memvidbusy) vdata <= {dramout2, dramout};
 
 
@@ -682,7 +664,7 @@ video vidi(.clk24(clk24),
             .coloridx(coloridx),
             .realcolor_in(realcolor2buf),
             .realcolor_out(realcolor),      // TODO: add this line to other versions, it was lost!
-            .bgr555_out(bgr555),            // same as realcolor_out but 5:5:5 components
+            .bgr555_out(bgr555),            // same as realcolor_out but bgr555
             .retrace(retrace),
             .video_scroll_reg(video_scroll_reg),
 `ifdef START1200
@@ -843,13 +825,21 @@ wire [5:0]  kbd_keys_osd;
 
 `ifdef WITH_KEYBOARD
 
-wire [7:0]  kbd_rowselect; = ~vv55int_pa_out;
+`ifndef WITH_KEYBOARD_PS2
+wire PS2_CLK = 1'b1;
+wire PS2_DAT = 1'b1;
+`endif
+
+wire [7:0]  kbd_rowselect = ~vv55int_pa_out;
 
     vectorkeys kbdmatrix(
         .clkk(clk24), 
-        .reset(~KEY[0]), 
+        //.reset(~SYS_RESETN), 
+        .reset(~delayed_reset_n),
         .ps2_clk(PS2_CLK), 
         .ps2_dat(PS2_DAT), 
+        .ext_scancode_i(halt_scancode),
+        .ext_scancode_ready_i(halt_scancode_ready),
         .mod_rus(kbd_mod_rus), 
         .rowselect(kbd_rowselect), 
         .rowbits(kbd_rowbits), 
@@ -1364,6 +1354,9 @@ wire halt_wr;
 wire halt_halt;
 wire [11:0] halt_fkeys;
 
+wire [7:0] halt_scancode;
+wire halt_scancode_ready;
+
 assign halt_command_f11 = halt_fkeys[10];
 assign halt_command_f12 = halt_fkeys[11];
 
@@ -1371,7 +1364,9 @@ haltmode debugger(.clk24(clk24), .rst_n(delayed_reset_n),
     .uart_rx(UART_RX), .uart_tx(UART_TX),
     .addr_o(halt_addr), .data_o(halt_do), .wr_o(halt_wr),
     .halt_o(halt_halt),
-    .fkeys_o(halt_fkeys)
+    .fkeys_o(halt_fkeys),
+    .scancode_o(halt_scancode),
+    .scancode_ready_o(halt_scancode_ready)
 );
 
 always @(posedge clk24)

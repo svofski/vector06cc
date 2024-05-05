@@ -18,25 +18,25 @@
 // --------------------------------------------------------------------
 
 module shiftreg2(clk, ce, din, wr, shiftout);
-	input wire		clk;
-	input wire		ce;
-	input wire [7:0] din;
-	input wire		wr;
-	output reg 	shiftout;
+input clk;
+input ce;
+input [7:0] din;
+input wr;
+output reg shiftout;
 
 reg [7:0] data;
 
 always @(posedge clk) begin
-	if (wr) begin
-		data <= {din[6:0],1'b0};
-		shiftout <= din[7];
-	end
-	else begin 
-		if (ce) begin
-			shiftout <= data[7];
-			data <= data << 1;
-		end
-	end
+    if (wr) begin
+        data <= {din[6:0],1'b0};
+        shiftout <= din[7];
+    end
+    else begin 
+        if (ce) begin
+            shiftout <= data[7];
+            data <= data << 1;
+        end
+    end
 end
 
 endmodule

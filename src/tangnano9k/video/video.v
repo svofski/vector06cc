@@ -1,7 +1,7 @@
 // ====================================================================
 //                         VECTOR-06C FPGA REPLICA
 //
-//               Copyright (C) 2007-2016 Viacheslav Slavinsky
+//               Copyright (C) 2007-2024 Viacheslav Slavinsky
 //
 // This core is distributed under modified BSD license. 
 // For complete licensing information see LICENSE.TXT.
@@ -9,7 +9,7 @@
 //
 // An open implementation of Vector-06C home computer
 //
-// Author: Viacheslav Slavinsky, http://sensi.org/~svo
+// Author: Viacheslav Slavinsky
 // 
 // Design File: video.v
 //
@@ -195,13 +195,15 @@ reg     [3:0] xcoloridx;
 // but then there's a little problem with TV out, because it's unbuffered: 
 // leftmost column gets half-pixels from the right column. 
 //
-// 2024: on tang nano 9k negedge fails to latch the right colors in time (capture
-// ce12, ce6, xcoloridx to see). 
+// 2024: on tang nano 9k negedge fails to latch the right colors in time 
+// (capture ce12, ce6, xcoloridx to see). 
+`define FHTAGN
+`ifdef FHTAGN
 reg [1:0] switch;
 always @(posedge clk24)
     switch <= switch + 1;
 
-always @(posedge clk24) begin 
+always @(negedge clk24) begin 
     if (mode512) begin
         //if (ce6)
         if (switch[1])
@@ -212,21 +214,43 @@ always @(posedge clk24) begin
     else
         xcoloridx <= coloridx_modeless;
 end
+`else
+always @(negedge clk24) begin
+    if (mode512) begin
+        if (ce6)
+            xcoloridx <= {coloridx_modeless[3], coloridx_modeless[2], 2'b00};
+        else
+            xcoloridx <= {2'b00, coloridx_modeless[1], coloridx_modeless[0]};
+    end
+    else
+        xcoloridx <= coloridx_modeless;
+end
+`endif
 
 // coloridx is an output port, address of colour in the palette ram
 assign coloridx = border ? border_idx : xcoloridx;
 
 
+// scan multiplier: write counter reset
 reg reset_line;
-always @(posedge clk24) begin
+always @(posedge clk24)
     reset_line <= fb_row[0] & !hsync;
-end
 
+
+//         _________
+// ________         __________ fb_row[0]
+// _______ ________ __________ vga hsync  ~resetrd (fast)
+//        _        _
+//                 _
+// ________________ _________  reset_line  resetwr (slow)
 
 `ifdef SCAN_2_1
 assign testpin = {reset_line, wren_line1, reset_line, mode512};
 // realcolor_out what actually goes to VGA DAC
 assign realcolor_out = videoActive ? (wren_line1 ? rc_b : rc_a) : 8'b0;
+
+assign bgr555_out = videoActive ? 
+    (wren_line1 ? bgr233to555(rc_b) : bgr233to555(rc_a)) : 8'b0;
 
 
 wire [7:0] rc_a;
@@ -375,7 +399,7 @@ reg [14:0] read_b;
 wire [14:0] amix [4:0];
 wire [14:0] bmix [4:0];
 
-// failburger
+// mix 7+7+6
 pipmix4 ma1(clk24, rc_a[0], rc_a[0], rc_a[0], rc_a[0], bmix[0]);    
 pipmix4 ma2(clk24, rc_a[0], rc_a[0], rc_a[0], rc_a[1], bmix[1]);
 pipmix4 ma3(clk24, rc_a[1], rc_a[1], rc_a[1], rc_a[1], bmix[2]);
@@ -388,7 +412,7 @@ pipmix4 mb3(clk24, rc_b[1], rc_b[1], rc_b[1], rc_b[1], amix[2]);
 pipmix4 mb4(clk24, rc_b[1], rc_b[1], rc_b[2], rc_b[2], amix[3]);
 pipmix4 mb5(clk24, rc_b[2], rc_b[2], rc_b[2], rc_b[2], amix[4]);
 
-// fallback nothingburger                           
+// fallback nothingburger: line repeat 1/2/2
 //pipmix4 ma1(clk24, rc_a[0], rc_a[0], rc_a[0], rc_a[0], amix[0]);    
 //pipmix4 ma2(clk24, rc_a[1], rc_a[1], rc_a[1], rc_a[1], amix[1]);
 //pipmix4 ma3(clk24, rc_a[1], rc_a[1], rc_a[1], rc_a[1], amix[2]);
@@ -793,6 +817,14 @@ end
 assign mix = {bp[2][3:0],1'b0, gp[2], rp[2]};
 
 endmodule
+
+function [14:0] bgr233to555(input [7:0] a);
+
+bgr233to555 = {a[7:6],3'b0,
+               a[5:3],2'b0,
+               a[2:0],2'b0};
+
+endfunction
 
 ////////////////////////////////////////////////////////////////////////////
 

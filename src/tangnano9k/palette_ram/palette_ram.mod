@@ -13,5 +13,5 @@
 -depth 16
 -width 8
 -read_mode bypass
--write_mode normal
+-write_mode write-through
 -reset_mode sync
