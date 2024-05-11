@@ -9,6 +9,9 @@
         <File path="C:/Gowin/projects/vector06cc/src/border_delay.v" type="file.verilog" enable="1"/>
         <File path="C:/Gowin/projects/vector06cc/src/floppy/dma_rw.v" type="file.verilog" enable="1"/>
         <File path="C:/Gowin/projects/vector06cc/src/floppy/floppy.v" type="file.verilog" enable="1"/>
+        <File path="C:/Gowin/projects/vector06cc/src/floppy/luddes6502/MicroCode.v" type="file.verilog" enable="1"/>
+        <File path="C:/Gowin/projects/vector06cc/src/floppy/luddes6502/compat.v" type="file.verilog" enable="1"/>
+        <File path="C:/Gowin/projects/vector06cc/src/floppy/luddes6502/cpu6502.v" type="file.verilog" enable="1"/>
         <File path="C:/Gowin/projects/vector06cc/src/floppy/spi.v" type="file.verilog" enable="1"/>
         <File path="C:/Gowin/projects/vector06cc/src/floppy/timer100hz.v" type="file.verilog" enable="1"/>
         <File path="C:/Gowin/projects/vector06cc/src/floppy/verilog-6502-copy/ALU.v" type="file.verilog" enable="1"/>
@@ -20,6 +23,9 @@
         <File path="C:/Gowin/projects/vector06cc/src/keyboard/vectorkeys.v" type="file.verilog" enable="0"/>
         <File path="C:/Gowin/projects/vector06cc/src/keyboard/vectorkeys2.v" type="file.verilog" enable="1"/>
         <File path="C:/Gowin/projects/vector06cc/src/oneshot.v" type="file.verilog" enable="1"/>
+        <File path="C:/Gowin/projects/vector06cc/src/osd/chargen.v" type="file.verilog" enable="1"/>
+        <File path="C:/Gowin/projects/vector06cc/src/osd/screenbuffer.v" type="file.verilog" enable="1"/>
+        <File path="C:/Gowin/projects/vector06cc/src/osd/textmode.v" type="file.verilog" enable="1"/>
         <File path="C:/Gowin/projects/vector06cc/src/ramdisk/kvaz.v" type="file.verilog" enable="1"/>
         <File path="C:/Gowin/projects/vector06cc/src/specialkeys.v" type="file.verilog" enable="1"/>
         <File path="C:/Gowin/projects/vector06cc/src/tangnano9k/bootrom/bootrom.v" type="file.verilog" enable="1"/>
@@ -30,6 +36,7 @@
         <File path="C:/Gowin/projects/vector06cc/src/tangnano9k/palette_ram/palette_ram.v" type="file.verilog" enable="1"/>
         <File path="C:/Gowin/projects/vector06cc/src/tangnano9k/psram/psram_controller.v" type="file.verilog" enable="1"/>
         <File path="C:/Gowin/projects/vector06cc/src/tangnano9k/ram.v" type="file.verilog" enable="1"/>
+        <File path="C:/Gowin/projects/vector06cc/src/tangnano9k/rom.v" type="file.verilog" enable="1"/>
         <File path="C:/Gowin/projects/vector06cc/src/tangnano9k/soundcodec.v" type="file.verilog" enable="1"/>
         <File path="C:/Gowin/projects/vector06cc/src/tangnano9k/uart/haltmode.v" type="file.verilog" enable="1"/>
         <File path="C:/Gowin/projects/vector06cc/src/tangnano9k/uart/intelhex_rx.v" type="file.verilog" enable="1"/>
@@ -40,6 +47,7 @@
         <File path="C:/Gowin/projects/vector06cc/src/tangnano9k/video/vga_refresh.v" type="file.verilog" enable="1"/>
         <File path="C:/Gowin/projects/vector06cc/src/tangnano9k/video/video.v" type="file.verilog" enable="1"/>
         <File path="C:/Gowin/projects/vector06cc/src/tangnano9k/video/videomod.v" type="file.verilog" enable="1"/>
+        <File path="C:/Gowin/projects/vector06cc/src/tangnano9k/vram.v" type="file.verilog" enable="1"/>
         <File path="C:/Gowin/projects/vector06cc/src/video/framebuffer.v" type="file.verilog" enable="1"/>
         <File path="C:/Gowin/projects/vector06cc/src/video/rambuffer.v" type="file.verilog" enable="1"/>
         <File path="C:/Gowin/projects/vector06cc/src/video/shiftreg2.v" type="file.verilog" enable="1"/>
@@ -54,6 +62,7 @@
         <File path="C:/Gowin/projects/vector06cc/src/floppy/uart/txd.vhd" type="file.vhdl" enable="1"/>
         <File path="C:/Gowin/projects/vector06cc/src/i82c55/i82c55.vhd" type="file.vhdl" enable="1"/>
         <File path="src/tangnano9k.cst" type="file.cst" enable="1"/>
+        <File path="src/vector06cc.sdc" type="file.sdc" enable="1"/>
         <File path="src/clocks_gao.gao" type="file.gao" enable="0"/>
         <File path="src/floppy.rao" type="file.gao" enable="1"/>
         <File path="src/framebuf.rao" type="file.gao" enable="0"/>

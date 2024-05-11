@@ -152,6 +152,8 @@ assign debug = wdport_status;
 assign debugidata = {ce & bufmem_en, ce, hostio_rd, wd_ram_rd};
 
 `define VHDL_6502
+//`define LUDDES6502
+
 // Workhorse 6502 CPU
 `ifdef VHDL_6502
 cpu65xx_en cpu(
@@ -165,7 +167,10 @@ cpu65xx_en cpu(
                 .addr(cpu_ax),
                 .we(memwrx)
         );
-`else
+`endif
+
+`ifdef ARLET6502
+
 // this doesn't work on Gowin because of "Find logic loop" 
 // apparently it has to do with how AB is formed in Arlet's 6502...
 wire ready = /*ce & */ ~(wd_ram_rd|wd_ram_wr|~dma_ready);
@@ -187,8 +192,22 @@ reg [15:0]  cpu_ax_r;
 always @(negedge clk)
     cpu_ax_r <= cpu_ax_comb;
 assign cpu_ax = cpu_ax_r;
-
 `endif
+
+`ifdef LUDDES6502
+wire cpu_memr;
+CPU6502(.clk(clk),
+    .ce(ce & ~(wd_ram_rd|wd_ram_wr|~dma_ready)),
+    .reset(~reset_n),
+    .irq(1'b0),
+    .nmi(1'b0),
+    .dout(cpu_dox),
+    .aout(cpu_ax),
+    .DIN(cpu_di),
+    .mr(cpu_memr),
+    .mw(memrwx));
+`endif
+
 
 // Main RAM, Low-mem, Buffer-mem, I/O ports to CPU connections
 wire    [7:0]   ram_do;

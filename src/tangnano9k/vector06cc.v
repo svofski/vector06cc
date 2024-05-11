@@ -774,9 +774,17 @@ assign LCD_VSYNC = vga_vs;
 //assign LCD_R[4:1] = video_r;
 //assign LCD_G[5:2] = video_g;
 //assign LCD_B[4:1] = video_b;
-assign LCD_R[4:0] = bgr555[4:0];
-assign LCD_G[5:1] = bgr555[9:5];
-assign LCD_B[4:0] = bgr555[14:10];
+wire r5 = bgr555[4:0];
+wire g5 = bgr555[9:5];
+wire b5 = bgr555[14:10];
+
+
+wire [14:0] osd_555 = bgr233to555(osd_colour);
+wire [14:0] overlayed_bgr555 = osd_active ? osd_555 : bgr555;
+
+assign LCD_R[4:0] = overlayed_bgr555[4:0];
+assign LCD_G[5:1] = overlayed_bgr555[9:5];
+assign LCD_B[4:0] = overlayed_bgr555[14:10];
 
 `endif
 ///////////
