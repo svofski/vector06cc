@@ -1,6 +1,6 @@
-C65=../cc65/bin/cc65
-A65=../cc65/bin/ca65
-L65=../cc65/bin/ld65
+C65=../cc65-winbuild/cc65/bin/cc65
+A65=../cc65-winbuild/cc65/bin/ca65
+L65=../cc65-winbuild/cc65/bin/ld65
 
 #CINC=c:\usr\lib\cc65\include
 #AINC=c:\usr\lib\cc65\asminc
@@ -19,10 +19,12 @@ CFLAGS=-Os -t none -T --cpu 6502
 all:	disk
 
 disk:	$(OBJS)
-	$(L65) -C vector.lc $(OBJS) ../cc65/lib/vector.lib -o disk.bin -m disk.map
+	$(L65) -C vector.lc $(OBJS) lib/vector.lib -o disk.bin -m disk.map
 	#bin2hex disk.bin disk.hex
 	objcopy -Ibinary -Oihex disk.bin disk.hex
+	objcopy -Ibinary -Overilog disk.bin disk.hax
 	cp disk.hex ../..
+	cp disk.hax ../..
 
 clean:
 	rm -f $(OBJS) $(ASSS) disk.bin disk.map disk.hex ../../disk.hex

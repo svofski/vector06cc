@@ -25,7 +25,7 @@
 //
 // --------------------------------------------------------------------
 
-`default_nettype wire
+//`default_nettype wire
 
 module soundcodec(
         clk24,

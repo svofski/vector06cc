@@ -1,4 +1,4 @@
-`default_nettype none
+//`default_nettype none
 
 // ====================================================================
 //                         VECTOR-06C FPGA REPLICA
@@ -41,14 +41,13 @@ input	[3:0]		nblocks;		// input: bits [2:0] is the amount of 512-byte blocks to 
 									// 		  		      a non-zero value initiates transfer
 									//		  bit  3: 	 0: transfer from spi to host ("read")
 									//                   1: transfer from host to spi ("write")
-output				ready = !busy;	// when 0, the controller has exclusive access to busses
+output				ready;// = !busy;	// when 0, the controller has exclusive access to busses
 
 output	[7:0]		ospi_data; 		// this data fed to SPI 
 input	[7:0]		ispi_data;		// SPI data input, routed directly to odata output
 output	reg			ospi_wr;		// SPI transfer initiator
 input				ispi_dsr;		// SPI data ready
-output  [7:0]		debug = {rblocks,state};
-
+output  [7:0]		debug;// = {rblocks,state};
 
 reg [7:0]	idata_r;
 reg [2:0] 	rblocks;
@@ -62,7 +61,11 @@ reg [3:0] state;
 
 reg		busy;
 
-always odata <= ispi_data;
+assign ready = !busy;
+assign debug = {rblocks,state};
+
+always @* 
+    odata <= ispi_data;
 
 // if direction is set FROM spi TO host, poke out FF's
 assign ospi_data = idata_r;	

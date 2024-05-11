@@ -1,4 +1,4 @@
-`default_nettype none
+//`default_nettype none
 // ====================================================================
 //                         VECTOR-06C FPGA REPLICA
 //

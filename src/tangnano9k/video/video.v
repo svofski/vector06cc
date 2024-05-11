@@ -26,7 +26,7 @@
 
 //`default_nettype none
 
-//`define SCAN_2_1
+//`define SCAN_2_1  // less BRAM usage
 `define SCAN_5_3
 
 module video(
@@ -88,7 +88,7 @@ input           reset_n;
 input           video_slice;
 input           pipe_ab;
 
-input           mode512;          // 1 for 512x256 video mode
+input           mode512;            // 1 for 512x256 video mode
 
 // RAM access
 input [31:0]   vdata;
@@ -113,7 +113,7 @@ input  [3:0]    border_idx;
 
 // tv
 input           clk4fsc;
-input  [1:0]    tv_mode;        // tv_mode[1] = alternating fields
+input  [1:0]    tv_mode;            // tv_mode[1] = alternating fields
                                     // tv_mode[0] = tv mode
 output tv_sync;
 output reg[7:0]     tv_luma;        // CVBS output, TV sync included

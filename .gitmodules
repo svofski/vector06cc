@@ -1,4 +1,0 @@
-[submodule "firmware/cc65"]
-	path = firmware/cc65
-	url = https://github.com/svofski/cc65
-	branch = vector06cc

@@ -1,6 +1,6 @@
 SYMBOLS {
 	__STACKSIZE__: type = weak, value = $400;
-	__RAM_SIZE__:	type = weak, value = $47FF;
+	__RAM_SIZE__:	type = weak, value = $3FFF;
 	__RAM_START__:	type = weak, value = $0800;
 }
 

@@ -36,7 +36,7 @@
 /  2: f_opendir and f_readdir are removed in addition to level 1.
 /  3: f_lseek is removed in addition to level 2. */
 
-#define _FAT32	0
+#define _FAT32	1
 /* To enable FAT32 support in addition of FAT12/16, set _FAT32 to 1. */
 
 #define _USE_FSINFO	0

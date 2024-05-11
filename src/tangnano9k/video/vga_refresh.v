@@ -47,7 +47,7 @@ output  [9:0]	tvx,tvy;
 // visible = (16 + 256 + 16)*2 = 288*2 = 576
 // rest = 624-576 = 48
 
-parameter SCREENWIDTH = 10'd640;	
+parameter VISIBLEWIDTH = 10'd640;	
 parameter SCREENHEIGHT = 10'd576;
 parameter VISIBLEHEIGHT = SCREENHEIGHT - 2*2*16;
 parameter SCROLLLOAD_X = 112;	// when on line 0 scroll register is copied into the line counter
@@ -85,7 +85,9 @@ reg [8:0] fb_row;			// fb row
 reg [8:0] fb_row_count;
 
 
-assign lcd_den_o = videoActive;// & clk24;
+//assign lcd_den_o = videoActive;
+reg lcd_active_x;
+assign lcd_den_o = videoActiveY && lcd_active_x;
 assign lcd_clk_o = clk24;
 
 
@@ -140,15 +142,20 @@ always @(posedge clk24) begin
         endcase
     end 
 
+    // begin lcd data clock even earlier in the middle of hsync pulse
+    if (scanxx_state == state2 && scanxx == 20 )
+        lcd_active_x <= 1'b1;
+
     if (scanxx == 0) begin	
         case (scanxx_state) 
-            state0: // enter FRONT PORCH + LEFT BORDER
+            state0: // enter FRONT PORCH
             begin 
                 scanxx <= 10'd11 - 1'b1;
                 scanyy <= scanyy - 1'b1;
 
                 scanxx_state <= state1;
                 videoActiveX <= 1'b0;
+                lcd_active_x <= 1'b0;
 
                 realy <= realy + 1'b1;
 
@@ -164,16 +171,17 @@ always @(posedge clk24) begin
                 scanxx <= 10'd56 - 1'b1; 
                 scanxx_state <= state2;
             end
-            state2:	// enter BACK PORCH + RIGHT BORDER
+            state2:	// enter BACK PORCH
             begin
                 scanxx <= 10'd60;
                 scanxx_state <= state3;
+                //lcd_active_x <= 1'b1; // start early to offset the picture to the right
             end
             state3:	// enter VISIBLE AREA
             begin
                 videoActiveX <= 1'b1;
                 realx <= 9'b0;
-                scanxx <= SCREENWIDTH - 1'b1 - 1'b1; // borrow one from state4
+                scanxx <= VISIBLEWIDTH - 1'b1 - 1'b1; // borrow one from state4
                 scanxx_state <= state4;
             end
             state4:

@@ -7,6 +7,14 @@
     <FileList>
         <File path="src/gowin_rpll72/gowin_rpll72.v" type="file.verilog" enable="1"/>
         <File path="C:/Gowin/projects/vector06cc/src/border_delay.v" type="file.verilog" enable="1"/>
+        <File path="C:/Gowin/projects/vector06cc/src/floppy/dma_rw.v" type="file.verilog" enable="1"/>
+        <File path="C:/Gowin/projects/vector06cc/src/floppy/floppy.v" type="file.verilog" enable="1"/>
+        <File path="C:/Gowin/projects/vector06cc/src/floppy/spi.v" type="file.verilog" enable="1"/>
+        <File path="C:/Gowin/projects/vector06cc/src/floppy/timer100hz.v" type="file.verilog" enable="1"/>
+        <File path="C:/Gowin/projects/vector06cc/src/floppy/verilog-6502-copy/ALU.v" type="file.verilog" enable="1"/>
+        <File path="C:/Gowin/projects/vector06cc/src/floppy/verilog-6502-copy/cpu.v" type="file.verilog" enable="1"/>
+        <File path="C:/Gowin/projects/vector06cc/src/floppy/wd1793.v" type="file.verilog" enable="1"/>
+        <File path="C:/Gowin/projects/vector06cc/src/i8253/8253.v" type="file.verilog" enable="1"/>
         <File path="C:/Gowin/projects/vector06cc/src/keyboard/ps2k.v" type="file.verilog" enable="1"/>
         <File path="C:/Gowin/projects/vector06cc/src/keyboard/scan2matrix.v" type="file.verilog" enable="1"/>
         <File path="C:/Gowin/projects/vector06cc/src/keyboard/vectorkeys.v" type="file.verilog" enable="0"/>
@@ -21,6 +29,7 @@
         <File path="C:/Gowin/projects/vector06cc/src/tangnano9k/multikvaz.v" type="file.verilog" enable="1"/>
         <File path="C:/Gowin/projects/vector06cc/src/tangnano9k/palette_ram/palette_ram.v" type="file.verilog" enable="1"/>
         <File path="C:/Gowin/projects/vector06cc/src/tangnano9k/psram/psram_controller.v" type="file.verilog" enable="1"/>
+        <File path="C:/Gowin/projects/vector06cc/src/tangnano9k/ram.v" type="file.verilog" enable="1"/>
         <File path="C:/Gowin/projects/vector06cc/src/tangnano9k/soundcodec.v" type="file.verilog" enable="1"/>
         <File path="C:/Gowin/projects/vector06cc/src/tangnano9k/uart/haltmode.v" type="file.verilog" enable="1"/>
         <File path="C:/Gowin/projects/vector06cc/src/tangnano9k/uart/intelhex_rx.v" type="file.verilog" enable="1"/>
@@ -41,10 +50,13 @@
         <File path="C:/Gowin/projects/vector06cc/src/T80/T80_Pack.vhd" type="file.vhdl" enable="1"/>
         <File path="C:/Gowin/projects/vector06cc/src/T80/T80_Reg.vhd" type="file.vhdl" enable="1"/>
         <File path="C:/Gowin/projects/vector06cc/src/T80/T80sef.vhd" type="file.vhdl" enable="1"/>
+        <File path="C:/Gowin/projects/vector06cc/src/floppy/65c02/cpu65xx_en.vhd" type="file.vhdl" enable="1"/>
+        <File path="C:/Gowin/projects/vector06cc/src/floppy/uart/txd.vhd" type="file.vhdl" enable="1"/>
         <File path="C:/Gowin/projects/vector06cc/src/i82c55/i82c55.vhd" type="file.vhdl" enable="1"/>
         <File path="src/tangnano9k.cst" type="file.cst" enable="1"/>
         <File path="src/clocks_gao.gao" type="file.gao" enable="0"/>
-        <File path="src/framebuf.rao" type="file.gao" enable="1"/>
+        <File path="src/floppy.rao" type="file.gao" enable="1"/>
+        <File path="src/framebuf.rao" type="file.gao" enable="0"/>
         <File path="src/rtl_gao.rao" type="file.gao" enable="0"/>
         <File path="src/rtl_trigger.rao" type="file.gao" enable="0"/>
         <File path="src/sigh.rao" type="file.gao" enable="0"/>

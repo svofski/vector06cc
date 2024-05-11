@@ -52,28 +52,30 @@
 `include "config.v"
 
 module vector06cc(
-    input wire XTAL_27MHZ,
-    input wire SYS_RESETN,
-    input wire BUTTON,
+    input           XTAL_27MHZ,
+    input           SYS_RESETN,
+    input           BUTTON,
 
 
-    output	wire		LCD_CLK,
-    output	wire		LCD_HSYNC,
-    output	wire		LCD_VSYNC,
-    output	wire 		LCD_DEN,
-    output	wire [4:0]	LCD_R,
-    output	wire [5:0]	LCD_G,
-    output	wire [4:0]	LCD_B,
+    output          LCD_CLK,
+    output          LCD_HSYNC,
+    output          LCD_VSYNC,
+    output          LCD_DEN,
+    output  [4:0]   LCD_R,
+    output  [5:0]   LCD_G,
+    output  [4:0]   LCD_B,
 
-
+`ifdef WITH_FLOPPY
     //////////////////    SD Card Interface   ////////////////////////
-//    input           SD_DAT,                 //  SD Card Data            (MISO)
-//    output          SD_DAT3,                //  SD Card Data 3          (CSn)
-//    output          SD_CMD,                 //  SD Card Command Signal  (MOSI)
-//    output          SD_CLK,                 //  SD Card Clock           (SCK)
+    input           SD_DAT,                 //  SD Card Data            (MISO)
+    output          SD_DAT3,                //  SD Card Data 3          (CSn)
+    output          SD_CMD,                 //  SD Card Command Signal  (MOSI)
+    output          SD_CLK,                 //  SD Card Clock           (SCK)
+`endif
+    output          UART_TX,
+    input           UART_RX,
 
-    output              UART_TX,
-    input               UART_RX,
+    output          BEEP,
 
     output reg [5:0] LED,
 
@@ -86,9 +88,6 @@ module vector06cc(
     output wire [1:0] O_psram_cs_n
 );
 
-
-// temporary stubs for nonexistent outputs
-wire BEEP; 
 
 wire  delayed_reset_n;
 
@@ -321,10 +320,11 @@ always @(posedge clk24) begin
         if (SYNC) begin
             status_word <= DO;
         end 
+        address_bus_r <= address_bus[7:0];
     end
         
-    if (SYNC)
-        address_bus_r <= address_bus[7:0];
+    //if (SYNC)
+    //    address_bus_r <= address_bus[7:0];
 end
 
 //always @(posedge clk24)
@@ -672,7 +672,7 @@ video vidi(.clk24(clk24),
 `else
             .border_idx(border_idx_delayed),
 `endif
-				
+                                
             .tv_sync(tv_sync),
             .tv_luma(tv_luma),
             .tv_chroma_o(tv_chroma),
@@ -789,7 +789,10 @@ reg int_request;
 wire int_rq_tick;
 reg  int_rq_hist;
 
-oneshot #(10'd28) retrace_delay(clk24, cpu_ce, retrace, int_delay);
+//oneshot #(10'd28) retrace_delay(clk24, cpu_ce, retrace, int_delay);
+// 21 too early, 22 almost too good, 23-24 good
+//oneshot #(10'd24) retrace_delay(clk24, cpu_ce, retrace, int_delay); 
+oneshot #(10'd24) retrace_delay(clk24, cpu_ce, retrace, int_delay); 
 oneshot #(10'd191) retrace_irq(clk24, cpu_ce, ~int_delay, int_rq_tick);
 
 //assign int_rq_tick_inte = ~interrupt_ack & INTE & int_rq_tick;
@@ -1118,10 +1121,28 @@ wire        osd_command_f11     = osd_command[2];
 wire [7:0]  floppy_leds;
 
 wire        floppy_sel = portmap_device[2:1] == 2'b11; // both 110 and 111
-wire        floppy_wren = ~WR_n & io_write & floppy_sel;
+
+//--------------------------------------------------------------
+// WR_n may hold for 2 cpu_ce cycles, I'm not sure why
+// to avoid double-writes, we sample WR_n to detect negedge WR_n
+// this will also likely cause problems with other peripherals
+reg wrn_sampled_r;
+always @(posedge clk24)
+    if (cpu_ce)
+        wrn_sampled_r <= WR_n;
+wire wrn_sampled = ~(wrn_sampled_r & ~WR_n);
+
+//wire        floppy_wren = ~WR_n & io_write & floppy_sel;
+wire        floppy_wren = ~wrn_sampled & io_write & floppy_sel;
+//--------------------------------------------------------------
+
 wire        floppy_rden  = io_read & floppy_sel;
 
 wire        floppy_death_by_floppy;
+
+wire floppy_uart_tx, halt_uart_tx;
+
+assign UART_TX = floppy_uart_tx & halt_uart_tx;
 
 
 `ifdef WITH_FLOPPY
@@ -1131,7 +1152,8 @@ wire [7:0]  floppy_status;
 floppy flappy(
     .clk(clk24), 
     .ce(cpu_ce),  
-    .reset_n(KEY[0]),       // to make it possible to change a floppy image, then press F11
+    //.reset_n(KEY[0]),       // to make it possible to change a floppy image, then press F11
+    .reset_n(SYS_RESETN),
     
     // sd card signals
     .sd_dat(SD_DAT), 
@@ -1140,7 +1162,7 @@ floppy flappy(
     .sd_clk(SD_CLK), 
     
     // uart comms
-    .uart_txd(UART_TXD),
+    .uart_txd(floppy_uart_tx),
     
     // io ports
     .hostio_addr({address_bus_r[2],~address_bus_r[1:0]}),
@@ -1163,11 +1185,12 @@ floppy flappy(
     .green_leds(floppy_leds),
     //.red_leds(floppy_leds),
     .debug(floppy_status),
-    .host_hold(floppy_death_by_floppy),
+    .host_hold(floppy_death_by_floppy)
     );
     //green_leds, red_leds, debug, debugidata);
 
 `else 
+assign floppy_uart_tx <= 1'b1;
 assign floppy_death_by_floppy = 0;
 wire [7:0]  floppy_odata = 
 `ifdef FLOPPYLESS_HAX
@@ -1187,10 +1210,12 @@ wire            osd_hsync, osd_vsync;   // provided by video.v
 reg             osd_active;
 reg [7:0]       osd_colour;
 always @(posedge clk24)
-    if (scrollock_osd & osd_bg) begin
+    if (scrollock_osd & osd_bg)
+    begin
         osd_active <= 1;
         osd_colour <= osd_fg ? 8'b11111110 : 8'b01011001;   // slightly greenish tint hopefully
-    end else 
+    end 
+    else 
         osd_active <= 0;
 
 wire            osd_fg;
@@ -1220,8 +1245,6 @@ assign osd_fg = 0;
 assign osd_bg = 0;
 assign osd_rq  = 0;
 `endif
-
-
 
 ////////
 // AY //
@@ -1345,9 +1368,6 @@ always @* gledreg[8] <= disable_rom;
 I2C_AV_Config       u7(clk24,mreset_n,I2C_SCLK,I2C_SDAT);
 `endif
 
-
-`ifdef WITH_SERIAL_PROBE
-
 wire [21:0] halt_addr;
 wire [7:0] halt_do;
 wire halt_wr;
@@ -1357,11 +1377,13 @@ wire [11:0] halt_fkeys;
 wire [7:0] halt_scancode;
 wire halt_scancode_ready;
 
+`ifdef WITH_SERIAL_PROBE
+
 assign halt_command_f11 = halt_fkeys[10];
 assign halt_command_f12 = halt_fkeys[11];
 
 haltmode debugger(.clk24(clk24), .rst_n(delayed_reset_n),
-    .uart_rx(UART_RX), .uart_tx(UART_TX),
+    .uart_rx(UART_RX), .uart_tx(halt_uart_tx),
     .addr_o(halt_addr), .data_o(halt_do), .wr_o(halt_wr),
     .halt_o(halt_halt),
     .fkeys_o(halt_fkeys),
@@ -1371,6 +1393,18 @@ haltmode debugger(.clk24(clk24), .rst_n(delayed_reset_n),
 
 always @(posedge clk24)
     LED[5:0] <= {cpu_m1, ~halt_addr[4:0]};
+
+`else
+
+assign halt_uart_tx = 1'b1;
+assign halt_addr = 22'h0;
+assign halt_do = 8'h00;
+assign halt_wr = 1'b1;
+assign halt_halt = 1'b0;
+assign halt_fkeys = 12'b0;
+
+assign halt_scancode = 8'h00;
+assign halt_scancode_ready = 1'b0;
 
 `endif
 

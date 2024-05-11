@@ -1,4 +1,4 @@
-`default_nettype none
+//`default_nettype none
 
 // ====================================================================
 //                         VECTOR-06C FPGA REPLICA
@@ -25,12 +25,12 @@ input 		ce;
 input		reset_n;
 output	reg	mosi;
 input		miso;
-output		sck = ~clk & scken;
+output		sck;
 
 input [7:0]	di;
 input		wr;
 
-output[7:0]	do = shiftreg;
+output[7:0]	do;
 output reg	dsr;
 
 reg [7:0]	shiftreg;
@@ -38,6 +38,9 @@ reg [7:0]	shiftski;
 
 reg [1:0]	state = 0;
 reg 		scken = 0;
+
+assign sck = ~clk & scken;
+assign do = shiftreg;
 
 always @(posedge clk or negedge reset_n) begin
 	if (!reset_n) begin

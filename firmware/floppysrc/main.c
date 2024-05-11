@@ -35,7 +35,7 @@
 #include "philes.h"
 
 char* cnotice1 = "    VECTOR-06C FPGA REPLICA     ";
-char* cnotice2 = "(C)2008-14  VIACHESLAV SLAVINSKY";
+char* cnotice2 = "(C)2008-24  VIACHESLAV SLAVINSKY";
 
 /*---------------------------------------------------------*/
 /* User Provided Timer Function for FatFs module           */
