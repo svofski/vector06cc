@@ -44,7 +44,6 @@ uint8_t fdd_clearerror() {
 }
 
 uint8_t fdd_load(FIL* file, FDDImage *fdd, uint8_t *bufptr) {
-	WORD w1;
 	fdd_clearerror();
 	
 	//fdd->ntracks = file->fsize / (2*FDD_NSECTORS*FDD_SECTOR_SIZE);	// these seem to be fixed more or less
@@ -71,6 +70,7 @@ uint8_t fdd_seek(FDDImage *fdd, uint8_t side, uint8_t track, uint8_t sector) {
 	fdd->cur_sector = sector;
 	fdd->offset = 0;
 	fdd->ready = 0;
+	return FR_OK;
 }
 
 static uint32_t calc_offset(FDDImage* fdd) {
@@ -112,7 +112,7 @@ FRESULT fdd_writesector(FDDImage* fdd) {
 	return r;
 }
 
-FRESULT fdd_readadr(FDDImage *fdd) {
+FRESULT fdd_readadr(FDDImage *fdd) {        
 	uint8_t sizecode = SECTOR_SIZE_CODE;
 	
 	// 6 bytes: track, side, sector, sectorsize code, crc1, crc2

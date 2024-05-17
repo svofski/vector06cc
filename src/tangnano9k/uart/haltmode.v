@@ -4,7 +4,12 @@ module haltmode(
     input clk24,
     input rst_n,
     input uart_rx,
-    output uart_tx,
+
+    //output uart_tx,
+    output [7:0] o_uart_tx_data,
+    output o_uart_tx_wr,
+    input i_uart_tx_busy,
+
     output [21:0] addr_o,     // ram address
     output [7:0] data_o,      // data
     output wr_o,              // write ram[addr_o] <= data_o

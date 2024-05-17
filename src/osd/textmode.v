@@ -106,7 +106,7 @@ wire [`TILE_W-2:0]  tileline;
 //          .q(tileline));
 
 rom #(.ADDR_WIDTH(10),.DATA_WIDTH(5),.DEPTH(1024),.ROM_FILE("e5x7.hax"))
-    (.clk(clk),
+chrom0(.clk(clk),
     .cs(1'b1),
     .addr(tileaddr),
     .data_out(tileline));

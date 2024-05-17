@@ -20,13 +20,19 @@
 // --------------------------------------------------------------------
 
 module floppy(
-        clk, ce, reset_n, 
+        clk, cpu_ce, reset_n, 
         // sram interface (reserved)
         addr, idata, odata, memwr, 
         // sd card signals
         sd_dat, sd_dat3, sd_cmd, sd_clk, 
         // uart comms
+        `ifdef BUILTIN_UART
         uart_txd, 
+        `else
+        o_uart_send,
+        o_uart_data,
+        i_uart_busy,
+        `endif
         
         // io ports
         hostio_addr,
@@ -52,6 +58,8 @@ module floppy(
         host_hold
         );
         
+parameter DISK_HAX = "../../../disk.hax";
+
 parameter IOBASE = 16'hE000;
 parameter PORT_MMCA= 0;
 parameter PORT_SPDR= 1;
@@ -76,7 +84,7 @@ parameter PORT_LED = 16;
 parameter PORT_OSD_COMMAND = 17;                // {F11,F12,HOLD}
 
 input           clk;
-input           ce;
+input           cpu_ce;
 input           reset_n;
 output  [15:0]  addr;
 input   [7:0]   idata;
@@ -86,7 +94,13 @@ input           sd_dat;
 output  reg     sd_dat3;
 output          sd_cmd;
 output          sd_clk;
+`ifdef BUILTIN_UART
 output          uart_txd;
+`else
+output          o_uart_send;
+output [7:0]    o_uart_data;
+input           i_uart_busy;
+`endif
 
 // I/O interface to host system (Vector)
 input   [2:0]   hostio_addr;
@@ -107,10 +121,12 @@ input   [7:0]   display_idata;
 output reg[7:0] osd_command;
 output reg[7:0] green_leds;
 
-output  [7:0]   red_leds; //= {spi_wren,dma_debug[6:0]};
-output  [7:0]   debug;// = wdport_status;
-output  [7:0]   debugidata;// = {ce & bufmem_en, ce, hostio_rd, wd_ram_rd};
+output  [7:0]   red_leds;
+output  [7:0]   debug;
+output  [7:0]   debugidata;
 output          host_hold;
+
+wire ce = 1'b1;
 
 wire    [15:0]  cpu_ax;
 wire            memwrx;
@@ -151,8 +167,9 @@ assign red_leds = {spi_wren,dma_debug[6:0]};
 assign debug = wdport_status;
 assign debugidata = {ce & bufmem_en, ce, hostio_rd, wd_ram_rd};
 
-`define VHDL_6502
+//`define VHDL_6502
 //`define LUDDES6502
+`define ARLET6502
 
 // Workhorse 6502 CPU
 `ifdef VHDL_6502
@@ -167,31 +184,6 @@ cpu65xx_en cpu(
                 .addr(cpu_ax),
                 .we(memwrx)
         );
-`endif
-
-`ifdef ARLET6502
-
-// this doesn't work on Gowin because of "Find logic loop" 
-// apparently it has to do with how AB is formed in Arlet's 6502...
-wire ready = /*ce & */ ~(wd_ram_rd|wd_ram_wr|~dma_ready);
-wire [15:0] cpu_ax_comb;
-cpu cpu(.clk(clk),
-    .clken(ce),
-    //.clken(1'b1),
-    .reset(~reset_n),
-    .AB(cpu_ax_comb),
-    .DI(cpu_di),
-    .DO(cpu_dox),
-    .WE(memwrx),
-    .IRQ(1'b0),
-    .NMI(1'b0),
-    .RDY(ready));
-
-// I tried to fix AB by this, but it doesn't work
-reg [15:0]  cpu_ax_r;
-always @(negedge clk)
-    cpu_ax_r <= cpu_ax_comb;
-assign cpu_ax = cpu_ax_r;
 `endif
 
 `ifdef LUDDES6502
@@ -209,96 +201,108 @@ CPU6502(.clk(clk),
 `endif
 
 
+`ifdef ARLET6502
+
+// this doesn't work on Gowin because of "Find logic loop" 
+// apparently it has to do with how AB is formed in Arlet's 6502...
+wire ready = /*ce & */ ~(wd_ram_rd|wd_ram_wr|~dma_ready);
+wire [15:0] cpu_ax_comb;
+cpu cpu(.clk(clk),
+    .clken(1'b1),
+    .reset(~reset_n),
+    .AB(cpu_ax_comb),
+    .DI(cpu_di),
+    .DO(cpu_dox),
+    .WE(memwrx),
+    .IRQ(1'b0),
+    .NMI(1'b0),
+    .RDY(ready)
+);
+
+reg [15:0] cpu_ax_prev;
+always @(posedge clk)
+    if (ce) cpu_ax_prev <= cpu_ax_comb;
+assign cpu_ax = cpu_ax_prev;
+
+`endif
+
+
 // Main RAM, Low-mem, Buffer-mem, I/O ports to CPU connections
 wire    [7:0]   ram_do;
 wire    [7:0]   lowmem_do;
 wire    [7:0]   bufmem_do;
 reg     [7:0]   ioports_do;
 
-always @* 
-begin: _cpu_datain
-        case({&cpu_a[15:4], lowmem_en, bufmem_en, rammem_en, osd_en}) 
-        5'b10000:       cpu_di <= (cpu_a[0] ? 8'h08:8'h00); // boot addr $0800
-        5'b01000:       cpu_di <= lowmem_do;
-        5'b00100:       cpu_di <= bufmem_do;
-        5'b00010:       cpu_di <= ram_do;
-        5'b00001:       cpu_di <= display_idata;
-        default:        cpu_di <= ioports_do;
-        endcase
-end                                                     
-
 // memory enables
+wire vectors_en = &cpu_a[15:4];
 wire lowmem_en = |cpu_a[15:9] == 0;
 wire bufmem_en = (wd_ram_rd|wd_ram_wr) || (cpu_a >= 16'h200 && cpu_a < 16'h600);
 wire rammem_en = cpu_a >= 16'h0800 && cpu_a < 16'h8000;
 wire ioports_en= cpu_a >= IOBASE && cpu_a < IOBASE + 256;
 wire osd_en = cpu_a >= IOBASE + 256 && cpu_a < IOBASE + 512;
 
+wire [5:0] memsel = {vectors_en, lowmem_en, bufmem_en, rammem_en, osd_en, ioports_en};
+
+always @*
+begin: _cpu_datain
+        //case({&cpu_a[15:4], lowmem_en, bufmem_en, rammem_en, osd_en}) 
+        case (memsel)
+        6'b100000:       cpu_di <= (cpu_ax_prev[0] ? 8'h08:8'h00); // boot addr $0800
+        6'b010000:       cpu_di <= lowmem_do;
+        6'b001000:       cpu_di <= bufmem_do;
+        6'b000100:       cpu_di <= ram_do;
+        6'b000010:       cpu_di <= display_idata;
+        6'b000001:       cpu_di <= ioports_do;
+        default:         cpu_di <= 8'hff;
+        endcase
+end                                                     
+
+
 assign display_addr = cpu_a[7:0];
 assign display_data = cpu_do;
 assign display_wren = osd_en & memwr;
 
+wire rammem_cs = cpu_ax_comb >= 16'h0800 && cpu_ax_comb < 16'h8000;
 
-//floppyram flopramnik(
-//      .address(cpu_a-16'h0800),
-//      .clock(~clk),
-//      .data(cpu_do),
-//      .wren(memwr),
-//      .q(ram_do)
-//      );
-wire [14:0] ram_adrs = cpu_a-16'h0800;
-ram 
-    #(.ADDR_WIDTH(15),.DEPTH(16384),
-        .HEXFILE("../../../disk.hax")) 
-    flopramnik(
-    .clk(~clk),
-    .cs(ce & rammem_en),
-    //.cs(1'b1),
-    .addr(ram_adrs),
-    .we(memwr),
+wire [14:0] rammem_a = cpu_ax_comb-16'h0800;
+ram #(.ADDR_WIDTH(15),.DEPTH(16384), .HEXFILE(DISK_HAX)) 
+flopramnik(
+    .clk(clk),
+    .cs(rammem_cs),
+    .addr(rammem_a),
+    .we(rammem_cs & memwr),
     .data_in(cpu_do),
     .data_out(ram_do)
 );
 
-//ram512x8a zeropa(
-//      .clock(~clk),
-//      .clken(ce & lowmem_en),
-//      .address(cpu_a),
-//      .wren(memwr),
-//      .data(cpu_do),
-//      .q(lowmem_do));
+wire lowmem_cs = |cpu_ax_comb[15:9] == 0;
+wire lowmem_wr = lowmem_cs & memwr;
+wire [8:0] lowmem_a = cpu_ax_comb[8:0];
 ram #(.ADDR_WIDTH(9),.DEPTH(512)) zeropa(
-    .clk(~clk),
-    .cs(ce & lowmem_en),
-    //.cs(1'b1),
-    .addr(cpu_a[8:0]),
-    .we(memwr),
+    .clk(clk),
+    .cs(lowmem_cs),
+    .addr(lowmem_a),
+    .we(lowmem_wr),
     .data_in(cpu_do),
     .data_out(lowmem_do));
 
-wire [9:0]      bufmem_addr = (wd_ram_rd|wd_ram_wr) ? wd_ram_addr : cpu_a - 10'h200;
+wire [9:0]      bufmem_a = (wd_ram_rd|wd_ram_wr) ? wd_ram_addr : cpu_ax_comb - 10'h200;
 wire            bufmem_wren = wd_ram_wr | memwr;
 wire [7:0]      bufmem_di = wd_ram_wr ? wd_ram_odata : cpu_do;
 
-//ram1024x8a bufpa(
-//      .clock(~clk),
-//      .clken(ce & bufmem_en),
-//      .address(bufmem_addr),
-//      .wren(bufmem_wren),
-//      .data(bufmem_di),
-//      .q(bufmem_do));
+wire bufmem_cs = (wd_ram_rd|wd_ram_wr) || (cpu_ax_comb >= 16'h200 && cpu_ax_comb < 16'h600);
 ram #(.ADDR_WIDTH(10),.DATA_WIDTH(8),.DEPTH(1024)) bufpa(
-    .clk(~clk),
-    .cs(ce & bufmem_en), // ??
-    .addr(bufmem_addr),
-    .we(bufmem_wren),
+    .clk(clk),
+    .cs(bufmem_cs), // ??
+    .addr(bufmem_a),
+    .we(bufmem_cs & bufmem_wren),
     .data_in(bufmem_di),
     .data_out(bufmem_do));
 
 /////////////////////
 // CPU INPUT PORTS //
 /////////////////////
-always @(negedge clk)
+always @* //@(posedge clk)
 begin
     case (cpu_a)             
         IOBASE+PORT_CTL:        ioports_do <= {7'b0,uart_busy}; // uart status
@@ -332,37 +336,39 @@ begin
     begin
         if (ce)
         begin
-            if (memwr && cpu_a[15:8] == 8'hE0)
+            if (memwr && cpu_ax_comb[15:8] == 8'hE0)
             begin
-                if (cpu_a[7:0] == 8'h10) begin
+                //$display("writing to port %04x=%02x", cpu_ax_comb, cpu_do);
+
+                if (cpu_ax_comb[7:0] == 8'h10) begin
                     green_leds <= cpu_do;
                 end
 
                 // E004: send data
-                if (cpu_a[7:0] == PORT_TXD) begin
+                if (cpu_ax_comb[7:0] == PORT_TXD) begin
                     uart_data <= cpu_do;
                     uart_state <= 0;
                 end
 
                 // MMCA: SD/MMC card chip select
-                if (cpu_a[7:0] == PORT_MMCA) begin
+                if (cpu_ax_comb[7:0] == PORT_MMCA) begin
                     sd_dat3 <= cpu_do[0];
                 end
 
                 // CPU status return
-                if (cpu_a[7:0] == PORT_CPU_STATUS) begin
+                if (cpu_ax_comb[7:0] == PORT_CPU_STATUS) begin
                     wdport_cpu_status <= cpu_do;
                 end
 
-                if (cpu_a[7:0] == PORT_OSD_COMMAND) begin
+                if (cpu_ax_comb[7:0] == PORT_OSD_COMMAND) begin
                     osd_command <= cpu_do;
                 end
 
                 // DMA
-                if (cpu_a[7:0] == PORT_DMA_MSB) dma_msb <= cpu_do;
-                if (cpu_a[7:0] == PORT_DMA_LSB) dma_lsb <= cpu_do;
+                if (cpu_ax_comb[7:0] == PORT_DMA_MSB) dma_msb <= cpu_do;
+                if (cpu_ax_comb[7:0] == PORT_DMA_LSB) dma_lsb <= cpu_do;
 
-                if (cpu_a[7:0] == PORT_SPSR) begin
+                if (cpu_ax_comb[7:0] == PORT_SPSR) begin
                     dma_blocks <= cpu_do[7:4];
                 end 
             end
@@ -396,6 +402,15 @@ begin
     end
 end
 
+// trace
+always @(posedge clk)
+    if (rammem_cs)
+    begin
+        //if (rammem_a == 0)
+        //    $display("rammem read @0000");
+    end
+
+
 //////////////////
 // UART Console //
 //////////////////
@@ -404,6 +419,11 @@ reg  [7:0]      uart_data;
 wire            uart_busy;
 reg  [1:0]      uart_state = 3;
 
+//`define VHDL_UART
+
+`ifdef BUILTIN_UART
+
+`ifdef VHDL_UART
 TXD txda( 
         .clk(clk),
         .ld(uart_send),
@@ -411,6 +431,33 @@ TXD txda(
         .TxD(uart_txd),
         .txbusy(uart_busy)
    );
+`else
+
+`ifdef SIMULATION
+`define BAUDRATE 12000000
+`else
+`define BAUDRATE 115200
+`endif
+
+uart_interface #(.SYS_CLK(24000000),.BAUDRATE(`BAUDRATE)) uart0(
+    .clk(clk),
+    .reset(~reset_n),
+    .cs(ce),
+    .rs(1'b1),
+    .we(uart_send),
+    .din(uart_data),
+    .uart_tx(uart_txd),
+    .tx_busy(uart_busy));
+
+`endif
+
+`else
+
+assign o_uart_send = uart_send;
+assign o_uart_data = uart_data;
+assign uart_busy = i_uart_busy;
+
+`endif // BUILTIN_UART
 
 ////////////
 // TIMERS //
@@ -419,8 +466,11 @@ TXD txda(
 wire [7:0] timer1q;
 wire [7:0] timer2q;
 
-timer100hz timer1(.clk(clk), .di(cpu_do), .wren(ce && cpu_a==(IOBASE+PORT_TMR1) && memwr), .q(timer1q));
-timer100hz timer2(.clk(clk), .di(cpu_do), .wren(ce && cpu_a==(IOBASE+PORT_TMR2) && memwr), .q(timer2q));
+wire timer1_wren = ce && cpu_ax_comb==(IOBASE+PORT_TMR1) && memwr;
+wire timer2_wren = ce && cpu_ax_comb==(IOBASE+PORT_TMR2) && memwr;
+
+timer100hz timer1(.clk(clk), .di(cpu_do), .wren(timer1_wren), .q(timer1q));
+timer100hz timer2(.clk(clk), .di(cpu_do), .wren(timer2_wren), .q(timer2q));
 
 //////////////////////
 // SPI/SD INTERFACE //
@@ -428,35 +478,53 @@ timer100hz timer2(.clk(clk), .di(cpu_do), .wren(ce && cpu_a==(IOBASE+PORT_TMR2) 
 
 wire [7:0]      spdr_do;
 wire            spdr_dsr;
-wire            spi_wren = (ce && (cpu_a == (IOBASE+PORT_SPDR) && memwr)) || dma_spiwr;
+wire            spi_wren = (ce && (cpu_ax_comb == (IOBASE+PORT_SPDR) && memwr)) || dma_spiwr;
 spi sd0(.clk(clk),
-                .ce(1'b1),
-                .reset_n(reset_n),
-                .mosi(sd_cmd),
-                .miso(sd_dat),
-                .sck(sd_clk),
-                .di(dma_ready ? cpu_do : dma_spido), 
-                .wr(spi_wren), 
-                .do(spdr_do), 
-                .dsr(spdr_dsr)
-                );
+        .ce(1'b1),
+        .reset_n(reset_n),
+        .mosi(sd_cmd),
+        .miso(sd_dat),
+        .sck(sd_clk),
+        .di(dma_ready ? cpu_do : dma_spido), 
+        .wr(spi_wren), 
+        .do(spdr_do), 
+        .dsr(spdr_dsr)
+        );
 
+// DMA is not used, but removing it breaks the entire v06cc, so let it stay
+// for now
+`define WITH_FLOPPY_DMA
+`ifdef WITH_FLOPPY_DMA
 dma_rw pump0(
-                .clk(clk), 
-                .ce(ce), 
-                .reset_n(reset_n), 
-                .iaddr({dma_msb,dma_lsb}),
-                .oaddr(dma_oaddr), 
-                .odata(dma_odata),
-                .idata(cpu_di), 
-                .owren(dma_memwr), 
-                .nblocks(dma_blocks), 
-                .ready(dma_ready), 
-                .ospi_data(dma_spido), 
-                .ispi_data(spdr_do), 
-                .ospi_wr(dma_spiwr), 
-                .ispi_dsr(spdr_dsr),
-                .debug(dma_debug));
+             .clk(clk), 
+             .ce(ce), 
+             //.ce(1'b0),
+             .reset_n(reset_n), 
+             //.iaddr({dma_msb,dma_lsb}),
+             //.oaddr(dma_oaddr),  // - nax
+             //.odata(dma_odata),  // - nax 
+             //.idata(cpu_di),     // - nax
+             //.owren(dma_memwr),  // - nax
+             //.nblocks(dma_blocks),//- nax
+             //.ready(dma_ready),  // - nax (drive 1)
+             //.ospi_data(dma_spido), // - nax
+             //.ispi_data(spdr_do),   // nax
+             .ospi_wr(dma_spiwr), // DED!
+             .ispi_dsr(spdr_dsr)//, // DED!
+             //.debug(dma_debug)    // nax
+         );
+// assign dma_spiwr = 1'b1; // 0 = ded, 1 = v06cc works but not floppy
+assign dma_ready = 1'b1;
+
+ `else
+ assign dma_ready = 1'b1;
+ assign dma_spido = 8'h00;
+ assign dma_spiwr = 1'b0;
+ assign dma_memwr = 1'b0;
+ assign dma_odata = 8'h00;
+ assign dma_oaddr = 16'h0000;
+ assign dma_debug = 8'h00;
+ `endif
 
 ////////////
 // WD1793 //
@@ -471,14 +539,17 @@ dma_rw pump0(
 //              100             $1C             Control                         Write only
 
 
+wire wd_rd = cpu_ce & hostio_rd;
+wire wd_wr = cpu_ce & hostio_wr;
+
 wd1793 vg93(
                                 .clk(clk), 
                                 .clken(ce), 
                                 .reset_n(reset_n),
                                 
                                 // host i/o ports 
-                                .rd(hostio_rd), 
-                                .wr(hostio_wr), 
+                                .rd(wd_rd), 
+                                .wr(wd_wr), 
                                 .addr(hostio_addr), 
                                 .idata(hostio_idata), 
                                 .odata(hostio_odata), 

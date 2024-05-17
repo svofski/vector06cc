@@ -40,6 +40,7 @@
 #include "tff.h"		/* Tiny-FatFs declarations */
 #include "diskio.h"		/* Include file for user provided disk functions */
 
+#include "serial.h"
 
 static
 FATFS *FatFs;			/* Pointer to the file system objects (logical drive) */
@@ -613,7 +614,6 @@ BYTE check_fs (		/* 0:The FAT boot record, 1:Valid boot record but not an FAT, 2
 )
 {
 	FATFS *fs = FatFs;
-
 	if (disk_read(0, fs__win, sect, 1) != RES_OK)	/* Load boot record */
 		return 2;
 	if (LD_WORD(&fs__win[BS_55AA]) != 0xAA55)		/* Check record signature */
@@ -1241,11 +1241,11 @@ FRESULT f_opendir (
 	FRESULT res;
 	FATFS *fs = FatFs;
 
-
 	res = auto_mount(&path, 0);
 	if (res != FR_OK) return res;
-
+ser_puts("f_opendir auto_mount ok\n");
 	res = trace_path(dirobj, fn, path, &dir);	/* Trace the directory path */
+ser_puts("f_opendir trace_path res="); print_hex(res); ser_nl();
 	if (res == FR_OK) {							/* Trace completed */
 		if (dir != NULL) {						/* It is not the root dir */
 			if (dir[DIR_Attr] & AM_DIR) {		/* The entry is a directory */

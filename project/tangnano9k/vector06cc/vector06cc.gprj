@@ -14,6 +14,7 @@
         <File path="C:/Gowin/projects/vector06cc/src/floppy/luddes6502/cpu6502.v" type="file.verilog" enable="1"/>
         <File path="C:/Gowin/projects/vector06cc/src/floppy/spi.v" type="file.verilog" enable="1"/>
         <File path="C:/Gowin/projects/vector06cc/src/floppy/timer100hz.v" type="file.verilog" enable="1"/>
+        <File path="C:/Gowin/projects/vector06cc/src/floppy/upi_uart/uart.v" type="file.verilog" enable="1"/>
         <File path="C:/Gowin/projects/vector06cc/src/floppy/verilog-6502-copy/ALU.v" type="file.verilog" enable="1"/>
         <File path="C:/Gowin/projects/vector06cc/src/floppy/verilog-6502-copy/cpu.v" type="file.verilog" enable="1"/>
         <File path="C:/Gowin/projects/vector06cc/src/floppy/wd1793.v" type="file.verilog" enable="1"/>
@@ -64,7 +65,7 @@
         <File path="src/tangnano9k.cst" type="file.cst" enable="1"/>
         <File path="src/vector06cc.sdc" type="file.sdc" enable="1"/>
         <File path="src/clocks_gao.gao" type="file.gao" enable="0"/>
-        <File path="src/floppy.rao" type="file.gao" enable="1"/>
+        <File path="src/floppy.rao" type="file.gao" enable="0"/>
         <File path="src/framebuf.rao" type="file.gao" enable="0"/>
         <File path="src/rtl_gao.rao" type="file.gao" enable="0"/>
         <File path="src/rtl_trigger.rao" type="file.gao" enable="0"/>

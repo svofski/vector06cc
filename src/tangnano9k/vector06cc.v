@@ -1150,7 +1150,15 @@ wire        floppy_death_by_floppy;
 
 wire floppy_uart_tx, halt_uart_tx;
 
+
+`ifdef FLOPPY_BUILTIN_UART
 assign UART_TX = floppy_uart_tx & halt_uart_tx;
+`else
+assign floppy_uart_tx = 1'b1;
+
+wire floppy_uart_tx_wr;
+wire [7:0] floppy_uart_tx_data;
+`endif
 
 
 `ifdef WITH_FLOPPY
@@ -1159,7 +1167,7 @@ wire [7:0]  floppy_status;
 
 floppy flappy(
     .clk(clk24), 
-    .ce(cpu_ce),  
+    .cpu_ce(cpu_ce),  
     //.reset_n(KEY[0]),       // to make it possible to change a floppy image, then press F11
     .reset_n(SYS_RESETN),
     
@@ -1170,8 +1178,13 @@ floppy flappy(
     .sd_clk(SD_CLK), 
     
     // uart comms
+`ifdef FLOPPY_BUILTIN_UART
     .uart_txd(floppy_uart_tx),
-    
+`else
+    .o_uart_send(floppy_uart_tx_wr),
+    .o_uart_data(floppy_uart_tx_data),
+    .i_uart_busy(uart_tx_busy),
+`endif 
     // io ports
     .hostio_addr({address_bus_r[2],~address_bus_r[1:0]}),
     .hostio_idata(DO),
@@ -1385,13 +1398,35 @@ wire [11:0] halt_fkeys;
 wire [7:0] halt_scancode;
 wire halt_scancode_ready;
 
+wire [7:0] halt_uart_tx_data;
+wire halt_uart_tx_wr;
+
+//////////////////// UART TX /////////////////////////
+wire [7:0] uart_tx_data = floppy_uart_tx_wr ? floppy_uart_tx_data : halt_uart_tx_data;
+wire uart_tx_wr = halt_uart_tx_wr | floppy_uart_tx_wr;
+wire uart_tx_busy;
+uart_tx_V2 tx(
+    .clk(clk24),
+    .din(uart_tx_data),
+    .wr_en(uart_tx_wr),
+    .tx_busy(uart_tx_busy), 
+    .tx_p(UART_TX));
+
+defparam tx.uart_freq=115200;
+defparam tx.clk_freq=24_000_000;
+
+
 `ifdef WITH_SERIAL_PROBE
 
 assign halt_command_f11 = halt_fkeys[10];
 assign halt_command_f12 = halt_fkeys[11];
 
 haltmode debugger(.clk24(clk24), .rst_n(delayed_reset_n),
-    .uart_rx(UART_RX), .uart_tx(halt_uart_tx),
+    .uart_rx(UART_RX),
+    //.uart_tx(halt_uart_tx),
+    .o_uart_tx_data(halt_uart_tx_data),
+    .o_uart_tx_wr(halt_uart_tx_wr),
+    .i_uart_tx_busy(uart_tx_busy),
     .addr_o(halt_addr), .data_o(halt_do), .wr_o(halt_wr),
     .halt_o(halt_halt),
     .fkeys_o(halt_fkeys),
@@ -1413,6 +1448,8 @@ assign halt_fkeys = 12'b0;
 
 assign halt_scancode = 8'h00;
 assign halt_scancode_ready = 1'b0;
+
+assign halt_uart_tx_wr = 1'b0;
 
 `endif
 

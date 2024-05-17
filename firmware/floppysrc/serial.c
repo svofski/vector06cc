@@ -28,7 +28,7 @@ void ser_putc(char c) {
 	SERIAL_TxD = c;
 }
 
-void ser_puts(char *s) {
+void ser_puts(const char *s) {
 	for(; *s != 0; s++) {
 		for(; SERIAL_CTL & SERIAL_RDY != 0;);
 		SERIAL_TxD = *s;
@@ -49,7 +49,7 @@ void print_hex(BYTE b) {
 	ser_putc(nybble_alpha(b & 0x0f));
 }
 
-void print_buff(BYTE *Buffer) {
+void print_buff(const BYTE *Buffer) {
   WORD ofs;
   BYTE add;
   BYTE c;

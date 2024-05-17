@@ -72,12 +72,14 @@ uint8_t thrall(char *imagefile, uint8_t *buffer) {
         SLAVE_STATUS = CPU_STATUS_DRVNOTRDY;
         do {
             philes_mount();
+            ser_puts("philes_mount ok\n");
             result = philes_opendir();
             if (result != FR_OK) {
                 ser_puts("opendir() error\n");
                 delay2(1000);
                 break;
             }
+            ser_puts("philes_opendir ok\n");
 
             if (!first) {
                 philes_nextfile(imagefile+10, 1);

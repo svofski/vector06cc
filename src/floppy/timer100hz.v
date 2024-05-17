@@ -41,6 +41,7 @@ end
 always @(posedge clk) begin
 	if (wren) begin
 		q <= di;
+                $display("timer100hz wr q<=%d", di);
 	end 
 	else if (q != 0 && hz100) q <= q - 1'b1;
 end

@@ -30,10 +30,10 @@
 #ifdef WITH_SERIAL
 
 void ser_putc(char c);
-void ser_puts(char *s);
+void ser_puts(const char *s);
 void ser_nl(void);
 void print_hex(BYTE b);
-void print_buff(BYTE *Buffer);
+void print_buff(const BYTE *Buffer);
 
 #else
 

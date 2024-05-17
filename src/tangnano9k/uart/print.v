@@ -107,7 +107,10 @@ end
 reg uart_en;
 wire uart_bz;
 //wire uart_tx;
-uart_tx_V2 tx(print_clk, print_seq[seq_head], uart_en, uart_bz, uart_tx);
+//uart_tx_V2 tx(print_clk, print_seq[seq_head], uart_en, uart_bz, uart_tx);
+assign o_uart_tx_data = print_seq[seq_head];
+assign o_uart_tx_wr = uart_en;
+assign uart_bz = i_uart_tx_busy;
 
 //always block to send the data via UART
 always@(posedge print_clk)begin

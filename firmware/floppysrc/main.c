@@ -83,9 +83,11 @@ void main(void) {
 
     ser_puts("@");
     delay2(10);
+    ser_puts("A");
     
     ser_nl(); ser_puts(cnotice1); 
     ser_nl(); ser_puts(cnotice2);
+    ser_nl();
 
     thrall(ptrfile, Buffer);
     print_result(result);
