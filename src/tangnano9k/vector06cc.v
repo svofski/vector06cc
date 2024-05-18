@@ -65,13 +65,13 @@ module vector06cc(
     output  [5:0]   LCD_G,
     output  [4:0]   LCD_B,
 
-`ifdef WITH_FLOPPY
+
     //////////////////    SD Card Interface   ////////////////////////
     input           SD_DAT,                 //  SD Card Data            (MISO)
     output          SD_DAT3,                //  SD Card Data 3          (CSn)
     output          SD_CMD,                 //  SD Card Command Signal  (MOSI)
     output          SD_CLK,                 //  SD Card Clock           (SCK)
-`endif
+
     output          UART_TX,
     input           UART_RX,
 
@@ -383,7 +383,7 @@ begin
         prev_opcode_addr <= opcode_addr;
 
         opcode <= DI;
-        opcode_addr <= A;
+        opcode_addr <= A[9:0];
 
         if (A == 16'h3ded)
             ded_3ded <= 1'b1;
@@ -774,10 +774,6 @@ assign LCD_VSYNC = vga_vs;
 //assign LCD_R[4:1] = video_r;
 //assign LCD_G[5:2] = video_g;
 //assign LCD_B[4:1] = video_b;
-wire r5 = bgr555[4:0];
-wire g5 = bgr555[9:5];
-wire b5 = bgr555[14:10];
-
 
 wire [14:0] osd_555 = bgr233to555(osd_colour);
 wire [14:0] overlayed_bgr555 = osd_active ? osd_555 : bgr555;
@@ -1148,18 +1144,11 @@ wire        floppy_rden  = io_read & floppy_sel;
 
 wire        floppy_death_by_floppy;
 
-wire floppy_uart_tx, halt_uart_tx;
+wire halt_uart_tx;
 
-
-`ifdef FLOPPY_BUILTIN_UART
-assign UART_TX = floppy_uart_tx & halt_uart_tx;
-`else
-assign floppy_uart_tx = 1'b1;
 
 wire floppy_uart_tx_wr;
 wire [7:0] floppy_uart_tx_data;
-`endif
-
 
 `ifdef WITH_FLOPPY
 wire [7:0]  floppy_odata;
@@ -1178,13 +1167,10 @@ floppy flappy(
     .sd_clk(SD_CLK), 
     
     // uart comms
-`ifdef FLOPPY_BUILTIN_UART
-    .uart_txd(floppy_uart_tx),
-`else
     .o_uart_send(floppy_uart_tx_wr),
     .o_uart_data(floppy_uart_tx_data),
     .i_uart_busy(uart_tx_busy),
-`endif 
+
     // io ports
     .hostio_addr({address_bus_r[2],~address_bus_r[1:0]}),
     .hostio_idata(DO),
@@ -1204,15 +1190,12 @@ floppy flappy(
     
     // debug 
     .green_leds(floppy_leds),
-    //.red_leds(floppy_leds),
     .debug(floppy_status),
     .host_hold(floppy_death_by_floppy)
     );
-    //green_leds, red_leds, debug, debugidata);
 
 `else 
-assign floppy_uart_tx <= 1'b1;
-assign floppy_death_by_floppy = 0;
+assign floppy_death_by_floppy = 1'b0;
 wire [7:0]  floppy_odata = 
 `ifdef FLOPPYLESS_HAX
     8'h00;

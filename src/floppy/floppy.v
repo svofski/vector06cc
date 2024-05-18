@@ -21,8 +21,6 @@
 
 module floppy(
         clk, cpu_ce, reset_n, 
-        // sram interface (reserved)
-        addr, idata, odata, memwr, 
         // sd card signals
         sd_dat, sd_dat3, sd_cmd, sd_clk, 
         // uart comms
@@ -77,19 +75,12 @@ parameter PORT_CPU_STATUS       = 10;
 parameter PORT_TRACK            = 11;
 parameter PORT_SECTOR           = 12;
 
-parameter PORT_DMA_MSB = 14;    // spi dma target address msb
-parameter PORT_DMA_LSB = 15;    // spi dma target address lsb
-
 parameter PORT_LED = 16;
 parameter PORT_OSD_COMMAND = 17;                // {F11,F12,HOLD}
 
 input           clk;
 input           cpu_ce;
 input           reset_n;
-output  [15:0]  addr;
-input   [7:0]   idata;
-output  [7:0]   odata;
-output          memwr;
 input           sd_dat;
 output  reg     sd_dat3;
 output          sd_cmd;
@@ -132,21 +123,11 @@ wire    [15:0]  cpu_ax;
 wire            memwrx;
 wire    [7:0]   cpu_dox;
 
-wire    [15:0]  cpu_a = dma_ready ? cpu_ax  : dma_oaddr;
+wire    [15:0]  cpu_a = cpu_ax;
 
-assign memwr = dma_ready ? memwrx  : dma_memwr;
-wire    [7:0]   cpu_do = dma_ready ? cpu_dox: dma_odata;
+wire memwr = memwrx;
+wire    [7:0]   cpu_do = cpu_dox;
 reg     [7:0]   cpu_di;
-
-reg  [7:0]      dma_lsb, dma_msb;
-wire [15:0]     dma_oaddr;
-wire [7:0]      dma_odata;
-wire            dma_memwr;
-reg [3:0]       dma_blocks;
-wire            dma_ready;
-wire [7:0]      dma_spido;
-wire            dma_spiwr;
-wire [7:0]      dma_debug;
 
 wire [7:0]      wdport_track;
 wire [7:0]      wdport_sector;
@@ -161,9 +142,7 @@ wire [7:0]      wd_ram_odata;   // this is to write to ram
 
 
 
-assign addr = cpu_a;
-assign odata = cpu_do;
-assign red_leds = {spi_wren,dma_debug[6:0]};
+assign red_leds = {spi_wren,7'b0};
 assign debug = wdport_status;
 assign debugidata = {ce & bufmem_en, ce, hostio_rd, wd_ram_rd};
 
@@ -176,7 +155,7 @@ assign debugidata = {ce & bufmem_en, ce, hostio_rd, wd_ram_rd};
 cpu65xx_en cpu(
                 .clk(clk),
                 .reset(~reset_n),
-                .enable(ce & ~(wd_ram_rd|wd_ram_wr|~dma_ready)),
+                .enable(ce & ~(wd_ram_rd|wd_ram_wr)),
                 .nmi_n(1'b1),
                 .irq_n(1'b1),
                 .di(cpu_di),
@@ -189,7 +168,7 @@ cpu65xx_en cpu(
 `ifdef LUDDES6502
 wire cpu_memr;
 CPU6502(.clk(clk),
-    .ce(ce & ~(wd_ram_rd|wd_ram_wr|~dma_ready)),
+    .ce(ce & ~(wd_ram_rd|wd_ram_wr)),
     .reset(~reset_n),
     .irq(1'b0),
     .nmi(1'b0),
@@ -205,7 +184,7 @@ CPU6502(.clk(clk),
 
 // this doesn't work on Gowin because of "Find logic loop" 
 // apparently it has to do with how AB is formed in Arlet's 6502...
-wire ready = /*ce & */ ~(wd_ram_rd|wd_ram_wr|~dma_ready);
+wire ready = /*ce & */ ~(wd_ram_rd|wd_ram_wr);
 wire [15:0] cpu_ax_comb;
 cpu cpu(.clk(clk),
     .clken(1'b1),
@@ -363,17 +342,7 @@ begin
                 if (cpu_ax_comb[7:0] == PORT_OSD_COMMAND) begin
                     osd_command <= cpu_do;
                 end
-
-                // DMA
-                if (cpu_ax_comb[7:0] == PORT_DMA_MSB) dma_msb <= cpu_do;
-                if (cpu_ax_comb[7:0] == PORT_DMA_LSB) dma_lsb <= cpu_do;
-
-                if (cpu_ax_comb[7:0] == PORT_SPSR) begin
-                    dma_blocks <= cpu_do[7:4];
-                end 
             end
-            else
-                dma_blocks <= 4'h0;
 
             // uart state machine
             case (uart_state) 
@@ -478,53 +447,18 @@ timer100hz timer2(.clk(clk), .di(cpu_do), .wren(timer2_wren), .q(timer2q));
 
 wire [7:0]      spdr_do;
 wire            spdr_dsr;
-wire            spi_wren = (ce && (cpu_ax_comb == (IOBASE+PORT_SPDR) && memwr)) || dma_spiwr;
+wire            spi_wren = (ce && (cpu_ax_comb == (IOBASE+PORT_SPDR) && memwr));
 spi sd0(.clk(clk),
         .ce(1'b1),
         .reset_n(reset_n),
         .mosi(sd_cmd),
         .miso(sd_dat),
         .sck(sd_clk),
-        .di(dma_ready ? cpu_do : dma_spido), 
+        .di(cpu_do), 
         .wr(spi_wren), 
         .do(spdr_do), 
         .dsr(spdr_dsr)
         );
-
-// DMA is not used, but removing it breaks the entire v06cc, so let it stay
-// for now
-`define WITH_FLOPPY_DMA
-`ifdef WITH_FLOPPY_DMA
-dma_rw pump0(
-             .clk(clk), 
-             .ce(ce), 
-             //.ce(1'b0),
-             .reset_n(reset_n), 
-             //.iaddr({dma_msb,dma_lsb}),
-             //.oaddr(dma_oaddr),  // - nax
-             //.odata(dma_odata),  // - nax 
-             //.idata(cpu_di),     // - nax
-             //.owren(dma_memwr),  // - nax
-             //.nblocks(dma_blocks),//- nax
-             //.ready(dma_ready),  // - nax (drive 1)
-             //.ospi_data(dma_spido), // - nax
-             //.ispi_data(spdr_do),   // nax
-             .ospi_wr(dma_spiwr), // DED!
-             .ispi_dsr(spdr_dsr)//, // DED!
-             //.debug(dma_debug)    // nax
-         );
-// assign dma_spiwr = 1'b1; // 0 = ded, 1 = v06cc works but not floppy
-assign dma_ready = 1'b1;
-
- `else
- assign dma_ready = 1'b1;
- assign dma_spido = 8'h00;
- assign dma_spiwr = 1'b0;
- assign dma_memwr = 1'b0;
- assign dma_odata = 8'h00;
- assign dma_oaddr = 16'h0000;
- assign dma_debug = 8'h00;
- `endif
 
 ////////////
 // WD1793 //

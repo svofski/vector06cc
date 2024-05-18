@@ -72,25 +72,6 @@ uart_rx#
 	.rx_pin(uart_rx)
 );
 
-`ifndef UART_TX_V2
-uart_tx#
-(
-	.CLK_FRE(CLK_FRE),
-	.BAUD_RATE(UART_FRE)
-) uart_tx_inst
-(
-	.clk(clk24),
-	.rst_n(rst_n),
-	.tx_data(tx_data),
-	.tx_data_valid(tx_data_valid),
-	.tx_data_ready(tx_data_ready),
-	.tx_pin(uart_tx)
-);
-`else
-defparam tx.uart_freq=115200;
-defparam tx.clk_freq=24_000_000;
-`endif
-
 `include "print.v"
 
 assign print_clk = clk24;

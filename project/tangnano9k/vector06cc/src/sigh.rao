@@ -2,7 +2,7 @@
 <GAO_CONFIG>
     <Version>3.0</Version>
     <Mode>Standard</Mode>
-    <AoCore index="0" sample_clock="clk24" trig_type="0" storage_depth="1024" window_num="1" capture_amount="1024" implementation="0" trigger_pos="0" module_name="vector06cc" force_trigger_by_falling_edge="true">
+    <AoCore index="0" sample_clock="clk24" trig_type="0" storage_depth="1024" window_num="1" capture_amount="1024" implementation="0" trigger_pos="32" module_name="vector06cc" force_trigger_by_falling_edge="true">
         <SignalList>
             <Bus name="A[15:0]">
                 <Signal>A[15]</Signal>
@@ -22,18 +22,16 @@
                 <Signal>A[1]</Signal>
                 <Signal>A[0]</Signal>
             </Bus>
-            <Bus name="mem_ctrl/state[2:0]">
-                <Signal>mem_ctrl/state[2]</Signal>
-                <Signal>mem_ctrl/state[1]</Signal>
-                <Signal>mem_ctrl/state[0]</Signal>
-            </Bus>
-            <Signal>psram_busy</Signal>
-            <Signal>psram_rd_vid</Signal>
+            <Signal>cpu_ce</Signal>
+            <Signal>SYS_RESETN</Signal>
+            <Signal>blksbr_reset_pulse</Signal>
+            <Signal>mreset_n</Signal>
+            <Signal>RESET_n</Signal>
         </SignalList>
         <Triggers>
             <Trigger index="0">
                 <SignalList>
-                    <Signal>mem_ctrl/cfg_now</Signal>
+                    <Signal>RESET_n</Signal>
                 </SignalList>
             </Trigger>
             <Trigger index="1"/>

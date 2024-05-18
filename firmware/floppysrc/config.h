@@ -1,7 +1,7 @@
 #ifndef _CONFIG_H
 #define _CONFIG_H
 
-//#define WITH_DMA
+#define NOT_WITH_DMA
 
 #define WITH_SERIAL
 
