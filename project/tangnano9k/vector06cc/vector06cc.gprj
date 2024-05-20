@@ -52,6 +52,7 @@
         <File path="C:/Gowin/projects/vector06cc/src/video/framebuffer.v" type="file.verilog" enable="1"/>
         <File path="C:/Gowin/projects/vector06cc/src/video/rambuffer.v" type="file.verilog" enable="1"/>
         <File path="C:/Gowin/projects/vector06cc/src/video/shiftreg2.v" type="file.verilog" enable="1"/>
+        <File path="C:/Gowin/projects/vector06cc/src/vm80/vm80a.v" type="file.verilog" enable="1"/>
         <File path="C:/Gowin/projects/vector06cc/src/T80/T80.vhd" type="file.vhdl" enable="1"/>
         <File path="C:/Gowin/projects/vector06cc/src/T80/T8080se.vhd" type="file.vhdl" enable="1"/>
         <File path="C:/Gowin/projects/vector06cc/src/T80/T80_ALU.vhd" type="file.vhdl" enable="1"/>
@@ -64,7 +65,7 @@
         <File path="C:/Gowin/projects/vector06cc/src/i82c55/i82c55.vhd" type="file.vhdl" enable="1"/>
         <File path="src/tangnano9k.cst" type="file.cst" enable="1"/>
         <File path="src/vector06cc.sdc" type="file.sdc" enable="1"/>
-        <File path="src/clocks_gao.gao" type="file.gao" enable="0"/>
+        <File path="src/clocks.rao" type="file.gao" enable="0"/>
         <File path="src/floppy.rao" type="file.gao" enable="0"/>
         <File path="src/framebuf.rao" type="file.gao" enable="0"/>
         <File path="src/rtl_gao.rao" type="file.gao" enable="0"/>

@@ -95,7 +95,7 @@ wire  delayed_reset_n;
 wire mreset_n = delayed_reset_n & ~kbd_key_blkvvod;
 wire mreset = !mreset_n;
 wire clk24, clkAudio, clk48, clk48p;
-wire ce12, ce6, ce6x, ce3, vi53_timer_ce, video_slice, pipe_ab;
+wire ce12, ce6, ce6x, ce3, ce3f2, vi53_timer_ce, video_slice, pipe_ab;
 wire clkpal4FSC = 0;    // no PAL modulator
 wire clk_color_mod = 0; // no PAL color 
 
@@ -113,6 +113,7 @@ clockster clockmaker(
     .ce6(ce6),              // tv pixel clock
     .ce6x(ce6x),
     .ce3(ce3),              // cpu 
+    .ce3f2(ce3f2),          // vm80a f2
     .video_slice(video_slice), 
     .pipe_ab(pipe_ab), 
     .ce1m5(vi53_timer_ce)
@@ -278,8 +279,43 @@ wire WRN_CPUCE = WR_n | ~cpu_ce;
 
 
 `ifdef WITH_CPU
+    `ifdef WITH_T8080
     T8080se CPU(RESET_n, clk24, cpu_ce, READY, HOLD, INT, INTE, DBIN, SYNC, VAIT, HLDA, WR_n, A, DI, DO);
 wire inta_n;
+    `endif
+
+    `ifdef WITH_VM80A
+wire cpu_aena, cpu_dena;
+
+reg  [3:0] vm80a_reset_r = 4'b0000;
+wire vm80a_reset = vm80a_reset_r[0];
+always @(posedge clk24 or negedge RESET_n)
+    if (~RESET_n) 
+        vm80a_reset_r <= 4'b1111;
+    else if (ce3f2)
+        vm80a_reset_r <= {1'b0, vm80a_reset_r[3:1]};
+
+vm80a_core CPUVM80A(
+    .pin_clk(clk24),
+    .pin_f1(cpu_ce),
+    .pin_f2(ce3f2),
+    .pin_reset(vm80a_reset),
+    .pin_a(A),
+    .pin_dout(DO),
+    .pin_din(DI),
+    .pin_aena(cpu_aena),
+    .pin_dena(cpu_dena),
+    .pin_hold(HOLD),
+    .pin_hlda(cpu_hlda),
+    .pin_ready(READY),
+    .pin_wait(VAIT),
+    .pin_int(INT),
+    .pin_inte(INTE),
+    .pin_sync(SYNC),
+    .pin_dbin(DBIN),
+    .pin_wr_n(WR_n));
+
+    `endif
     
     assign ram_read = status_word[7];
     assign ram_write_n = status_word[1];
@@ -466,12 +502,22 @@ wire psram_wr_cpu_pre = SYNC & ~(DO[1] | DO[4]); // unregistered raw_write_n and
 reg psram_wr_cpu;
 
 always @(posedge clk24)
-    if (ce3) psram_wr_cpu <= psram_wr_cpu_pre;
+    `ifdef WITH_T8080
+    //if (ce3) psram_wr_cpu <= psram_wr_cpu_pre;
+    `endif
+    `ifdef WITH_VM80A
+    if (ce3f2) psram_wr_cpu <= psram_wr_cpu_pre; //phi
+    `endif
 
 reg[63:0] rdvidreg;
 always @(posedge clk_psram) rdvidreg={rdvidreg[62:0],rdvid};
 
+`ifdef WITH_T8080
 wire psram_rd_vid = rdvidreg[30]; 
+`endif
+`ifdef WITH_VM80A
+wire psram_rd_vid = rdvidreg[33];
+`endif
 
 
 // ---------- haltmode write access ----------------

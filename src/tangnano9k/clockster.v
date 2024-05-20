@@ -31,24 +31,26 @@ module clockster(
     output ce6,
     output ce6x,
     output ce3,
+    output ce3f2,
     output video_slice,
     output pipe_ab,
     output ce1m5);
+
+
+reg[5:0] ctr;
+reg[4:0] initctr;
+
+reg qce12, qce6, qce6x, qce3, qce3f2, qvideo_slice, qpipe_ab, qce1m5;
 
 assign clkAudio = qce12;
 assign ce12 = qce12;
 assign ce6 = qce6;
 assign ce6x = qce6x;
 assign ce3 = qce3;
+assign ce3f2 = qce3f2;
 assign video_slice = qvideo_slice;
 assign pipe_ab = qpipe_ab;
 assign ce1m5 = qce1m5;
-
-
-reg[5:0] ctr;
-reg[4:0] initctr;
-
-reg qce12, qce6, qce6x, qce3, qce3v, qvideo_slice, qpipe_ab, qce1m5;
 
 Gowin_rPLL48p24 your_momma(
     .clkout(clk48), //output clkout
@@ -74,7 +76,10 @@ always @(posedge clk24) begin
         qce6 <= ctr[1] & ctr[0];            // pixel push @6mhz
         qce6x <= ctr[1] & ~ctr[0];          // pre-pixel push @6mhz
 
+        // 1 1 0
+        // 1 1 1
         qce3 <= ctr[2] & ctr[1] & !ctr[0]; //00100000 - svofski
+        qce3f2 <= ctr[2] & ctr[1] & ctr[0];
 
         qvideo_slice <= !ctr[2];
         qce1m5 <= !ctr[3] & ctr[2] & ctr[1] & !ctr[0];
