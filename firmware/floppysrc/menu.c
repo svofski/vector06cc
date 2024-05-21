@@ -30,44 +30,43 @@
 extern uint8_t* dmem;
 extern char* ptrfile;
 
-static uint8_t fsel_index;              // currently selected item
-static uint8_t  fsel_pagestart; // start refresh from here
+static uint8_t fsel_index;      // currently selected item
+static uint8_t fsel_pagestart;  // start refresh from here
 static uint8_t fsel_redraw;     // plz redraw file selector, teh slow
 static uint8_t fsel_hasnextpage; 
 
-static uint16_t delay = 1;
 static uint8_t joy_status;
 
 #define STATE_MENU              0
 #define STATE_FSEL              1
-#define STATE_WAITBREAK 10
-#define STATE_WAITBREAK2 11
-#define STATE_ABOOT2 12
+#define STATE_WAITBREAK         10
+#define STATE_WAITBREAK2        11
+#define STATE_ABOOT2            12
 #define STATE_ABOOT             2
 
 static uint8_t state = 0377;
 
-static char* menu_item[] = {    NULL,                   TXT_MENU_UP,            NULL,
-    TXT_MENU_LEFT,      TXT_MENU_MIDDLE,        TXT_MENU_RIGHT,
-    NULL,                       TXT_MENU_DOWN,          NULL};
+static char* menu_item[] = {    NULL,           TXT_MENU_UP,      NULL,
+                                TXT_MENU_LEFT,  TXT_MENU_MIDDLE,  TXT_MENU_RIGHT,
+                                NULL,           TXT_MENU_DOWN,    NULL};
+
 static uint8_t menu_x, menu_y, menu_selected;
 
 static uint8_t osdcmd = 0;
 
-
-#define INACTIVITY 8192
+#define INACTIVITY 65535U //8192
 
 static uint16_t inactivity;
 
 #define SEL_HOLD        1
 #define SEL_RESET       3
 #define SEL_DISK        4
-#define SEL_RESTART 5
+#define SEL_RESTART     5
 #define SEL_ABOUT       7
 
 
-#define FSEL_PAGESIZE 12                // total of 12 items
-#define FSEL_NLINES     6                       // 6 lines
+#define FSEL_PAGESIZE   12              // total of 12 items
+#define FSEL_NLINES     6               // 6 lines
 
 extern char* cnotice2;
 extern char* dude[];
@@ -197,7 +196,7 @@ uint8_t menu_dispatch(uint8_t tick) {
                 menu_selected = menu_y*2 + menu_x;
                 fsel_showselection(1);
 
-                if (joy_status & JOY_FIRE != 0) {
+                if (joy_status & JOY_FIRE) {
                     state = STATE_WAITBREAK2;
                 }
 
@@ -358,8 +357,8 @@ void fsel_getselected(char *file) {
 
 
 char* aboot2   = "";
-char* aboot4   = "sensi.org/~svo/vector06c";
-char* aboot3   = "vector06cc.googlecode.com";
+char* aboot4   = "https://caglrc.cc";
+char* aboot3   = "github.com/svofski/vector06cc";
 char* aboot5   = "";
 char* aboot6   = "Thank you for using VECTOR-06CC!";
 //char* aboot6   = "--------------------------------";

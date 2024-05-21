@@ -28,9 +28,7 @@
 `define WINDOW_PIXELH (`TILE_H*`WINDOW_H)
 `define LOG2TXT 8       // this many bits for text buffer addressing
 
-
-
-module textmode(clk, ce, vsync, hsync, pixel, background, address, data, wren, q,
+module textmode(clk, ce, vsync, hsync, pixel, background, address, data, wren, rden, q,
                 // debug stuff
                 linebegin, textaddr, loadchar, tileaddr, tile_y, tileline, pixelreg);
 input                   clk;
@@ -44,6 +42,7 @@ output                  background;
 input [`LOG2TXT-1:0]    address;
 input [7:0]             data;
 input                   wren;
+input                   rden;
 output[7:0]             q;
 
 // stuff for debug
@@ -85,35 +84,29 @@ wire [7:0]  charcode;
 //          .q_a(charcode),
 //          .q_b(q));
 
-vram #(.ADDR_WIDTH(8), .DATA_WIDTH(8), .DEPTH(256), .HEXFILE("testtext.hax"))
+vram #(.ADDR_WIDTH(8), .DATA_WIDTH(8), .DEPTH(256), .HEXFILE("testtext.hax")) vram
     (.clk(clk), 
      .cs(1'b1),
-     .addr_r(textaddr),
-     .addr_w(address),
-     .we(wren),
+     .addr_a(textaddr),
+     .addr_b(address),
+     .we_b(wren),
+     .rd_b(rden),
      .data_in(data),
-     .data_out(charcode));
+     .dout_a(charcode),
+     .dout_b(q));
 
 
 wire        invert = charcode[7];
 wire [9:0]  tileaddr = tile_y != (`TILE_H-1)  ? {charcode[6:0], 3'b000} - charcode[6:0] + tile_y : 10'b0; 
-wire [`TILE_W-2:0]  tileline;
+//wire [`TILE_W-2:0]  tileline;
 
 // character rom is 512x5, 8 quintets per tile, 64 tiles total
-//chargen chrom0(
-//          .address(tileaddr),
-//          .clock(clk),
-//          .q(tileline));
-
 rom #(.ADDR_WIDTH(10),.DATA_WIDTH(5),.DEPTH(1024),.ROM_FILE("e5x7.hax"))
 chrom0(.clk(clk),
     .cs(1'b1),
     .addr(tileaddr),
     .data_out(tileline));
     
-
-
-
 wire [`TILE_W-1:0] poxels = loadchar ? {invert,(invert ? ~tileline : tileline)} : {pixelreg[`TILE_W-2:0],1'b0};
 
 always @(posedge clk) begin

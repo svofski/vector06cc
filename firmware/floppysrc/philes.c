@@ -69,7 +69,8 @@ FRESULT philes_nextfile(char *filename, uint8_t terminate) {
         if (finfo.fattrib & AM_DIR) {
             // nowai
         } else {
-            if (endsWith(finfo.fname, "BADAPS.FDD")) { // DEBUG restore to ".FDD"
+            //ser_puts(finfo.fname); ser_nl();
+            if (endsWith(finfo.fname, ".FDD")) { // DEBUG restore to ".FDD"
                 if (filename != 0) {
                     if (terminate) {
                         strncpy(filename, finfo.fname, 12);

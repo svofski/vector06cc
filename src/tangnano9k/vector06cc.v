@@ -1227,6 +1227,7 @@ floppy flappy(
     // screen memory
     .display_addr(osd_address),
     .display_data(osd_data),
+    .display_rden(osd_rden),
     .display_wren(osd_wren),
     .display_idata(osd_q),
     
@@ -1270,12 +1271,13 @@ always @(posedge clk24)
 
 wire            osd_fg;
 wire            osd_bg;
-wire            osd_wren;
-wire[7:0]       osd_data;
-wire[7:0]       osd_rq;
-wire[7:0]       osd_address;
+wire            osd_wren, osd_rden;
+wire [7:0]      osd_data;
+wire [7:0]      osd_rq;
+wire [7:0]      osd_address;
 
-wire[7:0]       osd_q = osd_rq + 8'd32;
+wire [7:0]      osd_q;
+assign osd_q = osd_rq + 8'd32;
 
 `ifdef WITH_OSD
 textmode osd(
@@ -1288,6 +1290,7 @@ textmode osd(
     .address(osd_address),
     .data(osd_data - 8'd32),        // OSD encoding has 00 == 32
     .wren(osd_wren),
+    .rden(osd_rden),
     .q(osd_rq)
     );
 `else

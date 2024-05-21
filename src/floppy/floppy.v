@@ -45,6 +45,7 @@ module floppy(
         // screen memory
         display_addr,
         display_data,
+        display_rden,
         display_wren,
         display_idata,
         
@@ -106,6 +107,7 @@ input   [5:0]   keyboard_keys;  // {reserved,left,right,up,down,enter}
 // screen memory
 output  [7:0]   display_addr;
 output  [7:0]   display_data;
+output          display_rden;
 output          display_wren;
 input   [7:0]   display_idata;
 
@@ -166,17 +168,23 @@ cpu65xx_en cpu(
 `endif
 
 `ifdef LUDDES6502
-wire cpu_memr;
+wire ready = /*ce & */ ~(wd_ram_rd|wd_ram_wr);
+wire [15:0] cpu_ax_comb;
 CPU6502(.clk(clk),
-    .ce(ce & ~(wd_ram_rd|wd_ram_wr)),
+    .ce(1'b1),
     .reset(~reset_n),
     .irq(1'b0),
     .nmi(1'b0),
     .dout(cpu_dox),
-    .aout(cpu_ax),
+    .aout(cpu_ax_comb),
     .DIN(cpu_di),
     .mr(cpu_memr),
     .mw(memrwx));
+
+reg [15:0] cpu_ax_prev;
+always @(posedge clk)
+    if (ce) cpu_ax_prev <= cpu_ax_comb;
+assign cpu_ax = cpu_ax_prev;
 `endif
 
 
@@ -219,6 +227,7 @@ wire bufmem_en = (wd_ram_rd|wd_ram_wr) || (cpu_a >= 16'h200 && cpu_a < 16'h600);
 wire rammem_en = cpu_a >= 16'h0800 && cpu_a < 16'h8000;
 wire ioports_en= cpu_a >= IOBASE && cpu_a < IOBASE + 256;
 wire osd_en = cpu_a >= IOBASE + 256 && cpu_a < IOBASE + 512;
+wire osd_rd = cpu_ax_comb >= IOBASE + 256 && cpu_ax_comb < IOBASE + 512;
 
 wire [5:0] memsel = {vectors_en, lowmem_en, bufmem_en, rammem_en, osd_en, ioports_en};
 
@@ -237,9 +246,10 @@ begin: _cpu_datain
 end                                                     
 
 
-assign display_addr = cpu_a[7:0];
+assign display_addr = cpu_ax_comb[7:0];
 assign display_data = cpu_do;
 assign display_wren = osd_en & memwr;
+assign display_rden = osd_en | osd_rd;
 
 wire rammem_cs = cpu_ax_comb >= 16'h0800 && cpu_ax_comb < 16'h8000;
 

@@ -9,14 +9,31 @@ module vram #(parameter
     DEPTH = 1024,
     HEXFILE = "")
 (
-    input wire clk,
-    input wire cs,
-    input wire [ADDR_WIDTH-1:0] addr_r, 
-    input wire [ADDR_WIDTH-1:0] addr_w, 
-    input wire we,
-    input wire [DATA_WIDTH-1:0] data_in,
-    output reg [DATA_WIDTH-1:0] data_out 
+    input  clk,
+    input  cs,
+    input  [ADDR_WIDTH-1:0] addr_a, 
+    input  [ADDR_WIDTH-1:0] addr_b, 
+    input  we_b,
+    input  rd_b,
+    input  [DATA_WIDTH-1:0] data_in,
+    output  [DATA_WIDTH-1:0] dout_a,
+    output  [DATA_WIDTH-1:0] dout_b
 );
+
+`ifdef SINGLEPORT
+
+wire [ADDR_WIDTH-1:0] sel_addr;
+wire [7:0] do;
+
+assign dout_b = rd_b ? do : 8'h00;
+assign dout_a = rd_b ? 8'h00 : do;
+
+assign sel_addr = (we_b|rd_b) ? addr_b : addr_a;
+
+ram #(.ADDR_WIDTH(ADDR_WIDTH), .DATA_WIDTH(DATA_WIDTH), .DEPTH(DEPTH), .HEXFILE(HEXFILE))
+  ram0(.clk(clk), .cs(cs), .addr(sel_addr), .we(we_b), .data_in(data_in), .data_out(do));
+
+`else
 
 reg [DATA_WIDTH-1:0] memory_array [0:DEPTH-1]; 
 integer i;
@@ -33,17 +50,26 @@ initial begin
     end
 end
 
+reg [DATA_WIDTH-1:0] dout_a_r, dout_b_r;
+assign dout_a = dout_a_r;
+assign dout_b = dout_b_r;
+
 always @(posedge clk) begin
     if (cs) begin
-        if (we) begin
-            memory_array[addr_w] <= data_in;
+        if (we_b) begin
+            memory_array[addr_b] <= data_in;
+            dout_a_r <= memory_array[addr_a];
+            dout_b_r <= data_in;
+            //dout_b <= memory_array[addr_b];
             //$display("@%04x<=%02x", addr, data_in);
         end
         else begin
-            data_out <= memory_array[addr_r];
+            dout_a_r <= memory_array[addr_a];
+            dout_b_r <= memory_array[addr_b];
             //$display("@%04x->%02x", addr, memory_array[addr]);
         end
     end
 end
+`endif
 
 endmodule
