@@ -1125,25 +1125,22 @@ wire            vi53_wren = ~WR_n & io_write & vi53_sel;
 wire            vi53_rden = io_read & vi53_sel;
 wire    [2:0]   vi53_out;
 wire    [7:0]   vi53_odata;
-wire    [9:0]   vi53_testpin;
 
 `ifdef WITH_VI53
 pit8253 vi53(
-            clk24, 
-            cpu_ce, 
-            vi53_timer_ce, 
-            ~address_bus_r[1:0], 
-            vi53_wren, 
-            vi53_rden, 
-            DO, 
-            vi53_odata, 
-            3'b111, 
-            vi53_out, 
-            vi53_testpin);
+            .clk(clk24), 
+            .ce(cpu_ce), 
+            .tce(vi53_timer_ce), 
+            .a(~address_bus_r[1:0]), 
+            .wr(vi53_wren), 
+            .rd(vi53_rden), 
+            .din(DO),
+            .dout(vi53_odata), 
+            .gate(3'b111), 
+            .out(vi53_out));
 `else
 assign vi53_out = 3'b000;
 assign vi53_odata = 8'h00;
-assign vi53_testpin = 9'h000;
 `endif
 
 
@@ -1329,7 +1326,7 @@ ayglue shrieker(
                 .rden(ay_rden),
                 .soundA(ay_soundA),
                 .soundB(ay_soundB),
-                .soundC(ay_soundC),
+                .soundC(ay_soundC)
                 );              
 `else
 assign ay_soundA=8'b0;

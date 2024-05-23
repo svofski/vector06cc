@@ -27,7 +27,7 @@
 
 //`default_nettype none
 
-module pit8253(clk, ce, tce, a, wr, rd, din, dout, gate, out, testpin, tpsel, intq0, counter_load);
+module pit8253(clk, ce, tce, a, wr, rd, din, dout, gate, out);
 input           clk;            // i: i/o clock
 input           ce;             // i: i/o clock enable
 input           tce;            // i: timer clock enable, one for all 3 timers
@@ -38,10 +38,6 @@ input [7:0]     din;            // i: data input bus
 output reg[7:0] dout;           // o: data output bus
 input [2:0]     gate;           // i: gate inputs, NOT USED
 output [2:0]    out;            // o: timer outputs
-output [9:0]    testpin;        // o: test pins
-input           tpsel;          // i: test pin group selector
-output [15:0]   intq0;
-output [15:0]   counter_load;
         
 wire [7:0]      q0;
 wire [7:0]      q1;
@@ -75,10 +71,6 @@ always @(din)
         2'b11:  cwsel <= 3'b000;
     endcase
 
-wire [9:0] testpin0;
-wire [9:0] testpin1;
-assign testpin = tpsel ? testpin0 : testpin1;
-
 //assign dout = rden[0] ? q0 : rden[1] ? q1 : rden[2] ? q2 : 0;
 always @(rden,q0,q1,q2) 
     case (rden) 
@@ -88,13 +80,13 @@ always @(rden,q0,q1,q2)
         default:dout <= 0;
     endcase
 
-pit8253_counterunit cu0(clk, ce, tce, din, wren[3] & cwsel[0], din, wren[0], rden[0], q0, gate[0], out[0], testpin0, intq0, counter_load);
+pit8253_counterunit cu0(clk, ce, tce, din, wren[3] & cwsel[0], din, wren[0], rden[0], q0, gate[0], out[0]);
 pit8253_counterunit cu1(clk, ce, tce, din, wren[3] & cwsel[1], din, wren[1], rden[1], q1, gate[1], out[1]);
-pit8253_counterunit cu2(clk, ce, tce, din, wren[3] & cwsel[2], din, wren[2], rden[2], q2, gate[2], out[2], testpin1);
+pit8253_counterunit cu2(clk, ce, tce, din, wren[3] & cwsel[2], din, wren[2], rden[2], q2, gate[2], out[2]);
 
 endmodule
 
-module pit8253_counterunit(clk, ce, tce, cword, cwset, d, wren, rden, dout, gate, out, testpins, value, counter_load, nextvalue);
+module pit8253_counterunit(clk, ce, tce, cword, cwset, d, wren, rden, dout, gate, out);
 input         clk;      // whatever main clk
 input         ce;       // bus clock enable, e.g. 3MHz
 input         tce;      // timer clock enable, e.g. 1.5MHz
@@ -107,19 +99,11 @@ output  [7:0] dout;     // read value
 input         gate;     // gate pin
 output        out;      // out pin according to mode
 
-output [9:0]  testpins;
-output [15:0] value;
-output [15:0] counter_load;
-output [15:0] nextvalue;
-        
-assign testpins = {counter_wren, counter_clock_enable, 1'b0, counter_loaded, counter_starting, rl_mode, cw_mode};
-assign value = counter_q;
-
 parameter M0 = 3'd0, M1 = 3'd1, M2 = 3'd2, M3 = 3'd3, M4 = 3'd4, M5 = 3'd5;
 parameter                       M2X= 3'd6, M3X= 3'd7; // according to OKI datasheet these modes are x10 and x11
 
-reg             outreg;
-assign  out = outreg;
+reg outreg;
+assign out = outreg;
 
 // control word breakdown
 reg  [5:0]      cwreg;
@@ -152,6 +136,7 @@ wire        counter_wren = ((cw_mode != M1 && cw_mode != M5) & counter_wren_wr);
 
 // let the counter auto-reload inself in modes M2,M2X,M3,M3X
 wire        autoreload = (cw_mode[1:0] == M3) || (cw_mode[1:0] == M2); 
+wire        halfmode = cw_mode[1:0] == M3;
 
 // software stop by loading
 reg loading_stopper;
@@ -161,7 +146,8 @@ always @(counter_loading,cw_mode)
 // master, total, final grand enable
 wire counter_clock_enable = tce & counter_loaded & !loading_stopper;
 
-pit8253_downcounter dctr(clk, counter_clock_enable, cw_mode[1:0] == M3, autoreload, outreg, counter_load, counter_wren, counter_q, nextvalue);
+pit8253_downcounter dctr(clk, counter_clock_enable, halfmode, autoreload, outreg, counter_load, counter_wren, counter_q);
+//serial_ctr sctr(clk, counter_clock_enable, halfmode, autoreload, outreg, counter_load, counter_wren, counter_q);
 
 reg loading_msb;    // for rl=3: 0: next 8-bit value will be lsb, 1: msb
 
@@ -361,7 +347,7 @@ always @(posedge clk)
 endmodule
 
 
-module pit8253_downcounter(clk, ce, halfmode, autoreload, o, d, wren, q, nextout);
+module pit8253_downcounter(clk, ce, halfmode, autoreload, o, d, wren, q);
 input         clk;
 input         ce;
 input         halfmode; // for square wave gen
@@ -370,15 +356,18 @@ input         o;                // current state of out for M3
 input [15:0]  d;
 input         wren;
 output [15:0] q;
-output [15:0] nextout;
 
 reg  [15:0]   counter;
 reg           wrlatch;
 
-wire [15:0] next = counter - (~halfmode ? 16'd1 : counter[0] == 1'b0 ? 16'd2 : o ? 1 : 3);
+//wire [15:0] next = counter - (~halfmode ? 16'd1 : counter[0] == 1'b0 ? 16'd2 : o ? 1 : 3);
+
+wire [15:0] next_norm = counter - 16'd1;
+wire [15:0] next_half = counter - 
+    (counter[0] == 1'b0 ? 16'd2 : o ? 16'd1 : 16'd3);
+wire [15:0] next = halfmode ? next_half : next_norm;
 
 assign q = counter;
-assign nextout = next;
 
 always @(posedge clk)
 begin
@@ -391,4 +380,51 @@ end
 
 endmodule
 
+
+`ifdef SERIAL_ADDER
+module fulladder(input x, input y, input cin, output z, output cout);
+//assign z = x ^ y ^ cin;
+//assign cout == (cin & (x ^ y));
+assign {cout, z} = x + y + cin;
+endmodule
+
+module serial_ctr(
+    input         clk,
+    input         sync,             // reload registers
+    input         halfmode,         // for square wave gen
+    input         autoreload,
+    input         o,                // current state of out for M3
+    input [15:0]  d,
+    input         wren,
+    output reg [15:0] q);
+
+wire [15:0] minus1 = 16'hfffe;
+wire [15:0] minus2 = 16'hfffd;
+wire [15:0] minus3 = 16'hfffc;
+
+reg [15:0] counter;
+reg [15:0] inc;
+
+reg cin;
+wire sum, cout;
+
+fulladder fa(counter[0], inc[0], cin, sum, cout);
+
+always @(posedge clk)
+begin
+    cin <= cout;
+    counter <= {sum, counter[15:1]};
+    inc <= {inc[0], inc[15:1]};
+
+    if (sync) 
+    begin
+        inc <= halfmode ? (~counter[0] ? minus2 : o ? minus1 : minus3) : minus1;
+        if (wren | (autoreload & ~|counter))
+            counter <= d;
+        q <= counter;
+    end
+end
+
+endmodule
+`endif
 // $Id$

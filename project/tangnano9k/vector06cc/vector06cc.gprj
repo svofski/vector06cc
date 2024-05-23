@@ -7,6 +7,7 @@
     <FileList>
         <File path="src/gowin_rpll72/gowin_rpll72.v" type="file.verilog" enable="1"/>
         <File path="src/vram_gw/vram_gw.v" type="file.verilog" enable="1"/>
+        <File path="C:/Gowin/projects/vector06cc/src/ay/ayglue.v" type="file.verilog" enable="1"/>
         <File path="C:/Gowin/projects/vector06cc/src/border_delay.v" type="file.verilog" enable="1"/>
         <File path="C:/Gowin/projects/vector06cc/src/floppy/dma_rw.v" type="file.verilog" enable="1"/>
         <File path="C:/Gowin/projects/vector06cc/src/floppy/floppy.v" type="file.verilog" enable="1"/>
@@ -61,6 +62,8 @@
         <File path="C:/Gowin/projects/vector06cc/src/T80/T80_Pack.vhd" type="file.vhdl" enable="1"/>
         <File path="C:/Gowin/projects/vector06cc/src/T80/T80_Reg.vhd" type="file.vhdl" enable="1"/>
         <File path="C:/Gowin/projects/vector06cc/src/T80/T80sef.vhd" type="file.vhdl" enable="1"/>
+        <File path="C:/Gowin/projects/vector06cc/src/ay/ay8910.vhd" type="file.vhdl" enable="1"/>
+        <File path="C:/Gowin/projects/vector06cc/src/ay/ym2149.vhd" type="file.vhdl" enable="1"/>
         <File path="C:/Gowin/projects/vector06cc/src/floppy/65c02/cpu65xx_en.vhd" type="file.vhdl" enable="1"/>
         <File path="C:/Gowin/projects/vector06cc/src/floppy/uart/txd.vhd" type="file.vhdl" enable="1"/>
         <File path="C:/Gowin/projects/vector06cc/src/i82c55/i82c55.vhd" type="file.vhdl" enable="1"/>
