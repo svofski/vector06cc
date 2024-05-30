@@ -1,0 +1,34 @@
+TARGET=floppy_testbench_neo430
+
+BASE_DIR=../..
+FLOPPY_DIR=$(BASE_DIR)/floppy
+TOP=$(TARGET)
+
+IVINC=$(addprefix -I,$(FLOPPY_DIR))
+
+IVERILOG=iverilog $(IVINC) -DSIMULATION #-DSIM
+VVP=vvp
+GTKWAVE=gtkwave
+
+FLOPPY_SRC=$(FLOPPY_DIR)/floppy_neo430.v $(FLOPPY_DIR)/neo430/neo430_cpu.v \
+	   $(FLOPPY_DIR)/spi.v $(FLOPPY_DIR)/wd1793.v\
+	   $(BASE_DIR)/tangnano9k/ram.v\
+	   $(BASE_DIR)/tangnano9k/vram.v\
+	   $(FLOPPY_DIR)/timer100hz.v
+
+OTHER_SRC=$(BASE_DIR)/oneshot.v ../upi_uart/uart.v
+
+$(info sdir=$(sdir) FLOPPY_SRC=$(FLOPPY_SRC) OTHER_SRC=$(OTHER_SRC))
+
+SRC=$(TARGET).v $(FLOPPY_SRC) $(SDCARD_SRC) $(OTHER_SRC)
+
+all:	$(TARGET).vcd
+
+wave:	$(TARGET).vcd
+	$(GTKWAVE) $^ &
+
+$(TARGET).vcd:	$(TARGET).vvp
+	$(VVP) $^
+
+$(TARGET).vvp:	$(SRC)
+	$(IVERILOG) -o $@ -s $(TOP) $^

@@ -10,10 +10,9 @@
         <File path="C:/Gowin/projects/vector06cc/src/ay/ayglue.v" type="file.verilog" enable="1"/>
         <File path="C:/Gowin/projects/vector06cc/src/border_delay.v" type="file.verilog" enable="1"/>
         <File path="C:/Gowin/projects/vector06cc/src/floppy/dma_rw.v" type="file.verilog" enable="1"/>
-        <File path="C:/Gowin/projects/vector06cc/src/floppy/floppy.v" type="file.verilog" enable="1"/>
-        <File path="C:/Gowin/projects/vector06cc/src/floppy/luddes6502/MicroCode.v" type="file.verilog" enable="1"/>
-        <File path="C:/Gowin/projects/vector06cc/src/floppy/luddes6502/compat.v" type="file.verilog" enable="1"/>
-        <File path="C:/Gowin/projects/vector06cc/src/floppy/luddes6502/cpu6502.v" type="file.verilog" enable="1"/>
+        <File path="C:/Gowin/projects/vector06cc/src/floppy/floppy.v" type="file.verilog" enable="0"/>
+        <File path="C:/Gowin/projects/vector06cc/src/floppy/floppy_neo430.v" type="file.verilog" enable="1"/>
+        <File path="C:/Gowin/projects/vector06cc/src/floppy/neo430/neo430_cpu.v" type="file.verilog" enable="0"/>
         <File path="C:/Gowin/projects/vector06cc/src/floppy/spi.v" type="file.verilog" enable="1"/>
         <File path="C:/Gowin/projects/vector06cc/src/floppy/timer100hz.v" type="file.verilog" enable="1"/>
         <File path="C:/Gowin/projects/vector06cc/src/floppy/upi_uart/uart.v" type="file.verilog" enable="1"/>
@@ -26,8 +25,8 @@
         <File path="C:/Gowin/projects/vector06cc/src/keyboard/vectorkeys.v" type="file.verilog" enable="0"/>
         <File path="C:/Gowin/projects/vector06cc/src/keyboard/vectorkeys2.v" type="file.verilog" enable="1"/>
         <File path="C:/Gowin/projects/vector06cc/src/oneshot.v" type="file.verilog" enable="1"/>
-        <File path="C:/Gowin/projects/vector06cc/src/osd/chargen.v" type="file.verilog" enable="1"/>
-        <File path="C:/Gowin/projects/vector06cc/src/osd/screenbuffer.v" type="file.verilog" enable="1"/>
+        <File path="C:/Gowin/projects/vector06cc/src/osd/chargen.v" type="file.verilog" enable="0"/>
+        <File path="C:/Gowin/projects/vector06cc/src/osd/screenbuffer.v" type="file.verilog" enable="0"/>
         <File path="C:/Gowin/projects/vector06cc/src/osd/textmode.v" type="file.verilog" enable="1"/>
         <File path="C:/Gowin/projects/vector06cc/src/ramdisk/kvaz.v" type="file.verilog" enable="1"/>
         <File path="C:/Gowin/projects/vector06cc/src/specialkeys.v" type="file.verilog" enable="1"/>
@@ -55,16 +54,22 @@
         <File path="C:/Gowin/projects/vector06cc/src/video/rambuffer.v" type="file.verilog" enable="1"/>
         <File path="C:/Gowin/projects/vector06cc/src/video/shiftreg2.v" type="file.verilog" enable="1"/>
         <File path="C:/Gowin/projects/vector06cc/src/vm80/vm80a.v" type="file.verilog" enable="1"/>
-        <File path="C:/Gowin/projects/vector06cc/src/T80/T80.vhd" type="file.vhdl" enable="1"/>
-        <File path="C:/Gowin/projects/vector06cc/src/T80/T8080se.vhd" type="file.vhdl" enable="1"/>
-        <File path="C:/Gowin/projects/vector06cc/src/T80/T80_ALU.vhd" type="file.vhdl" enable="1"/>
-        <File path="C:/Gowin/projects/vector06cc/src/T80/T80_MCode.vhd" type="file.vhdl" enable="1"/>
-        <File path="C:/Gowin/projects/vector06cc/src/T80/T80_Pack.vhd" type="file.vhdl" enable="1"/>
-        <File path="C:/Gowin/projects/vector06cc/src/T80/T80_Reg.vhd" type="file.vhdl" enable="1"/>
-        <File path="C:/Gowin/projects/vector06cc/src/T80/T80sef.vhd" type="file.vhdl" enable="1"/>
+        <File path="C:/Gowin/projects/vector06cc/src/T80/T80.vhd" type="file.vhdl" enable="0"/>
+        <File path="C:/Gowin/projects/vector06cc/src/T80/T8080se.vhd" type="file.vhdl" enable="0"/>
+        <File path="C:/Gowin/projects/vector06cc/src/T80/T80_ALU.vhd" type="file.vhdl" enable="0"/>
+        <File path="C:/Gowin/projects/vector06cc/src/T80/T80_MCode.vhd" type="file.vhdl" enable="0"/>
+        <File path="C:/Gowin/projects/vector06cc/src/T80/T80_Pack.vhd" type="file.vhdl" enable="0"/>
+        <File path="C:/Gowin/projects/vector06cc/src/T80/T80_Reg.vhd" type="file.vhdl" enable="0"/>
+        <File path="C:/Gowin/projects/vector06cc/src/T80/T80sef.vhd" type="file.vhdl" enable="0"/>
         <File path="C:/Gowin/projects/vector06cc/src/ay/ay8910.vhd" type="file.vhdl" enable="1"/>
         <File path="C:/Gowin/projects/vector06cc/src/ay/ym2149.vhd" type="file.vhdl" enable="1"/>
-        <File path="C:/Gowin/projects/vector06cc/src/floppy/65c02/cpu65xx_en.vhd" type="file.vhdl" enable="1"/>
+        <File path="C:/Gowin/projects/vector06cc/src/floppy/neo430/core/neo430_addr_gen.vhd" type="file.vhdl" enable="1" library="neo430"/>
+        <File path="C:/Gowin/projects/vector06cc/src/floppy/neo430/core/neo430_alu.vhd" type="file.vhdl" enable="1" library="neo430"/>
+        <File path="C:/Gowin/projects/vector06cc/src/floppy/neo430/core/neo430_control.vhd" type="file.vhdl" enable="1" library="neo430"/>
+        <File path="C:/Gowin/projects/vector06cc/src/floppy/neo430/core/neo430_cpu.vhd" type="file.vhdl" enable="1" library="neo430"/>
+        <File path="C:/Gowin/projects/vector06cc/src/floppy/neo430/core/neo430_package.vhd" type="file.vhdl" enable="1" library="neo430"/>
+        <File path="C:/Gowin/projects/vector06cc/src/floppy/neo430/core/neo430_reg_file.vhd" type="file.vhdl" enable="1" library="neo430"/>
+        <File path="C:/Gowin/projects/vector06cc/src/floppy/neo430/neo430_cpu_std_logic.vhd" type="file.vhdl" enable="1"/>
         <File path="C:/Gowin/projects/vector06cc/src/floppy/uart/txd.vhd" type="file.vhdl" enable="1"/>
         <File path="C:/Gowin/projects/vector06cc/src/i82c55/i82c55.vhd" type="file.vhdl" enable="1"/>
         <File path="src/tangnano9k.cst" type="file.cst" enable="1"/>
@@ -72,6 +77,7 @@
         <File path="src/clocks.rao" type="file.gao" enable="0"/>
         <File path="src/floppy.rao" type="file.gao" enable="0"/>
         <File path="src/framebuf.rao" type="file.gao" enable="0"/>
+        <File path="src/neo.rao" type="file.gao" enable="1"/>
         <File path="src/rtl_gao.rao" type="file.gao" enable="0"/>
         <File path="src/rtl_trigger.rao" type="file.gao" enable="0"/>
         <File path="src/sigh.rao" type="file.gao" enable="0"/>

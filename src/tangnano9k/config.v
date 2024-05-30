@@ -2,12 +2,11 @@
 // Undefine following for smaller/faster builds
 `define WITH_CPU            
 `define WITH_VM80A
-//`define WITH_T8080
 `define WITH_KEYBOARD
 //`define WITH_KEYBOARD_PS2         // -- ps/2 on gpio
 `define WITH_KEYBOARD_SERIAL        // -- debugprobe serial keyboard
-`define WITH_VI53
-`define WITH_AY
+//`define WITH_VI53
+//`define WITH_AY
 //`define WITH_RSOUND
 `define WITH_FLOPPY
 `define WITH_OSD

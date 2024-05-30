@@ -523,6 +523,9 @@ always @(posedge clk or negedge reset_n) begin: _wdmain
         /* Wait for a READ operation to complete */
         STATE_WAIT_CPUREAD:
             begin
+                // clear cpu request when floppy cpu sets busy
+                if (iCPU_STATUS[7]) oCPU_REQUEST <= CPU_REQUEST_NONE;
+
                 // s_ready == 0 means that in fact SD card was removed or some 
                 // other kind of unrecoverable error has happened
                 if (iCPU_STATUS[3] || (iCPU_STATUS[1:0] == 2'b01)) begin
@@ -544,6 +547,9 @@ always @(posedge clk or negedge reset_n) begin: _wdmain
         /* Wait for a WRITE operation to complete */
         STATE_WAIT_CPUWRITE:
             begin
+                // clear cpu request when floppy cpu sets busy
+                if (iCPU_STATUS[7]) oCPU_REQUEST <= CPU_REQUEST_NONE;
+
                 if (iCPU_STATUS[3] || (iCPU_STATUS[1:0] == 2'b01)) begin
                     s_wrfault <= iCPU_STATUS[2];
                     boo <= 4;

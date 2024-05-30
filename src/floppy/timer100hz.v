@@ -19,6 +19,7 @@
 //
 // --------------------------------------------------------------------
 
+
 module timer100hz(clk, di, wren, q);
 parameter MCLKFREQ = 24000000;
 
@@ -27,13 +28,19 @@ input [7:0]		di;
 input			wren;
 output reg[7:0]	q;
 
-reg [17:0] timerctr;
+reg [17:0] timerctr = 0;
 
 wire hz100 = timerctr == 0;
 
 always @(posedge clk) begin
 	if (timerctr == 0) 
+	begin
+		`ifdef SIMULATION
+		timerctr <= MCLKFREQ/1_000_000; 
+		`else
 		timerctr <= MCLKFREQ/100;
+		`endif
+        end
 	else
 		timerctr <= timerctr - 1'b1;
 end

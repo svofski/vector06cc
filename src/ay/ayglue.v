@@ -18,13 +18,14 @@ wire        odataoe;
 
 
 reg [2:0] ctl;  // {I_BDIR,I_BC2,I_BC1}
-always begin
-        case ({address,wren,rden}) 
-            3'b110:     ctl <= 3'b111;  // write addr
-            3'b010:     ctl <= 3'b110;  // wr data
-            3'b001:     ctl <= 3'b011;  // rd data
-            default:    ctl <= 3'b010;
-        endcase
+always @*
+begin
+    case ({address,wren,rden}) 
+        3'b110:     ctl <= 3'b111;  // write addr
+        3'b010:     ctl <= 3'b110;  // wr data
+        3'b001:     ctl <= 3'b011;  // rd data
+        default:    ctl <= 3'b010;
+    endcase
 end
 
 ay8910 digeridoo(   // (554) and seems to work

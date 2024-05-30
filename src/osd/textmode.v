@@ -28,32 +28,30 @@
 `define WINDOW_PIXELH (`TILE_H*`WINDOW_H)
 `define LOG2TXT 8       // this many bits for text buffer addressing
 
-module textmode(clk, ce, vsync, hsync, pixel, background, address, data, wren, rden, q,
-                // debug stuff
-                linebegin, textaddr, loadchar, tileaddr, tile_y, tileline, pixelreg);
-input                   clk;
-input                   ce;
-input                   vsync;
-input                   hsync;
-
-output                  pixel;// = background & pixxel;
-output                  background;
-
-input [`LOG2TXT-1:0]    address;
-input [7:0]             data;
-input                   wren;
-input                   rden;
-output[7:0]             q;
-
-// stuff for debug
-output      linebegin;
-output[7:0] textaddr;
-output      loadchar;
-output[9:0] tileaddr;
-output[2:0] tile_y;
-
-output[`TILE_W-1:0] tileline;
-output [`TILE_W-1:0] pixelreg;
+module textmode(
+    input                 clk,
+    input                 ce,
+    input                 vsync,
+    input                 hsync,
+    
+    output                pixel,// = background & pixxel,
+    output                background,
+    
+    input [`LOG2TXT-1:0]  osd_addr,
+    input [7:0]           osd_data,
+    input [1:0]           osd_wren,
+    input                 osd_rden,
+    output[7:0]           osd_q,
+    
+    // stuff for debug
+    output                linebegin,
+    output [7:0]          textaddr,
+    output                loadchar,
+    output [9:0]          tileaddr,
+    output [2:0]          tile_y,
+    
+    output[`TILE_W-1:0]   tileline,
+    output [`TILE_W-1:0]  pixelreg);
 
 assign pixel = background & pixxel;
 
@@ -75,25 +73,19 @@ textmode_counter tcu(
             );
 
 wire [7:0]  charcode;
-//screenbuffer ram0(            
-//          .clock(clk),
-//          .data_b(data),
-//          .address_a(textaddr),
-//          .address_b(address),
-//          .wren_b(wren),
-//          .q_a(charcode),
-//          .q_b(q));
 
-vram #(.ADDR_WIDTH(8), .DATA_WIDTH(8), .DEPTH(256), .HEXFILE("testtext.hax")) vram
+vram_r8w16 #(.ADDR_WIDTH(8), .DEPTH(256)) vram
     (.clk(clk), 
      .cs(1'b1),
+      // -- video --
      .addr_a(textaddr),
-     .addr_b(address),
-     .we_b(wren),
-     .rd_b(rden),
-     .data_in(data),
      .dout_a(charcode),
-     .dout_b(q));
+     // -- cpu --
+     .addr_b(osd_addr),
+     .rden_b(osd_rden),
+     .wren_b(osd_wren),
+     .data_in(osd_data),
+     .dout_b(osd_q));
 
 
 wire        invert = charcode[7];

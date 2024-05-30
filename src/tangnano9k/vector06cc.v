@@ -9,7 +9,7 @@
 //
 // An open implementation of Vector-06C home computer
 //
-// Author: Viacheslav Slavinsky, http://sensi.org/~svo
+// Author: Viacheslav Slavinsky
 // 
 // SDRAM version and some other changes: Ivan Gorodetsky
 //
@@ -1165,8 +1165,6 @@ wire        osd_command_bushold = osd_command[0];
 wire        osd_command_f12     = osd_command[1];
 wire        osd_command_f11     = osd_command[2];
 
-wire [7:0]  floppy_leds;
-
 wire        floppy_sel = portmap_device[2:1] == 2'b11; // both 110 and 111
 
 //--------------------------------------------------------------
@@ -1195,9 +1193,9 @@ wire [7:0] floppy_uart_tx_data;
 
 `ifdef WITH_FLOPPY
 wire [7:0]  floppy_odata;
-wire [7:0]  floppy_status;
 
-floppy flappy(
+//floppy_zpu_avalanche floppy_za(
+floppy_neo430 floppy_neo(
     .clk(clk24), 
     .cpu_ce(cpu_ce),  
     //.reset_n(KEY[0]),       // to make it possible to change a floppy image, then press F11
@@ -1222,19 +1220,17 @@ floppy flappy(
     .hostio_wr(floppy_wren),
     
     // screen memory
-    .display_addr(osd_address),
-    .display_data(osd_data),
-    .display_rden(osd_rden),
-    .display_wren(osd_wren),
-    .display_idata(osd_q),
+    .o_osd_addr(osd_addr),
+    .o_osd_data(osd_data),
+    .o_osd_rden(osd_rden),
+    .o_osd_wren(osd_wren),
+    .i_osd_data(osd_q),
     
     .keyboard_keys(kbd_keys_osd),
     
     .osd_command(osd_command),
     
     // debug 
-    .green_leds(floppy_leds),
-    .debug(floppy_status),
     .host_hold(floppy_death_by_floppy)
     );
 
@@ -1268,13 +1264,18 @@ always @(posedge clk24)
 
 wire            osd_fg;
 wire            osd_bg;
-wire            osd_wren, osd_rden;
+wire [1:0]      osd_wren;   // wren byte select
+wire            osd_rden;   // always read words
 wire [7:0]      osd_data;
-wire [7:0]      osd_rq;
-wire [7:0]      osd_address;
+wire [15:0]     osd_rq;
+wire [7:0]      osd_addr;
 
-wire [7:0]      osd_q;
-assign osd_q = osd_rq + 8'd32;
+wire [15:0]     osd_q;
+
+wire [7:0] osd_ql = osd_rq[7:0] + 8'd32;
+wire [7:0] osd_qh = osd_rq[15:8] + 8'd32;
+
+assign osd_q = {osd_qh, osd_ql};
 
 `ifdef WITH_OSD
 textmode osd(
@@ -1284,11 +1285,12 @@ textmode osd(
     .hsync(osd_hsync),
     .pixel(osd_fg),
     .background(osd_bg),
-    .address(osd_address),
-    .data(osd_data - 8'd32),        // OSD encoding has 00 == 32
-    .wren(osd_wren),
-    .rden(osd_rden),
-    .q(osd_rq)
+    // -- cpu interface --
+    .osd_addr(osd_addr),
+    .osd_data(osd_data - 8'd32),        // OSD encoding has 00 == 32
+    .osd_wren(osd_wren),
+    .osd_rden(osd_rden),
+    .osd_q(osd_rq)
     );
 `else
 assign osd_fg = 0;
