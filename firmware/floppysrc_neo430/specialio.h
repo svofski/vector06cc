@@ -42,8 +42,8 @@
 //#define		IOPORT_DMAMSB		0x0E
 //#define		IOPORT_DMALSB		0x0F
 
-#define		IOPORT_GLEDS		0x20
-#define 	IOPORT_OSDCMD		0x22			/* F11,F12,HOLD */
+#define		IOPORT_GLEDS		20
+#define 	IOPORT_OSDCMD		22			/* F11,F12,HOLD */
 
 
 #define		DISPLAY_BASE		0xE000

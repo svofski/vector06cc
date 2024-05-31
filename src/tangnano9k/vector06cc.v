@@ -503,7 +503,7 @@ reg psram_wr_cpu;
 
 always @(posedge clk24)
     `ifdef WITH_T8080
-    //if (ce3) psram_wr_cpu <= psram_wr_cpu_pre;
+    if (ce3) psram_wr_cpu <= psram_wr_cpu_pre;
     `endif
     `ifdef WITH_VM80A
     if (ce3f2) psram_wr_cpu <= psram_wr_cpu_pre; //phi
@@ -741,11 +741,6 @@ assign {realcolor2buf[7:4],realcolor2buf[2:1],realcolor2buf[3],realcolor2buf[0]}
 `else
 
 wire [3:0] paletteram_adr = (retrace/*|video_palette_wren*/) ? video_border_index : coloridx;
-//palette_ram (.address(paletteram_adr), 
-//                       .data(video_palette_value), 
-//                       .inclock(clk24), .outclock(clk24), 
-//                       .wren(video_palette_wren_delayed), 
-//                       .q(realcolor2buf));
 
 // simulate real Vector-06c K155RU2 (SN7489N)
 // K155RU2 is asynchronous and remembers input value 
@@ -839,9 +834,14 @@ reg int_request;
 wire int_rq_tick;
 reg  int_rq_hist;
 
+
+///////////////////////////////
+// MULTICOLOR FINE ADJUST
+///////////////////////////////
+
 //oneshot #(10'd28) retrace_delay(clk24, cpu_ce, retrace, int_delay);
 // 21 too early, 22 almost too good, 23-24 good
-//oneshot #(10'd24) retrace_delay(clk24, cpu_ce, retrace, int_delay); 
+//oneshot #(10'd24) retrace_delay(clk24, cpu_ce, retrace, int_delay);
 oneshot #(10'd24) retrace_delay(clk24, cpu_ce, retrace, int_delay); 
 oneshot #(10'd191) retrace_irq(clk24, cpu_ce, ~int_delay, int_rq_tick);
 
@@ -1266,7 +1266,7 @@ wire            osd_fg;
 wire            osd_bg;
 wire [1:0]      osd_wren;   // wren byte select
 wire            osd_rden;   // always read words
-wire [7:0]      osd_data;
+wire [15:0]     osd_data;
 wire [15:0]     osd_rq;
 wire [7:0]      osd_addr;
 
@@ -1276,6 +1276,10 @@ wire [7:0] osd_ql = osd_rq[7:0] + 8'd32;
 wire [7:0] osd_qh = osd_rq[15:8] + 8'd32;
 
 assign osd_q = {osd_qh, osd_ql};
+
+// OSD encoding has 00 == 32
+wire [7:0] osd_datah = osd_data[15:8] - 8'd32;
+wire [7:0] osd_datal = osd_data[7:0] - 8'd32;
 
 `ifdef WITH_OSD
 textmode osd(
@@ -1287,7 +1291,7 @@ textmode osd(
     .background(osd_bg),
     // -- cpu interface --
     .osd_addr(osd_addr),
-    .osd_data(osd_data - 8'd32),        // OSD encoding has 00 == 32
+    .osd_data({osd_datah, osd_datal}),
     .osd_wren(osd_wren),
     .osd_rden(osd_rden),
     .osd_q(osd_rq)

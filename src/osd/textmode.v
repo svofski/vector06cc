@@ -38,10 +38,10 @@ module textmode(
     output                background,
     
     input [`LOG2TXT-1:0]  osd_addr,
-    input [7:0]           osd_data,
+    input [15:0]          osd_data,
     input [1:0]           osd_wren,
     input                 osd_rden,
-    output[7:0]           osd_q,
+    output[15:0]          osd_q,
     
     // stuff for debug
     output                linebegin,

@@ -78,6 +78,7 @@ uint8_t thrall(char *imagefile, volatile uint8_t *buffer)
 
     SLAVE_STATUS = CPU_STATUS_DRVNOTRDY;
 
+    philes_init();
     menu_init();
 
     for(;;) {

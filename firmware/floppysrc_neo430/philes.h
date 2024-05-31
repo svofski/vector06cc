@@ -23,6 +23,7 @@
 #include "integer.h"
 #include "tff.h"
 
+void philes_init(void);
 FRESULT philes_mount(void);
 FRESULT philes_opendir(void);
 FRESULT philes_nextfile(char *filename, uint8_t terminate);

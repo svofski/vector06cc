@@ -250,6 +250,9 @@ void draw_menu() {
 void draw_item(char *s, uint8_t x, uint8_t y, uint8_t align) {
     int len;
 
+    if (!s) 
+        return;
+
     len = strlen(s);
     switch (align) {
         case ALIGN_MIDDLE:
@@ -401,4 +404,6 @@ void aboot_anim() {
         osd_gotoxy(28, i+3); osd_puts(dude[waverseq[dude_seqno]*3+i]);
     }
     dude_seqno = (dude_seqno + 1) % 16;
+
+    delay2(10);
 }

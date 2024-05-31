@@ -51,10 +51,13 @@ BYTE endsWith(char *s1, const char *suffix) {
     return strcmp(&s1[s1len - sulen], suffix) == 0;
 }
 
+void philes_init()
+{
+    strncpy(ptrfile, default_path, PATHBUF_SZ); // initialise ptrfile
+}
+
 FRESULT philes_mount() {
     FRESULT result = FR_NO_FILESYSTEM;
-
-    strncpy(ptrfile, default_path, PATHBUF_SZ); // initialise ptrfile
 
     uint8_t init_status = disk_initialize(0); 
     ser_puts("(disk_initialize: "); print_hex(init_status); ser_putc(')');
@@ -64,9 +67,7 @@ FRESULT philes_mount() {
 FRESULT philes_opendir() {
     FRESULT result;
 
-ser_puts("philes_opendir ptrfile="); ser_puts(ptrfile); ser_puts(" after=");
     ptrfile[9] = 000; 
-ser_puts(ptrfile); ser_puts(" @"); print_ptr16(ptrfile); ser_nl();
     result = f_opendir(&dir, ptrfile);                                      
     ptrfile[9] = '/'; 
 
