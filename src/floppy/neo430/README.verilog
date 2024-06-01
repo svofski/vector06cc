@@ -1,0 +1,7 @@
+The verilog version of neo430 is automatically translated using GHDL, see make-verilog.sh.
+It simulates well by iverilog, but Gowin tool has problems with it. 
+
+The main project synthesizes naked neo430 CPU from VHDL using neo430_cpu_std_logic.vhd.
+The rest of neo430 is not used, but kept in this repo for completeness sake.
+
+-- svofski 2024

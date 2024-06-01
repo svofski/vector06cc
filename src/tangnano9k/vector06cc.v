@@ -89,11 +89,12 @@ module vector06cc(
 );
 
 
-wire  delayed_reset_n;
+wire  delayed_reset_n;    // when PSRAM ready
 
 // CLOCK SETUP
 wire mreset_n = delayed_reset_n & ~kbd_key_blkvvod;
 wire mreset = !mreset_n;
+
 wire clk24, clkAudio, clk48, clk48p;
 wire ce12, ce6, ce6x, ce3, ce3f2, vi53_timer_ce, video_slice, pipe_ab;
 wire clkpal4FSC = 0;    // no PAL modulator
@@ -170,13 +171,13 @@ reg video_slice_my,video_slice_mymy;
 always @(posedge video_slice)   {vid_cnt,video_slice_mymy}<={vid_cnt+2'b1,!vid_cnt[1]&vid_cnt[0]};
 always @(posedge clk24) video_slice_my<=video_slice_mymy&video_slice;
 
-reg [15:0] clock_counter;
-always @(posedge clk24) begin
-    if (~RESET_n) 
-        clock_counter <= 0;
-    else if (cpu_ce & ~halt_ack) 
-        clock_counter <= clock_counter + 1'b1;
-end
+//reg [15:0] clock_counter;
+//always @(posedge clk24) begin
+//    if (~RESET_n) 
+//        clock_counter <= 0;
+//    else if (cpu_ce & ~halt_ack) 
+//        clock_counter <= clock_counter + 1'b1;
+//end
 
 /////////////////
 // WAIT STATES //
@@ -185,23 +186,31 @@ end
 // a very special waitstate generator
 reg [4:0]   ws_counter = 0;
 reg         ws_latch;
-always @(posedge clk24) ws_counter <= ws_counter + 1'b1;
+always @(posedge clk24) 
+    if (~RESET_n)
+        ws_counter <= 5'b0;
+    else
+        ws_counter <= ws_counter + 1'b1;
 
 wire [3:0] ws_rom = ws_counter[4:1];
+//wire ws_cpu_time = ws_rom[3:1] == 3'b101;
 wire ws_cpu_time = ws_rom[3:1] == 3'b101;
 wire ws_req_n = ~(DO[7] | ~DO[1]) | DO[4] | DO[6];  // == 0 when cpu wants cock
 
-always @(posedge clk24) begin
+always @(posedge clk24)
+begin: _ready_ctl
     if (~RESET_n)
         breakpoint_condition <= 1'b0;
     else
     begin
         breakpoint_condition <= halt_halt;
-        if (cpu_ce) begin
+        //if (cpu_ce)
+        if (ce3)
+        begin
             if (SYNC & ~warpclock_enabled) begin
                 // if this is not a cpu slice (ws_rom[2]) and cpu wants access, latch the ws flag
                 //if (~ws_req_n & ~ws_cpu_time) READY <= 0;
-                READY <= 0; //### the above looks overcomplicated
+                READY <= 0; //### this works for T8080 but not for v80a
 `ifdef WITH_BREAKPOINTS         
                 if (singleclock) begin
                     breakpoint_condition <= halt_halt;
@@ -222,17 +231,22 @@ always @(posedge clk24) begin
 end
 
 
-
-/////////////////
-// DEBUG PINS  //
-/////////////////
-//assign GPIO_0[8:0] = {clk24, ce12, ce6, ce3, vi53_timer_ce, video_slice, clkpal4FSC, 1'b1, tv_test[0]};
-//assign GPIO_0[7:0] = {clk24, ce12, ce6, ce3, vi53_timer_ce, video_slice, clkpal4FSC, clk60};
-
 /////////////////
 // CPU SECTION //
 /////////////////
-wire RESET_n = mreset_n & !blksbr_reset_pulse;
+reg [1:0] reset_rq = 2'b00;
+always @(posedge clk24)
+begin: _RESET_sync
+    if (mreset | blksbr_reset_pulse)
+        reset_rq <= 2'b01;
+    if (~int_rq_hist & int_rq_tick & reset_rq[0])
+        reset_rq <= 2'b10;  // set reset
+    if (reset_rq[1])
+        reset_rq <= 2'b00;  // reset done
+end
+wire RESET_n = ~reset_rq[1];
+
+//wire RESET_n = mreset_n & !blksbr_reset_pulse;
 reg READY;
 wire HOLD = osd_command_bushold | floppy_death_by_floppy;
 wire INT = int_request;
@@ -255,16 +269,6 @@ reg[9:0] gledreg;
 wire [1:0] sw23 = {1'b0, 1'b0};
 
 wire [7:0] kbd_keystatus = {kbd_mod_rus, kbd_key_shift, kbd_key_ctrl, kbd_key_rus, kbd_key_blksbr};
-
-//assign LEDg = sw23 == 0 ? status_word 
-//          : sw23 == 1 ? floppy_leds//{floppy_rden,floppy_odata[6:0]}//{kbd_keystatus} 
-//          : sw23 == 2 ? floppy_status 
-//          : {vi53_timer_ce, INT, interrupt_ack, 1'b0};
-
-//assign LEDg = {clk24, clkpal4FSC, clk60, CLK48};
-            
-//SEG7_LUT_4 seg7display(HEX0, HEX1, HEX2, HEX3, /*SW[4] ? clock_counter :*/ A);
-
 
 wire ram_read;
 wire ram_read_pre;
@@ -493,7 +497,6 @@ wire[15:0] dramout,dramout2;
 wire psram_busy;
 wire memcpubusy, memvidbusy, rdcpu_finished;
 
-//wire psram_rd_cpu = ram_read_pre; //ram_read & DBIN & ~rom_access;
 reg psram_rd_cpu;
 always @(posedge clk24)
     psram_rd_cpu <= ram_read_pre;
@@ -841,8 +844,7 @@ reg  int_rq_hist;
 
 //oneshot #(10'd28) retrace_delay(clk24, cpu_ce, retrace, int_delay);
 // 21 too early, 22 almost too good, 23-24 good
-//oneshot #(10'd24) retrace_delay(clk24, cpu_ce, retrace, int_delay);
-oneshot #(10'd24) retrace_delay(clk24, cpu_ce, retrace, int_delay); 
+oneshot #(10'd25) retrace_delay(clk24, cpu_ce, retrace, int_delay); 
 oneshot #(10'd191) retrace_irq(clk24, cpu_ce, ~int_delay, int_rq_tick);
 
 //assign int_rq_tick_inte = ~interrupt_ack & INTE & int_rq_tick;
