@@ -847,16 +847,12 @@ reg  int_rq_hist;
 oneshot #(10'd25) retrace_delay(clk24, cpu_ce, retrace, int_delay); 
 oneshot #(10'd191) retrace_irq(clk24, cpu_ce, ~int_delay, int_rq_tick);
 
-//assign int_rq_tick_inte = ~interrupt_ack & INTE & int_rq_tick;
-
 always @(posedge clk24) begin
     int_rq_hist <= int_rq_tick;
     
     if (~int_rq_hist & int_rq_tick & INTE) 
         int_request <= 1;
     
-    //if (interrupt_ack)
-    //    int_request <= 0;
     if ((int_request & ~int_rq_tick) | interrupt_ack)
         int_request <= 0;
 end
@@ -1156,7 +1152,6 @@ wire        iports_write    = /*~ram_write_n &*/ io_write & iports_sel; // this 
 wire iports_palette_sel = address_bus[1:0] == 2'b00;        // not used <- must be fixed some day
 
 
-
 //////////////////////////////////
 // Floppy Disk Controller ports //
 //////////////////////////////////
@@ -1179,7 +1174,6 @@ always @(posedge clk24)
         wrn_sampled_r <= WR_n;
 wire wrn_sampled = ~(wrn_sampled_r & ~WR_n);
 
-//wire        floppy_wren = ~WR_n & io_write & floppy_sel;
 wire        floppy_wren = ~wrn_sampled & io_write & floppy_sel;
 //--------------------------------------------------------------
 

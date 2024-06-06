@@ -111,19 +111,18 @@ end
 endmodule
 
 
-module textmode_counter(clk, ce, linebegin, framebegin, textaddr, video_enable, text_x, text_y, loadchar, tile_y);
-
-input       clk;
-input       ce;
-input       linebegin;
-input       framebegin;
-
-output[`LOG2TXT-1:0]textaddr;   // address of current character in text buffer
-output [4:0]        text_y;
-output[7:0]         text_x;
-output              loadchar;// = tile_x == 0;
-output[2:0]         tile_y;
-output  reg         video_enable;
+module textmode_counter
+    (input       clk,
+     input       ce,
+     input       linebegin,
+     input       framebegin,
+     
+     output[`LOG2TXT-1:0]textaddr,   // address of current character in text buffer
+     output [4:0]        text_y,
+     output[7:0]         text_x,
+     output              loadchar,// = tile_x == 0;
+     output[2:0]         tile_y,
+     output  reg         video_enable);
 
 reg [4:0]           text_y;
 reg [7:0]           text_x;
