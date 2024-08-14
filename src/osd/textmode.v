@@ -90,7 +90,6 @@ vram_r8w16 #(.ADDR_WIDTH(8), .DEPTH(256)) vram
 
 wire        invert = charcode[7];
 wire [9:0]  tileaddr = tile_y != (`TILE_H-1)  ? {charcode[6:0], 3'b000} - charcode[6:0] + tile_y : 10'b0; 
-//wire [`TILE_W-2:0]  tileline;
 
 // character rom is 512x5, 8 quintets per tile, 64 tiles total
 rom #(.ADDR_WIDTH(10),.DATA_WIDTH(5),.DEPTH(1024),.ROM_FILE("e5x7.hax"))
@@ -137,15 +136,8 @@ assign loadchar = tile_x == 0;
 wire [2:0]          wNextTileX = tile_x + 1'b1;
 wire [`LOG2TXT-1:0] wNextTextX = text_x + (wNextTileX == 2);
 
-// "scanline doubler" of sorts
-reg linediv;
-always @(posedge clk) begin
-    if (framebegin)
-        linediv <= 0;
-    else if (ce && (state == 2)) 
-        linediv <= linediv + 1'b1;
-end
-
+// "scanline tripler" of sorts
+reg [2:0] linedivreg;
 
 reg [`LOG2TXT-1:0]  text_base;      // current line begins here
 
@@ -162,6 +154,9 @@ always @(posedge clk) begin
         state <= 0;
         text_x <= 0;
         line_counter <= `WINDOW_H;
+        video_enable <= 0;
+
+        linedivreg <= 3'b001;
     end
     else
     if (ce) begin 
@@ -176,6 +171,7 @@ always @(posedge clk) begin
                 
                 if (wNextTileX == 1 && wNextTextX == `WINDOW_W) begin
                     state <= 2;
+                    video_enable <= 0;
                 end
                 
             end
@@ -184,16 +180,20 @@ always @(posedge clk) begin
                 // be prepared (tm) for the next line
                 text_x <= 0;
                 tile_x <= 0;
-                video_enable <= 0;
                 
-                tile_y <= tile_y + linediv;
-                if (tile_y == `TILE_H-1) begin
-                    text_base <= text_base + (linediv ? 8'h0 : `WINDOW_W);
-                    line_counter <= line_counter - linediv; 
-                    state <= {2{(line_counter - linediv == 0)}}; // 3 or 0
-                end 
-                else state <= 0;
-                
+                state <= 0;
+                linedivreg <= {linedivreg[1:0], linedivreg[2]};
+                if (linedivreg[2])
+                begin
+                    tile_y <= tile_y + 1'b1;
+                    if (tile_y + 1'b1 == `TILE_H)
+                    begin
+                        text_base <= text_base + `WINDOW_W;
+                        line_counter <= line_counter - 1'b1;
+                        if (line_counter - 1'b1 == 0)
+                            state <= 3;   // end of frame
+                    end
+                end
             end
         3:  ; // dead end, wait until reset/framebegin
         endcase

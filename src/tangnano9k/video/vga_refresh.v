@@ -28,32 +28,32 @@
 `default_nettype wire
 
 module vga_refresh(clk24, lcd_clk_o, lcd_den_o, hsync, vsync, YPbPrvsync, videoActive, bordery, retrace, video_scroll_reg, fb_row, fb_row_count, tvhs, tvvs, tvx, tvy);
-input		clk24;
-output          lcd_clk_o;
-output          lcd_den_o;
-output		hsync;
-output		vsync;
-output		YPbPrvsync;
-output		videoActive;
-output	        bordery;
-output 		retrace;
-input	[7:0]	video_scroll_reg;
-output	[8:0]	fb_row;
-output  [8:0]	fb_row_count;
-output	        tvhs, tvvs;
-output  [9:0]	tvx,tvy;
+input       clk24;
+output      lcd_clk_o;
+output      lcd_den_o;
+output      hsync;
+output      vsync;
+output      YPbPrvsync;
+output      videoActive;
+output      bordery;
+output      retrace;
+input   [7:0]   video_scroll_reg;
+output  [8:0]   fb_row;
+output  [8:0]   fb_row_count;
+output          tvhs, tvvs;
+output  [9:0]   tvx,tvy;
 
 // total = 624
 // visible = (16 + 256 + 16)*2 = 288*2 = 576
 // rest = 624-576 = 48
 
-parameter VISIBLEWIDTH = 10'd640;	
+parameter VISIBLEWIDTH = 10'd640;   
 parameter SCREENHEIGHT = 10'd576;
 parameter VISIBLEHEIGHT = SCREENHEIGHT - 2*2*16;
-parameter SCROLLLOAD_X = 112;	// when on line 0 scroll register is copied into the line counter
+parameter SCROLLLOAD_X = 112;   // when on line 0 scroll register is copied into the line counter
 
-reg videoActiveX;			// 1 == X is within visible area
-reg videoActiveY;			// 1 == Y is within visible area
+reg videoActiveX;           // 1 == X is within visible area
+reg videoActiveY;           // 1 == Y is within visible area
 wire videoActive = videoActiveX & videoActiveY;
 
 assign retrace = !videoActiveY;
@@ -72,16 +72,16 @@ reg[9:0] tvy;
 reg[9:0] realx;  
 reg[9:0] realy;
 
-reg[2:0] scanxx_state;		// x-machine state
-reg[2:0] scanyy_state;		// y-machine state
-reg[9:0] scanxx;			// x-state timer/counter
-reg[9:0] scanyy;			// y-state timer/counter
+reg[2:0] scanxx_state;      // x-machine state
+reg[2:0] scanyy_state;      // y-machine state
+reg[9:0] scanxx;            // x-state timer/counter
+reg[9:0] scanyy;            // y-state timer/counter
 
 reg bordery;
 //
 // framebuffer variables
 //
-reg [8:0] fb_row;			// fb row
+reg [8:0] fb_row;           // fb row
 reg [8:0] fb_row_count;
 
 
@@ -146,7 +146,7 @@ always @(posedge clk24) begin
     if (scanxx_state == state2 && scanxx == 20 )
         lcd_active_x <= 1'b1;
 
-    if (scanxx == 0) begin	
+    if (scanxx == 0) begin  
         case (scanxx_state) 
             state0: // enter FRONT PORCH
             begin 
@@ -171,13 +171,13 @@ always @(posedge clk24) begin
                 scanxx <= 10'd56 - 1'b1; 
                 scanxx_state <= state2;
             end
-            state2:	// enter BACK PORCH
+            state2: // enter BACK PORCH
             begin
                 scanxx <= 10'd60;
                 scanxx_state <= state3;
                 //lcd_active_x <= 1'b1; // start early to offset the picture to the right
             end
-            state3:	// enter VISIBLE AREA
+            state3: // enter VISIBLE AREA
             begin
                 videoActiveX <= 1'b1;
                 realx <= 9'b0;
