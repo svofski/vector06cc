@@ -148,9 +148,9 @@ assign red_leds = {spi_wren,7'b0};
 assign debug = wdport_status;
 assign debugidata = {ce & bufmem_en, ce, hostio_rd, wd_ram_rd};
 
-//`define VHDL_6502
+`define VHDL_6502
 //`define LUDDES6502
-`define ARLET6502
+//`define ARLET6502
 
 // Workhorse 6502 CPU
 `ifdef VHDL_6502

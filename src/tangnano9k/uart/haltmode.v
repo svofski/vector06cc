@@ -76,18 +76,6 @@ uart_rx#
 
 assign print_clk = clk24;
 
-//always @(posedge clk24) begin
-//    if (rx_data_valid)
-//    begin
-//        tx_data <= rx_data;
-//        tx_data_valid <= 1'b1;
-//    end
-//    else if(tx_data_valid && tx_data_ready)
-//    begin
-//        tx_data_valid <= 1'b0;
-//    end
-//end
-
 assign halt_o = state == ST_HALT;
 
 wire [7:0] ihex_data;

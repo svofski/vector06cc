@@ -5,10 +5,17 @@
 //`define WITH_T8080
 `define WITH_KEYBOARD
 //`define WITH_KEYBOARD_PS2         // -- ps/2 on gpio
-`define WITH_KEYBOARD_SERIAL        // -- debugprobe serial keyboard
-//`define WITH_VI53
-//`define WITH_AY
+//`define WITH_KEYBOARD_SERIAL        // -- debugprobe serial keyboard
+`define WITH_KEYBOARD_HID
+`define WITH_VI53
+  //`define VI53_B2M                  // Bashkiria-2m wi53 by Dmitry Tselikov //(doesn't work)
+  `define VI53_SORGELIG               // k580vi53 by Sorgelig
+  //`define VI53_SVOFSKI              // original vi53
+`define WITH_AY
+//`define WITH_WM8978               // WM8978 audio codec (not implemented yet)
 //`define WITH_RSOUND
+`define PWM_STEREO
+
 `define WITH_FLOPPY
 `define WITH_OSD
 //`define WITH_SDRAM
@@ -20,3 +27,7 @@
 //`define WITH_SVIDEO 
 `define WITH_VGA
 `define WITH_SERIAL_PROBE
+
+`define OSD_TOP_FB_ROW    9'd250   // more is higher above (200 is cursed)
+`define OSD_HPOS          9'd170
+`define OSD_TV_HALFLINE   275   // less is higher above

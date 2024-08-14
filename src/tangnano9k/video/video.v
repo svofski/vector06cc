@@ -474,10 +474,10 @@ reg         osd_xdelaybuf;
 
 wire        osd_xdelay;
 
-oneshot #(9'd200) lineos0(.clk(clk24), .ce(1'b1), .trigger(tv_mode[0] ? tvhs_local : hsync), .q(osd_xdelay));
+oneshot #(`OSD_HPOS) lineos0(.clk(clk24), .ce(1'b1), .trigger(tv_mode[0] ? tvhs_local : hsync), .q(osd_xdelay));
 
 always @(posedge clk24) begin
-    osd_vsync = tv_mode[0] ? ~(tv_halfline == 275) : ~(fb_row_count == 128);
+    osd_vsync = tv_mode[0] ? ~(tv_halfline == `OSD_TV_HALFLINE) : ~(fb_row_count == `OSD_TOP_FB_ROW);
 
     if (~tv_mode[0] | ce6) begin
         osd_xdelaybuf <= osd_xdelay;

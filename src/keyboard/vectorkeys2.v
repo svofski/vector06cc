@@ -9,9 +9,9 @@
 //
 // An open implementation of Vector-06C home computer
 //
-// Author: Viacheslav Slavinsky, http://sensi.org/~svo
+// Author: Viacheslav Slavinsky
 // 
-// Design File: vectorkeys.v
+// Design File: vectorkeys2.v
 //
 // Keyboard interface. This module maps PS/2 keyboard keypresses
 // and releases into a keyboard matrix model used in Vector-06C.
@@ -334,26 +334,6 @@ always @*
     3'b110: q <= 8'b01000000;
     3'b111: q <= 8'b10000000;
     endcase
-endmodule
-
-
-module keymatrix_ram(
-    input clk, 
-    input [2:0] addr, 
-    input wr,
-    input [7:0] data_i,
-    output reg [7:0] data_o);
-
-reg [7:0] data [0:7];
-
-always @(posedge clk)
-begin
-    if (wr)
-        data[addr] <= data_i;
-    else
-        data_o <= data[addr];
-end
-
 endmodule
 
 

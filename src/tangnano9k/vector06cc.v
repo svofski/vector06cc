@@ -75,7 +75,20 @@ module vector06cc(
     output          UART_TX,
     input           UART_RX,
 
-    output          BEEP,
+    input           HID_UART_RX,            // CH9350 HID USB adapter uart (57 AB 01 xx xx xx xx xx xx xx xx)
+
+    // pwm audio output
+    output wire [1:0] BEEP,
+
+    // i2s audio codec
+    output          I2S_MCLK,
+    output          I2S_BCLK,
+    output          I2S_LRC,
+    output          I2S_DACDAT,
+    input           I2S_ADCDAT,
+    // i2c codec config
+    output          I2C_SCL,
+    inout           I2C_SDA,
 
     output reg [5:0] LED,
 
@@ -122,20 +135,52 @@ clockster clockmaker(
 
 
 wire tape_input;
+wire [7:0]  ay_soundA,ay_soundB,ay_soundC;
+wire [7:0]  rs_soundA,rs_soundB,rs_soundC;
+wire [2:0]  vi53_out;
+reg  [7:0]  CovoxData;
+
 soundcodec soundnik(
-                    .clk24(clk24),
-                    .pulses({vv55int_pc_out[0],vi53_out}), 
-                    .ay_soundA(ay_soundA),  //
-                    .ay_soundB(ay_soundB),  //
-                    .ay_soundC(ay_soundC),  //
-                    .rs_soundA(rs_soundA),  //
-                    .rs_soundB(rs_soundB),  //
-                    .rs_soundC(rs_soundC),  //
-                    .covox(CovoxData),
-                    .tapein(tape_input), 
-                    .reset_n(mreset_n),
-                    .o_pwm(BEEP)
-                   );
+    .clk24(clk24),
+    .pulses({vv55int_pc_out[0],vi53_out}), 
+    .ay_soundA(ay_soundA),  //
+    .ay_soundB(ay_soundB),  //
+    .ay_soundC(ay_soundC),  //
+    .rs_soundA(rs_soundA),  //
+    .rs_soundB(rs_soundB),  //
+    .rs_soundC(rs_soundC),  //
+    .covox(CovoxData),
+    .tapein(tape_input), 
+    .reset_n(mreset_n),
+    .o_pwm(BEEP)
+`ifdef WITH_WM8978
+    ,
+    .oAUD_MCLK(I2S_MCLK),
+    .oAUD_BCK(I2S_BCLK),
+    .oAUD_LRCK(I2S_LRC),
+    .oAUD_DACDAT(I2S_DACDAT),
+    .iAUD_ADCDAT(I2S_ADCDAT)
+`endif
+    );
+
+`ifdef WITH_WM8978
+I2C_AV_Config accfg0(
+    .iCLK(clk24),
+    .iRST_N(mreset_n),
+    .I2C_SCLK(I2C_SCL),
+    .I2C_SDAT(I2C_SDA));
+`endif
+
+`ifndef WITH_WM8978
+    // i2s audio codec
+    assign I2S_MCLK = 1'bz;
+    assign I2S_BCLK = 1'bz;
+    assign I2S_LRC = 1'bz;
+    assign I2S_DACDAT = 1'bz;
+    // i2c codec config
+    assign I2C_SCL = 1'bz;
+    assign I2C_SDA = 1'bz;
+`endif
 
 reg [15:0] slowclock;
 always @(posedge clk24) if (ce3) slowclock <= slowclock + 1'b1;
@@ -853,7 +898,7 @@ always @(posedge clk24) begin
     if (~int_rq_hist & int_rq_tick & INTE) 
         int_request <= 1;
     
-    if ((int_request & ~int_rq_tick) | interrupt_ack)
+    if (interrupt_ack)
         int_request <= 0;
 end
 
@@ -876,13 +921,43 @@ wire [5:0]  kbd_keys_osd;
 
 `ifdef WITH_KEYBOARD
 
-`ifndef WITH_KEYBOARD_PS2
-wire PS2_CLK = 1'b1;
-wire PS2_DAT = 1'b1;
-`endif
+    wire [7:0]  kbd_rowselect = ~vv55int_pa_out;
+    
+    `ifdef WITH_KEYBOARD_HID
+    wire [7:0] uarthid_debug;
 
-wire [7:0]  kbd_rowselect = ~vv55int_pa_out;
+    // keyboard via HID to serial adapter
+    uarthid uarthid1(
+        .clk(clk24),
+        .reset(~delayed_reset_n),
+        .uart_rx(HID_UART_RX),
+        .i_rowselect(kbd_rowselect),
+        .o_rowbits(kbd_rowbits),
+    
+        .i_mod_rus(kbd_mod_rus), 
+    
+        .o_key_shift(kbd_key_shift), 
+        .o_key_ctrl(kbd_key_ctrl), 
+        .o_key_rus(kbd_key_rus), 
+        .o_key_blksbr(kbd_key_blksbr), 
+        .o_key_blkvvod(kbd_key_blkvvod_phy),
+        .o_key_bushold(kbd_key_scrolllock),
+        .o_key_osd(kbd_keys_osd),
+        .i_osd_active(scrollock_osd),
+        .o_debug(uarthid_debug)
+    );
 
+    always @(posedge clk24)
+        LED[5:0] <= uarthid_debug[5:0];//{kbd_key_shift,kbd_key_ctrl,kbd_key_rus,kbd_key_blkvvod_phy,kbd_key_blksbr,kbd_keys_osd};
+    `endif
+    
+    `ifndef WITH_KEYBOARD_PS2
+    wire PS2_CLK = 1'b1;
+    wire PS2_DAT = 1'b1;
+    `endif
+    
+    `ifdef WITH_KEYBOARD_SERIAL
+    // keyboard via serial debug console
     vectorkeys kbdmatrix(
         .clkk(clk24), 
         //.reset(~SYS_RESETN), 
@@ -903,7 +978,10 @@ wire [7:0]  kbd_rowselect = ~vv55int_pa_out;
         .key_osd(kbd_keys_osd),
         .osd_active(scrollock_osd)
         );
+    `endif
+
 `else
+// no keyboard of any kind
     assign kbd_rowbits = 8'hff;
     assign kbd_key_shift = 0;
     assign kbd_key_ctrl = 0;
@@ -1104,7 +1182,6 @@ I82C55 vv55pu(
     cpu_ce,
     clk24);
 
-reg[7:0]    CovoxData;
 reg[7:0]    RSdataIn,RSctrl;
 wire[7:0]   RSdataOut;
 always @(posedge clk24) begin
@@ -1119,12 +1196,14 @@ end
 // 580VI53 timer: ports 08-0B //
 ////////////////////////////////
 wire            vi53_sel = portmap_device == 3'b010;
-wire            vi53_wren = ~WR_n & io_write & vi53_sel; 
+//wire            vi53_wren = ~WR_n & io_write & vi53_sel; 
+wire            vi53_wren = ~wrn_sampled & io_write & vi53_sel; 
 wire            vi53_rden = io_read & vi53_sel;
-wire    [2:0]   vi53_out;
 wire    [7:0]   vi53_odata;
 
+
 `ifdef WITH_VI53
+    `ifdef VI53_SVOFSKI
 pit8253 vi53(
             .clk(clk24), 
             .ce(cpu_ce), 
@@ -1136,6 +1215,33 @@ pit8253 vi53(
             .dout(vi53_odata), 
             .gate(3'b111), 
             .out(vi53_out));
+    `endif
+    `ifdef VI53_B2M
+k580wi53 wi53(.clk(clk24),
+	.c0(cpu_ce), .c1(cpu_ce), .c2(cpu_ce),
+    .g0(1), .g1(1), .g2(2),
+    .out0(vi53_out[0]), .out1(vi53_out[1]), .out2(vi53_out[2]),
+    .addr(~address_bus_r[1:0]),
+    .rd(vi53_rden),
+    .we_n(~vi53_wren),
+    .idata(DO),
+    .odata(vi53_odata));
+    `endif
+    `ifdef VI53_SORGELIG
+k580vi53 vi53s(
+	// CPU bus
+    .reset(mreset),
+    .clk_sys(clk24),
+    .addr(~address_bus_r[1:0]),
+    .din(DO),
+    .dout(vi53_odata),
+    .wr(vi53_wren),
+    .rd(vi53_rden),
+	// Timer signals
+    .clk_timer({3{vi53_timer_ce}}),
+    .gate(3'b111),
+    .out(vi53_out));
+    `endif
 `else
 assign vi53_out = 3'b000;
 assign vi53_odata = 8'h00;
@@ -1280,7 +1386,7 @@ wire [7:0] osd_datal = osd_data[7:0] - 8'd32;
 `ifdef WITH_OSD
 textmode osd(
     .clk(clk24),
-    .ce(tv_mode[0] ? ce12 : 1'b1),
+    .ce(ce12),          // ce12 for wide text
     .vsync(osd_vsync),
     .hsync(osd_hsync),
     .pixel(osd_fg),
@@ -1305,9 +1411,6 @@ wire [7:0]  ay_odata;
 wire        ay_rden;
 wire        ay_wren;
 wire        ay_sel;
-
-wire [7:0]  ay_soundA,ay_soundB,ay_soundC;
-wire [7:0]  rs_soundA,rs_soundB,rs_soundC;
 
 `ifdef WITH_AY
 assign      ay_sel = portmap_device == 3'b101 && address_bus_r[1] == 0; // only ports $14 and $15
@@ -1436,16 +1539,18 @@ wire halt_uart_tx_wr;
 wire [7:0] uart_tx_data = floppy_uart_tx_wr ? floppy_uart_tx_data : halt_uart_tx_data;
 wire uart_tx_wr = halt_uart_tx_wr | floppy_uart_tx_wr;
 wire uart_tx_busy;
+wire uart_tx1;
 uart_tx_V2 tx(
     .clk(clk24),
     .din(uart_tx_data),
     .wr_en(uart_tx_wr),
     .tx_busy(uart_tx_busy), 
-    .tx_p(UART_TX));
+    .tx_p(uart_tx1));
+
+assign UART_TX = uart_tx1 & HID_UART_RX;
 
 defparam tx.uart_freq=115200;
 defparam tx.clk_freq=24_000_000;
-
 
 `ifdef WITH_SERIAL_PROBE
 
@@ -1454,7 +1559,6 @@ assign halt_command_f12 = halt_fkeys[11];
 
 haltmode debugger(.clk24(clk24), .rst_n(delayed_reset_n),
     .uart_rx(UART_RX),
-    //.uart_tx(halt_uart_tx),
     .o_uart_tx_data(halt_uart_tx_data),
     .o_uart_tx_wr(halt_uart_tx_wr),
     .i_uart_tx_busy(uart_tx_busy),
@@ -1465,8 +1569,8 @@ haltmode debugger(.clk24(clk24), .rst_n(delayed_reset_n),
     .scancode_ready_o(halt_scancode_ready)
 );
 
-always @(posedge clk24)
-    LED[5:0] <= {cpu_m1, ~halt_addr[4:0]};
+//always @(posedge clk24)
+//    LED[5:0] <= {cpu_m1, ~halt_addr[4:0]};
 
 `else
 
