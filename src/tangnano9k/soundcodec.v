@@ -105,13 +105,13 @@ always @(posedge clk24) begin
 	end
 
 	ma_pulseL <= {sumL,7'b0}
-        +{ay_soundC,4'b0}+{ay_soundB,3'b0}
-        +{rs_soundC,4'b0}+{rs_soundB,3'b0}
-        +{covox,4'b0};
+            + {ay_soundC,5'b0} + {ay_soundB,4'b0}
+            + {rs_soundC,5'b0} + {rs_soundB,4'b0}
+            + {covox,4'b0};
 	ma_pulseR <= {sumR,7'b0}
-        +{ay_soundA,4'b0}+{ay_soundB,3'b0}
-        +{rs_soundA,4'b0}+{rs_soundB,3'b0}
-        +{covox,4'b0};
+            + {ay_soundA,5'b0} + {ay_soundB,4'b0}
+            + {rs_soundA,5'b0} + {rs_soundB,4'b0}
+            + {covox,4'b0};
 	//ma_pulseL <= {sum[7:1],6'b0}+{m34,7'b0}+{ay_soundC,4'b0}+{ay_soundB,3'b0}+{rs_soundC,4'b0}+{rs_soundB,3'b0}+{covox,4'b0};
 	//ma_pulseR <= {sum[7:1],6'b0}+{m34,7'b0}+{ay_soundA,4'b0}+{ay_soundB,3'b0}+{rs_soundA,4'b0}+{rs_soundB,3'b0}+{covox,4'b0};
 end
