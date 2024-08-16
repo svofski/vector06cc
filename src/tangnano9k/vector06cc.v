@@ -117,11 +117,11 @@ wire clk_psram, clk_psram_p;
 
 clockster clockmaker(
     .clk27(XTAL_27MHZ),     // input xtal, 27 mhz on fhtagn nano 9k
-    .clk48(clk48),          // PSRAM clock
-    .clk48p(clk48p),        // PSRAM clock 90 deg
+    .clk48(clk48),          // ??
+    .clk48p(clk48p),        // ??
     .clk24(clk24),          // master clock
-    .clk_psram(clk_psram),
-    .clk_psram_p(clk_psram_p),
+    .clk_psram(clk_psram),  // PSRAM clock
+    .clk_psram_p(clk_psram_p),// PSRAM clock 90 deg
     .clkAudio(clkAudio),
     .ce12(ce12), 
     .ce6(ce6),              // tv pixel clock
@@ -142,6 +142,8 @@ reg  [7:0]  CovoxData;
 
 soundcodec soundnik(
     .clk24(clk24),
+    .clk_pwm(clk_psram),
+    //.clk_pwm(clk24),
     .pulses({vv55int_pc_out[0],vi53_out}), 
     .ay_soundA(ay_soundA),  //
     .ay_soundB(ay_soundB),  //

@@ -9,7 +9,7 @@
 //
 // An open implementation of Vector-06C home computer
 //
-// Author: Viacheslav Slavinsky, http://sensi.org/~svo
+// Author: Viacheslav Slavinsky, https://caglrc.cc
 //
 // Modified by Ivan Gorodetsky
 // 
@@ -29,6 +29,7 @@
 
 module soundcodec(
     input   clk24,
+    input   clk_pwm,          // 72MHz
     input   [3:0] pulses,
     input   [7:0] ay_soundA,
     input   [7:0] ay_soundB,
@@ -49,7 +50,7 @@ module soundcodec(
     input   iAUD_ADCDAT);
 
 parameter HYST = 4;
-parameter PWM_WIDTH = 9;
+parameter PWM_WIDTH = 10; // 24e6/2**10 = 23437hz, 72e6/2**10 = 70312
 
 // -------------------------------------
 // I2S interface
@@ -64,8 +65,8 @@ wire clk12rip = decimator[0] == 0;
 
 assign oAUD_MCLK = clk12rip;
 
-wire [15:0] linein;			// comes from codec
-reg [15:0] ma_pulseL,ma_pulseR;		// goes to codec
+wire [15:0] linein;                     // comes from codec
+reg [15:0] ma_pulseL,ma_pulseR;         // goes to codec
 
 //reg [7:0] pulses_sample[0:3];
 
@@ -85,8 +86,9 @@ wire [7:0] timerL = {pulses[2],4'b0} + {pulses[1],3'b0} + {pulses[3], 4'b0};
 wire [7:0] timerR = {pulses[0],4'b0} + {pulses[1],3'b0} + {pulses[3], 4'b0};
 
 
-always @(posedge clk24) begin
-	if (ma_ce)
+always @(posedge clk24) 
+begin
+    if (ma_ce)
     begin
         timer_hist[3] <= timer_hist[2];
         timer_hist[2] <= timer_hist[1];
@@ -94,26 +96,27 @@ always @(posedge clk24) begin
         timer_hist[0] <= {timerL, timerR};
 
 
-		//pulses_sample[3] <= pulses_sample[2];
-		//pulses_sample[2] <= pulses_sample[1];
-		//pulses_sample[1] <= pulses_sample[0];
-		//pulses_sample[0] <= m04 + m14 + m24/* + m34*/;
-		//sum <= pulses_sample[0] + pulses_sample[1] + pulses_sample[2] + pulses_sample[3];
+        //pulses_sample[3] <= pulses_sample[2];
+        //pulses_sample[2] <= pulses_sample[1];
+        //pulses_sample[1] <= pulses_sample[0];
+        //pulses_sample[0] <= m04 + m14 + m24/* + m34*/;
+        //sum <= pulses_sample[0] + pulses_sample[1] + pulses_sample[2] + pulses_sample[3];
 
         sumL <= timer_hist[0][15:8] + timer_hist[1][15:8] + timer_hist[2][15:8] + timer_hist[3][15:8];
         sumR <= timer_hist[0][7:0]  + timer_hist[1][7:0]  + timer_hist[2][7:0]  + timer_hist[3][7:0];
-	end
+    end
 
-	ma_pulseL <= {sumL,7'b0}
-            + {ay_soundC,5'b0} + {ay_soundB,4'b0}
-            + {rs_soundC,5'b0} + {rs_soundB,4'b0}
-            + {covox,4'b0};
-	ma_pulseR <= {sumR,7'b0}
-            + {ay_soundA,5'b0} + {ay_soundB,4'b0}
-            + {rs_soundA,5'b0} + {rs_soundB,4'b0}
-            + {covox,4'b0};
-	//ma_pulseL <= {sum[7:1],6'b0}+{m34,7'b0}+{ay_soundC,4'b0}+{ay_soundB,3'b0}+{rs_soundC,4'b0}+{rs_soundB,3'b0}+{covox,4'b0};
-	//ma_pulseR <= {sum[7:1],6'b0}+{m34,7'b0}+{ay_soundA,4'b0}+{ay_soundB,3'b0}+{rs_soundA,4'b0}+{rs_soundB,3'b0}+{covox,4'b0};
+    ma_pulseL <= {sumL,7'b0}
+        + {ay_soundC,5'b0} + {ay_soundB,4'b0}
+        + {rs_soundC,5'b0} + {rs_soundB,4'b0}
+        + {covox,4'b0};
+
+    ma_pulseR <= {sumR,7'b0}
+        + {ay_soundA,5'b0} + {ay_soundB,4'b0}
+        + {rs_soundA,5'b0} + {rs_soundB,4'b0}
+        + {covox,4'b0};
+    //ma_pulseL <= {sum[7:1],6'b0}+{m34,7'b0}+{ay_soundC,4'b0}+{ay_soundB,3'b0}+{rs_soundC,4'b0}+{rs_soundB,3'b0}+{covox,4'b0};
+    //ma_pulseR <= {sum[7:1],6'b0}+{m34,7'b0}+{ay_soundA,4'b0}+{ay_soundB,3'b0}+{rs_soundA,4'b0}+{rs_soundB,3'b0}+{covox,4'b0};
 end
 
 audio_io audioio(
@@ -183,7 +186,12 @@ wire [15:0] mixed_mono = {beepsum, 13'b0} +
 reg [PWM_WIDTH:0] delta_sigma_accu[0:1];
    
 always @(posedge clk24)  
-    if (delta_sigma_ce)
+    if (~reset_n)
+    begin
+        delta_sigma_accu[0] <= 0;
+        delta_sigma_accu[1] <= 0;
+    end
+    else if (delta_sigma_ce)
     begin
         delta_sigma_accu[0] <= delta_sigma_accu[0][PWM_WIDTH - 1:0] + mixed[0][15:15 - (PWM_WIDTH - 1)];
         delta_sigma_accu[1] <= delta_sigma_accu[1][PWM_WIDTH - 1:0] + mixed[1][15:15 - (PWM_WIDTH - 1)];

@@ -65,7 +65,6 @@ Gowin_rPLL72 your_momma2(
     .clkin(clk27) //input clkin
 );
 
-
 always @(posedge clk24) begin
     if (initctr != 3) begin
         initctr <= initctr + 1'b1;
