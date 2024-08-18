@@ -54,7 +54,15 @@ module floppy_neo430(
     
     output reg[7:0] osd_command,
     
-    output          host_hold);
+    output          host_hold,
+
+    // -- ROM / EDD loader support --
+    output          o_rom_hold,   // holds the cpu while loading happens
+    output  [15:0]  o_rom_addr,   // regular addr
+    output   [5:0]  o_rom_page,   // for kvaz loading (e.g. from .edd files)
+    output   [7:0]  o_rom_data,   // rom/edd file data
+    output          o_rom_wr      // write strobe
+);
         
 parameter DISK_HAX = "../../../disk_neo430.hax";
 
@@ -405,6 +413,15 @@ begin: _wdport_cpu_status
         wdport_cpu_status <= cpu_do16[7:0];
 end
 
+////////////////
+// ROM LOADER //
+////////////////
+
+assign o_rom_hold = 0;
+assign o_rom_addr = 0;
+assign o_rom_page = 0;
+assign o_rom_data = 0;
+assign o_rom_wr   = 0;
 
 // here's how 1793's registers are mapped in Vector-06c
 // 00011xxx

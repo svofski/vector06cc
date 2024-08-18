@@ -250,7 +250,7 @@ begin: _ready_ctl
         breakpoint_condition <= 1'b0;
     else
     begin
-        breakpoint_condition <= halt_halt;
+        breakpoint_condition <= sideload_halt;
         //if (cpu_ce)
         if (ce3)
         begin
@@ -260,13 +260,13 @@ begin: _ready_ctl
                 READY <= 0; //### this works for T8080 but not for v80a
 `ifdef WITH_BREAKPOINTS         
                 if (singleclock) begin
-                    breakpoint_condition <= halt_halt;
+                    breakpoint_condition <= sideload_halt;
                 end
                 else if (A == 16'h0100) begin
                     breakpoint_condition <= 1'b1;
                 end
 `else
-                breakpoint_condition <= halt_halt;
+                breakpoint_condition <= sideload_halt;
 `endif
             end
         end
@@ -570,11 +570,18 @@ wire psram_rd_vid = rdvidreg[33];
 `endif
 
 
-// ---------- haltmode write access ----------------
+// -------- haltmode / romload write access -------------
+
+wire [21:0] halt_addr;  // linear haltmode addr 
 
 reg psram_busy_r; // psram_busy registered
-reg halt_wr_r;    // haltmode write request registered
-reg halt_wr_cmd;  // psram command to write haltmode data
+reg halt_wr_r;    // haltmode/romload write request registered
+reg halt_wr_cmd;  // psram command to write haltmode/romload data
+
+reg [21:0] sideload_addr; // haltmode/romload addr selected
+reg  [7:0] sideload_data; // haltmode/romload data selected
+wire       sideload_halt; // merged halt_halt and romload_hold
+assign     sideload_halt = halt_halt | romload_hold;
 
 always @(posedge clk24)
 begin
@@ -584,8 +591,13 @@ begin
 
     halt_wr_cmd <= 1'b0;
 
-    if (halt_wr)
+    if (halt_wr | romload_wr)
+    begin
         halt_wr_r <= 1'b1;
+
+        sideload_addr <= halt_wr ? halt_addr : romload_addr;
+        sideload_data <= halt_wr ? halt_data : romload_data;
+    end
 
     if (halt_wr_r & psram_busy_r & ~psram_busy) // falling psram_busy
         {halt_wr_cmd, halt_wr_r} <= 2'b10;  // write cmd, clear reg
@@ -594,13 +606,15 @@ end
 // -----------------------------------------------------
 
 
-wire [21:0] halt_a_mangled = 
-    {halt_addr[21:16], halt_addr[15],halt_addr[12:0],halt_addr[14:13]};
+//wire [21:0] halt_a_mangled = 
+//    {halt_addr[21:16], halt_addr[15],halt_addr[12:0],halt_addr[14:13]};
+wire [21:0] sideload_addr_mangled = 
+    {sideload_addr[21:16], sideload_addr[15],sideload_addr[12:0],sideload_addr[14:13]};
 
 wire [21:0] cpu_a_mangled = {ramdisk_addr,A[15],A[12:0],A[14:13]};
 
 wire [21:0] psram_addr = 
-    halt_halt ? halt_a_mangled :
+    sideload_halt ? sideload_addr_mangled :
     psram_rd_vid ? {4'b0001,VIDEO_A[12:0],2'b00} : cpu_a_mangled;
 
 reg psram_rd_cpu_d, psram_wr_cpu_d;
@@ -614,7 +628,7 @@ wire psram_rd_cpu_posedge = psram_rd_cpu & ~psram_rd_cpu_d;
 wire psram_rd_cmd = psram_rd_cpu_posedge;// | psram_rd_vid; 
 wire psram_wr_cmd = (psram_wr_cpu & ~psram_wr_cpu_d) | halt_wr_cmd;
 
-wire [7:0] psram_di = halt_wr_cmd ? halt_do : DO;
+wire [7:0] psram_di = halt_wr_cmd ? sideload_data : DO;
 
 // this is almost an exact copy of CPU/STACK: 
 // from the start of SYNC+STACK until SYNC without STACK
@@ -1295,6 +1309,14 @@ wire halt_uart_tx;
 wire floppy_uart_tx_wr;
 wire [7:0] floppy_uart_tx_data;
 
+// ---------- ROM / EDD file loader signals ------------
+wire         romload_hold;  // pauses the CPU (maybe even video)
+wire  [15:0] romload_addr;  // write address
+wire   [5:0] romload_page;  // kvaz page, 0 = main ram
+wire   [7:0] romload_data;  // write data
+wire         romload_wr;    // write command
+
+
 `ifdef WITH_FLOPPY
 wire [7:0]  floppy_odata;
 
@@ -1333,6 +1355,12 @@ floppy_neo430 floppy_neo(
     .keyboard_keys(kbd_keys_osd),
     
     .osd_command(osd_command),
+
+    .o_rom_hold(romload_hold),
+    .o_rom_addr(romload_addr),
+    .o_rom_page(romload_page),
+    .o_rom_data(romload_data),
+    .o_rom_wr  (romload_wr),
     
     // debug 
     .host_hold(floppy_death_by_floppy)
@@ -1347,6 +1375,12 @@ wire [7:0]  floppy_odata =
     8'hFF;
 `endif  
 wire [7:0]  floppy_status = 8'hff;
+
+assign romload_hold = 0;
+assign romload_addr = 0;
+assign romload_page = 0;
+assign romload_data = 0;
+assign romload_wr   = 0;
 `endif
 
 
@@ -1525,8 +1559,7 @@ always @* gledreg[8] <= disable_rom;
 I2C_AV_Config       u7(clk24,mreset_n,I2C_SCLK,I2C_SDAT);
 `endif
 
-wire [21:0] halt_addr;
-wire [7:0] halt_do;
+wire [7:0] halt_data;
 wire halt_wr;
 wire halt_halt;
 wire [11:0] halt_fkeys;
@@ -1564,7 +1597,7 @@ haltmode debugger(.clk24(clk24), .rst_n(delayed_reset_n),
     .o_uart_tx_data(halt_uart_tx_data),
     .o_uart_tx_wr(halt_uart_tx_wr),
     .i_uart_tx_busy(uart_tx_busy),
-    .addr_o(halt_addr), .data_o(halt_do), .wr_o(halt_wr),
+    .addr_o(halt_addr), .data_o(halt_data), .wr_o(halt_wr),
     .halt_o(halt_halt),
     .fkeys_o(halt_fkeys),
     .scancode_o(halt_scancode),
@@ -1578,7 +1611,7 @@ haltmode debugger(.clk24(clk24), .rst_n(delayed_reset_n),
 
 assign halt_uart_tx = 1'b1;
 assign halt_addr = 22'h0;
-assign halt_do = 8'h00;
+assign halt_data = 8'h00;
 assign halt_wr = 1'b1;
 assign halt_halt = 1'b0;
 assign halt_fkeys = 12'b0;
