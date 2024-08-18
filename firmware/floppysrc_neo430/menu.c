@@ -96,6 +96,7 @@ uint8_t menu_busy(uint8_t status) {
     return 0;
 }
 
+// return MENURESULT_DISK etc.. when something is selected
 uint8_t menu_dispatch(uint8_t tick) {
     uint8_t result = MENURESULT_NOTHING;
 

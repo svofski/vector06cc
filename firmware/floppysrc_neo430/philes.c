@@ -51,6 +51,24 @@ BYTE endsWith(char *s1, const char *suffix) {
     return strcmp(&s1[s1len - sulen], suffix) == 0;
 }
 
+file_kind_t philes_getkind(const char * filename)
+{
+    int fnlen = strlen(filename);
+    int sulen = 4;  // ".fdd", ".rom", etc
+    if (sulen > fnlen) return FK_UNKNOWN;
+
+    if (strcmp(&filename[fnlen - sulen], ".FDD") == 0) return FK_FDD;
+    if (strcmp(&filename[fnlen - sulen], ".ROM") == 0) return FK_ROM;
+    if (strcmp(&filename[fnlen - sulen], ".R0M") == 0) return FK_R0M;
+    if (strcmp(&filename[fnlen - sulen], ".EDD") == 0) return FK_EDD;
+    if (strcmp(&filename[fnlen - sulen], ".WAV") == 0) return FK_WAV;
+    if (strcmp(&filename[fnlen - sulen], ".ASC") == 0) return FK_ASC;
+    if (strcmp(&filename[fnlen - sulen], ".BAS") == 0) return FK_BAS;
+    if (strcmp(&filename[fnlen - sulen], ".CAS") == 0) return FK_CAS;
+
+    return FK_UNKNOWN;
+}
+
 void philes_init()
 {
     strncpy(ptrfile, default_path, PATHBUF_SZ); // initialise ptrfile
@@ -81,7 +99,15 @@ FRESULT philes_nextfile(char *filename, uint8_t terminate) {
             // nowai
         } else {
             //ser_puts(finfo.fname); ser_nl();
-            if (endsWith(finfo.fname, ".FDD")) { // DEBUG restore to ".FDD"
+            //if (philes_getkind(finfo.fname) != FK_UNKNOWN) {
+            int fk = philes_getkind(finfo.fname);
+            ser_puts("philes_nextfile() name: ["); ser_puts(finfo.fname); 
+            ser_puts("] fk="); print_hex(fk); ser_nl();
+
+            if (fk != FK_UNKNOWN) {
+            //if (fk == FK_FDD) {
+            //if (endsWith(finfo.fname, ".FDD")) {
+            //if (philes_getkind(finfo.fname) == FK_FDD) {
                 if (filename != 0) {
                     if (terminate) {
                         strncpy(filename, finfo.fname, 12);

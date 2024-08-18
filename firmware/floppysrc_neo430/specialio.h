@@ -21,6 +21,8 @@
 #ifndef _SPECIALIO_J
 #define _SPECIALIO_J
 
+#include <stdint.h>
+
 #define 	IOPORT_BASE		0xFF00
 #define		IOPORT_MMC_A		0x00			/* BIT0: SD_DAT3/CS */
 #define		IOPORT_SPDR		0xA6
@@ -43,7 +45,17 @@
 //#define		IOPORT_DMALSB		0x0F
 
 #define		IOPORT_GLEDS		20
-#define 	IOPORT_OSDCMD		22			/* F11,F12,HOLD */
+#define 	IOPORT_OSDCMD		22			/* ROMHOLD,F11,F12,HOLD */
+
+#define         IOPORT_ROM_PAGE         24                      /* upper 6 bits of addr for romload */
+#define         IOPORT_ROM_ADDR         26                      /* romload write address, word-only */
+#define         IOPORT_ROM_DATA         28                      /* romload data */
+
+#define         OSDCMD_NONE             0
+#define         OSDCMD_HOLD             (1<<0)                  // pause
+#define         OSDCMD_RESTART          (1<<1)                  // BLK+SBR, F12
+#define         OSDCMD_RESET            (1<<2)                  // BLK+VVOD, F11
+#define         OSDCMD_ROMHOLD          (1<<3)                  // exclusive ram acceess for rom loader
 
 
 #define		DISPLAY_BASE		0xE000
@@ -68,12 +80,16 @@
 #define  	MASTER_TRACK	(*((volatile unsigned char *)(IOPORT_BASE+IOPORT_CPUTRACK)))	
 #define		MASTER_SECTOR	(*((volatile unsigned char *)(IOPORT_BASE+IOPORT_CPUSECTOR)))
 
-#define  	DMAMSB		(*((unsigned char *)(IOPORT_BASE+IOPORT_DMAMSB)))	
-#define  	DMALSB		(*((unsigned char *)(IOPORT_BASE+IOPORT_DMALSB)))	
+#define  	DMAMSB		(*((unsigned char *)(IOPORT_BASE+IOPORT_DMAMSB)))
+#define  	DMALSB		(*((unsigned char *)(IOPORT_BASE+IOPORT_DMALSB)))
 
 
 #define		GREEN_LEDS	(*((volatile unsigned char *)(IOPORT_BASE+IOPORT_GLEDS)))
 #define		OSD_CMD		(*((volatile unsigned char *)(IOPORT_BASE+IOPORT_OSDCMD)))
+
+#define		ROMLOAD_PAGE	(*((volatile unsigned char *)(IOPORT_BASE+IOPORT_ROM_PAGE)))
+#define		ROMLOAD_ADDR	(*((volatile uint16_t*)      (IOPORT_BASE+IOPORT_ROM_ADDR)))
+#define         ROMLOAD_DATA    (*((volatile uint8_t*)       (IOPORT_BASE+IOPORT_ROM_DATA)))
 
 #define		SECTOR_BUFFER_SZ	1024
 #define		SECTOR_BUFFER	((volatile BYTE *)0xd000)

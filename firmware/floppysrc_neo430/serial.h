@@ -46,4 +46,27 @@ void print_buff(const BYTE *Buffer);
 
 #endif
 
+#define vputs(s) {}
+#define vputc(s) {}
+#define vputh(s) {}
+#define vdump(s) {}
+#define vnl()    {}
+
+#if VERBOSE >= 3
+#undef vdump
+#define vdump(b)  print_buff(b)
+#endif
+
+#if VERBOSE >= 2
+#undef vputs
+#undef vputc
+#undef vputh
+#undef vnl
+#define vputs(s) ser_puts(s)
+#define vputc(c) ser_putc(c)
+#define vputh(x) print_hex(x)
+#define vnl()    ser_nl()
+#endif
+
+
 #endif

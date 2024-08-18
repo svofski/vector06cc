@@ -40,7 +40,7 @@
 EFFORT = -Os
 
 # User's application sources (add additional files here)
-APP_SRC = main.c fddimage.c menu.c mmc.c osd.c philes.c serial.c slave.c tff.c timer.c
+APP_SRC = main.c fddimage.c menu.c mmc.c osd.c philes.c serial.c slave.c tff.c timer.c romload.c
 
 # User's application include folders (don't forget the '-I' before each entry)
 APP_INC = -I .

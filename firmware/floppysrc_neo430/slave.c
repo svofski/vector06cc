@@ -21,6 +21,7 @@
 #include "specialio.h"
 #include "tff.h"
 #include "fddimage.h"
+#include "romload.h"
 #include "integer.h"
 #include "timer.h"
 #include "menu.h"
@@ -29,28 +30,6 @@
 
 #include "serial.h"
 
-
-#define vputs(s) {}
-#define vputc(s) {}
-#define vputh(s) {}
-#define vdump(s) {}
-#define vnl()    {}
-
-#if VERBOSE >= 3
-#undef vdump
-#define vdump(b)  print_buff(b)
-#endif
-
-#if VERBOSE >= 2
-#undef vputs
-#undef vputc
-#undef vputh
-#undef vnl
-#define vputs(s) ser_puts(s)
-#define vputc(c) ser_putc(c)
-#define vputh(x) print_hex(x)
-#define vnl()    ser_nl()
-#endif
 
 const char * S_ERROR = "ERROR";
 const char * S_ERRORnl = "ERROR\n";
@@ -63,7 +42,9 @@ FIL     file1;
 #define DELAY_RELOAD 128
 
 uint8_t blink(void);
-uint8_t slave(void);
+uint8_t loop_until_useraction(void);
+
+uint8_t fdd_mounted;
 
 void printerr(uint8_t code, uint8_t nl)
 {
@@ -80,6 +61,8 @@ uint8_t thrall(char *imagefile, volatile uint8_t *buffer)
 
     philes_init();
     menu_init();
+
+    fdd_mounted = 0;
 
     for(;;) {
         SLAVE_STATUS = CPU_STATUS_DRVNOTRDY;
@@ -116,8 +99,31 @@ uint8_t thrall(char *imagefile, volatile uint8_t *buffer)
 
             if (result != FR_OK) break;
 
-            fdd_load(&file1, &fddimage, (uint8_t *)buffer);
-            slave();
+            int fk = philes_getkind(imagefile);
+
+            switch (fk) {
+            case FK_FDD:
+                fdd_load(&file1, &fddimage, (uint8_t *)buffer);
+                fdd_mounted = 1;
+                loop_until_useraction(); // until menu_dispatch() returns MENURESULT_DISK or something
+                break;
+            case FK_ROM:
+                fdd_mounted = 0; // avoid confict with fdd image
+                rom_load(&file1, (uint8_t *)buffer, 0x100);
+                f_close(&file1);
+                loop_until_useraction();
+                break;
+            case FK_R0M:
+                fdd_mounted = 0; // avoid conflict with fdd image
+                rom_load(&file1, (uint8_t *)buffer, 0x0);
+                f_close(&file1);
+                loop_until_useraction();
+                break;
+            default:
+                loop_until_useraction();
+                break;
+            }
+
         } while(0);
         delay2(255);
         menu_busy(2);
@@ -126,8 +132,8 @@ uint8_t thrall(char *imagefile, volatile uint8_t *buffer)
     }
 }
 
-// thrall forever
-uint8_t slave(void) {
+// loop until menu_dispatch() returns something else but MENURESULT_NOTHING
+uint8_t loop_until_useraction(void) {
     uint8_t result;
     uint8_t t1;
     uint8_t cmd;
@@ -140,6 +146,15 @@ uint8_t slave(void) {
         if (disk_poll(0) == RES_NOTRDY) {
             vputs("NOSD");
             break;
+        }
+
+        if (!fdd_mounted) {
+            //vputs("FDD not mounted");
+            SLAVE_STATUS = CPU_STATUS_DRVNOTRDY;
+            if ((result = blink()) != MENURESULT_NOTHING) {
+                return result;   // break and return to the toplevel loop
+            }
+            continue;
         }
 
         cmd = MASTER_COMMAND;
@@ -252,7 +267,7 @@ uint8_t slave(void) {
             default:
                 SLAVE_STATUS = 0;
                 if ((result = blink()) != MENURESULT_NOTHING) {
-                    return result;
+                    return result;   // break and return to the toplevel loop
                 }
                 break;
         }               
@@ -261,7 +276,6 @@ uint8_t slave(void) {
     SLAVE_STATUS = 0;
     return result;
 }
-
 
 uint8_t blink(void) {
     static uint8_t leds = 0x01;

@@ -1283,7 +1283,7 @@ wire [7:0]  osd_command;
 wire        osd_command_bushold = osd_command[0];
 wire        osd_command_f12     = osd_command[1];
 wire        osd_command_f11     = osd_command[2];
-
+//                                osd_command[3] -> romload_hold
 wire        floppy_sel = portmap_device[2:1] == 2'b11; // both 110 and 111
 
 //--------------------------------------------------------------

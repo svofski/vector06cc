@@ -84,8 +84,11 @@ parameter PORT_TRACK            = 16;
 parameter PORT_SECTOR           = 18;
 
 parameter PORT_LED              = 20;
-parameter PORT_OSD_COMMAND      = 22;                // {F11,F12,HOLD}
+parameter PORT_OSD_COMMAND      = 22;               // {ROMHOLD,F11,F12,HOLD}
 
+parameter PORT_ROM_PAGE         = 24;               // romload_addr[21:16]
+parameter PORT_ROM_ADDR         = 26;               // romload_addr[15:0]     --- word access only
+parameter PORT_ROM_DATA         = 28;               // romload_data, generate write strobe to o_rom_wr
 
 wire ce = 1'b1;
 
@@ -372,6 +375,35 @@ begin: _osdcmd
 end
 
 /////////////////////
+// ROMLOAD 
+/////////////////////
+wire romload_pagesel    = ioports_sel & cpu_addr[7:0] == PORT_ROM_PAGE;
+wire romload_addrsel    = ioports_sel & cpu_addr[7:1] == (PORT_ROM_ADDR >> 1); // word access
+wire romload_datasel    = ioports_sel & cpu_addr[7:0] == PORT_ROM_DATA;
+
+wire  romload_page_wr = romload_pagesel & cpu_memwr[0];   // byte
+wire  romload_addr_wr = romload_addrsel & |cpu_memwr;     // word
+wire  romload_data_wr = romload_datasel & cpu_memwr[0];   // byte
+
+reg   [5:0] romload_page = 0;
+reg  [15:0] romload_addr = 0;
+reg   [7:0] romload_data = 0;
+reg         romload_wr = 0;
+
+always @(posedge clk)
+begin: _romloadwr
+    if (~reset_n)
+        {romload_page, romload_addr, romload_data, romload_wr} <= 0;
+    else
+    begin
+        romload_wr <= 1'b0;
+        if (romload_page_wr) romload_page <= cpu_do16[7:0];
+        if (romload_addr_wr) romload_addr <= cpu_do16;
+        if (romload_data_wr) {romload_wr, romload_data} <= {1'b1, cpu_do16[7:0]};
+    end
+end
+
+/////////////////////
 // CPU INPUT PORTS //
 /////////////////////
 reg [15:0] ioports_do16_x;
@@ -417,11 +449,11 @@ end
 // ROM LOADER //
 ////////////////
 
-assign o_rom_hold = 0;
-assign o_rom_addr = 0;
-assign o_rom_page = 0;
-assign o_rom_data = 0;
-assign o_rom_wr   = 0;
+assign o_rom_hold = osd_command[3];
+assign o_rom_addr = romload_addr;
+assign o_rom_page = romload_page;
+assign o_rom_data = romload_data;
+assign o_rom_wr   = romload_wr;
 
 // here's how 1793's registers are mapped in Vector-06c
 // 00011xxx
