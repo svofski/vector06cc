@@ -30,8 +30,7 @@
 extern uint8_t* dmem;
 extern char* ptrfile;
 
-static uint8_t fsel_index;      // currently selected item
-static uint8_t fsel_pagestart;  // start refresh from here
+static int32_t fsel_pagestart;  // start refresh from here
 static uint8_t fsel_redraw;     // plz redraw file selector, teh slow
 static uint8_t fsel_hasnextpage; 
 
@@ -50,7 +49,7 @@ static char* menu_item[] = {    NULL,           TXT_MENU_UP,      NULL,
                                 TXT_MENU_LEFT,  TXT_MENU_MIDDLE,  TXT_MENU_RIGHT,
                                 NULL,           TXT_MENU_DOWN,    NULL};
 
-static uint8_t menu_x, menu_y, menu_selected;
+static int8_t menu_x, menu_y, menu_selected;
 
 static uint8_t osdcmd = 0;
 
@@ -163,25 +162,31 @@ uint8_t menu_dispatch(uint8_t tick) {
                 if (joy_status & JOY_UP) {
                     if (menu_y > 0)     {
                         menu_y -= 1;
-                    } else if (fsel_pagestart != 0) {
-                        fsel_pagestart -= FSEL_PAGESIZE-1;
-                        menu_y = FSEL_NLINES-1;
+                    } else {
+                        fsel_pagestart -= FSEL_PAGESIZE - 2;
+                        menu_y = FSEL_NLINES - 1;
                         fsel_redraw = 1;
                     }
                 } 
 
                 if (joy_status & JOY_DN) {
-                    if (menu_y  < FSEL_NLINES-1) {
+                    if (menu_y < FSEL_NLINES-1) {
                         menu_y += 1;
-                    } else if (fsel_hasnextpage) {
+                    } else {
                         menu_y = 0;
-                        fsel_pagestart += FSEL_PAGESIZE-1;
+                        if (fsel_hasnextpage) {
+                            fsel_pagestart += FSEL_PAGESIZE - 2;
+                        }
+                        else {
+                            fsel_pagestart = 0;
+                        }
                         fsel_redraw = 1;
                     }
                 }
 
                 if (joy_status & JOY_LT) {
-                    menu_x = (menu_x - 1) % 2;
+                    menu_x = menu_x - 1;
+                    if (menu_x < 0) menu_x += 2;
                 }
 
                 if (joy_status & JOY_RT) {
@@ -311,9 +316,30 @@ uint8_t fsel_index2offs(uint8_t idx) {
     return 33 + (idx/2)*32 + (idx % 2)*16;
 }
 
+// set fsel_pagestart to the beginning of the last page
+void find_last_pagestart()
+{
+    if (philes_opendir() == FR_OK) {
+        fsel_pagestart = 0;
+        while (1) {
+            for (int i = 0; i < FSEL_PAGESIZE; ++i) {
+                if (philes_nextfile(0, 0) != FR_OK) {
+                    return;
+                }
+            }
+            fsel_pagestart += FSEL_PAGESIZE;
+        }
+    }
+}
+
 void draw_fsel(void) {
-    uint8_t i;
+    int32_t i;
     char *uptr;
+
+    // if rolling back over 0, find start of last page
+    if (fsel_pagestart < 0) {
+        find_last_pagestart();
+    }
 
     fsel_hasnextpage = 1;
     ser_puts("opendir");
@@ -321,8 +347,8 @@ void draw_fsel(void) {
         ser_puts(" ok"); ser_nl();
 
         // skip until pagestart
-        if (fsel_pagestart != 0) {
-            for (i = 0; i < fsel_pagestart; i++) {
+        if (fsel_pagestart > 0) {
+            for (i = 0; i < fsel_pagestart; ++i) {
                 if (philes_nextfile(0, 0) != FR_OK) {
                     fsel_pagestart = 0;
                     break;

@@ -19,15 +19,22 @@
 
 #include <string.h>
 
+#include "config.h"
+
 #include "serial.h"
 #include "specialio.h"
 #include "integer.h"
 
 #include "diskio.h"
-#include "tff.h"
 
 #include "timer.h"
-#include "config.h"
+
+#if NEW_FATFS
+#include "ff.h"
+#else
+#include "tff.h"
+#endif
+
 #include "slave.h"
 
 #include "osd.h"

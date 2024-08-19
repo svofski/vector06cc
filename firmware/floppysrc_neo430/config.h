@@ -15,4 +15,8 @@
 #define FDD_NSECTORS		5U
 #define SECTOR_SIZE_CODE	3U		// 0 = 128, 1 = 256, 2 = 512, 3 = 1024
 
+#ifndef NEW_FATFS
+#define NEW_FATFS 0 // default to the old version
+#endif
+
 #endif

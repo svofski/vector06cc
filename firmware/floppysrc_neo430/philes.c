@@ -17,11 +17,17 @@
 //
 // --------------------------------------------------------------------
 
+#include "config.h"
 #include "integer.h"
 #include "philes.h"
 #include "diskio.h"
-#include "tff.h"
 #include "serial.h"
+
+#if NEW_FATFS
+#include "ff.h"
+#else
+#include "tff.h"
+#endif
 
 #include <string.h>
 
@@ -79,7 +85,11 @@ FRESULT philes_mount() {
 
     uint8_t init_status = disk_initialize(0); 
     ser_puts("(disk_initialize: "); print_hex(init_status); ser_putc(')');
+#if NEW_FATFS
+    return f_mount(&fatfs, "", 0);
+#else
     return f_mount(0, &fatfs);
+#endif
 }
 
 FRESULT philes_opendir() {
@@ -94,20 +104,14 @@ FRESULT philes_opendir() {
 
 // fill in file name in buffer pointed by filename
 FRESULT philes_nextfile(char *filename, uint8_t terminate) {
-    while ((f_readdir(&dir, &finfo) == FR_OK) && finfo.fname[0]) {
+    FRESULT res;
+
+    while (((res = f_readdir(&dir, &finfo)) == FR_OK) && finfo.fname[0]) {
         if (finfo.fattrib & AM_DIR) {
             // nowai
         } else {
-            //ser_puts(finfo.fname); ser_nl();
-            //if (philes_getkind(finfo.fname) != FK_UNKNOWN) {
             int fk = philes_getkind(finfo.fname);
-            ser_puts("philes_nextfile() name: ["); ser_puts(finfo.fname); 
-            ser_puts("] fk="); print_hex(fk); ser_nl();
-
             if (fk != FK_UNKNOWN) {
-            //if (fk == FK_FDD) {
-            //if (endsWith(finfo.fname, ".FDD")) {
-            //if (philes_getkind(finfo.fname) == FK_FDD) {
                 if (filename != 0) {
                     if (terminate) {
                         strncpy(filename, finfo.fname, 12);

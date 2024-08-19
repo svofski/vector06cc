@@ -17,9 +17,16 @@
 //
 // --------------------------------------------------------------------
 
+#include "config.h"
 #include "slave.h"
 #include "specialio.h"
+
+#if NEW_FATFS
+#include "ff.h"
+#else
 #include "tff.h"
+#endif
+
 #include "fddimage.h"
 #include "romload.h"
 #include "integer.h"
@@ -140,7 +147,7 @@ uint8_t loop_until_useraction(void) {
 
     SLAVE_STATUS = 0;       // clear drive not ready flag
 
-    for (result = FR_OK; result != FR_RW_ERROR;) {
+    for (result = FR_OK; result == FR_OK;) { //result != FR_RW_ERROR;) {
         //SLAVE_STATUS = 0;
         result = FR_OK;
         if (disk_poll(0) == RES_NOTRDY) {
@@ -183,7 +190,9 @@ uint8_t loop_until_useraction(void) {
                     vputs("DRVERR");
                 }
 
-                SLAVE_STATUS = CPU_STATUS_COMPLETE | (result == FR_OK ? CPU_STATUS_SUCCESS : 0) | (result == FR_RW_ERROR ? CPU_STATUS_CRC : 0);
+                SLAVE_STATUS = CPU_STATUS_COMPLETE 
+                    | (result == FR_OK ? CPU_STATUS_SUCCESS : 0) 
+                    | (result != FR_OK ? CPU_STATUS_CRC : 0);
 
                 //delay2(10);
 
@@ -238,7 +247,9 @@ uint8_t loop_until_useraction(void) {
                     vputs("DRVERR");
                 }
 
-                SLAVE_STATUS = CPU_STATUS_COMPLETE | (result == FR_OK ? CPU_STATUS_SUCCESS : 0) | (result == FR_RW_ERROR ? CPU_STATUS_CRC : 0);
+                SLAVE_STATUS = CPU_STATUS_COMPLETE
+                    | (result == FR_OK ? CPU_STATUS_SUCCESS : 0)
+                    | (result != FR_OK ? CPU_STATUS_CRC : 0);
                 break;
             case CPU_REQUEST_ACK:
                 SLAVE_STATUS = 0;

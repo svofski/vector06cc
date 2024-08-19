@@ -21,7 +21,13 @@
 #define _PHILES_H
 
 #include "integer.h"
+#include "config.h"
+
+#if NEW_FATFS
+#include "ff.h"
+#else
 #include "tff.h"
+#endif
 
 typedef enum file_kind {
     FK_UNKNOWN,

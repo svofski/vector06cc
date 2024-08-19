@@ -20,7 +20,13 @@
 #define _FDDIMAGE_H
 
 #include "integer.h"
+#include "config.h"
+
+#if NEW_FATFS
+#include "ff.h"
+#else
 #include "tff.h"
+#endif
 
 typedef struct {
     uint8_t nsides;

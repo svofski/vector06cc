@@ -39,8 +39,16 @@
 # Compiler effort (-Os = optimize for size)
 EFFORT = -Os
 
+# Additional user flags:
+CC_USER_FLAGS += -DNEW_FATFS=0
+FATFS_SRC = tff.c
+# FATFS_SRC = ff.c -DNEW_FATFS=1
+
 # User's application sources (add additional files here)
-APP_SRC = main.c fddimage.c menu.c mmc.c osd.c philes.c serial.c slave.c tff.c timer.c romload.c
+# old fatfs
+#APP_SRC = main.c fddimage.c menu.c mmc.c osd.c philes.c serial.c slave.c tff.c timer.c romload.c
+# new fatfs
+APP_SRC = main.c fddimage.c menu.c mmc.c osd.c philes.c serial.c slave.c $(FATFS_SRC) timer.c romload.c
 
 # User's application include folders (don't forget the '-I' before each entry)
 APP_INC = -I .
@@ -49,8 +57,6 @@ APP_INC = -I .
 #NEO430_HOME ?= ../../..
 NEO430_HOME ?= /mnt/c/Gowin/refprojects/neo430
 
-# Additional user flags:
-CC_USER_FLAGS += 
 #*******************************************************************************
 
 
