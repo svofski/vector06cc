@@ -22,9 +22,13 @@ typedef unsigned long	DWORD;
 /* Boolean type */
 typedef enum { FALSE = 0, TRUE } BOOL;
 
+#ifndef SIMULATION
 typedef BYTE 	uint8_t;
 typedef WORD	uint16_t;
 typedef DWORD	uint32_t;
+#else
+#include <stdint.h>
+#endif
 
 #define _INTEGER
 #endif

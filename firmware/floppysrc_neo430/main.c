@@ -41,9 +41,6 @@
 
 #include "philes.h"
 
-char* cnotice1 = "    VECTOR-06C FPGA REPLICA     ";
-char* cnotice2 = "(C)2008-24  VIACHESLAV SLAVINSKY";
-
 void _zpu_interrupt(void) {}
 void _premain(void) {}
 
@@ -119,6 +116,7 @@ int main(void) {
 
     //ser_puts("A");
     
+    extern const char *cnotice1, *cnotice2;
     ser_nl(); ser_puts(cnotice1); 
     ser_nl(); ser_puts(cnotice2);
     ser_nl();

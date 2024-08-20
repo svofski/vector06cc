@@ -58,7 +58,12 @@
 #define         OSDCMD_ROMHOLD          (1<<3)                  // exclusive ram acceess for rom loader
 
 
+#ifndef SIMULATION
 #define		DISPLAY_BASE		0xE000
+#else
+extern uint8_t DISPLAY_BASE[];
+#endif
+
 #define		DISPLAY_W		32
 #define		DISPLAY_H		8
 #define		DISPLAY_RAMSIZE		256
@@ -66,7 +71,11 @@
 #define		MMC_A		(*((volatile unsigned char *)(IOPORT_BASE+IOPORT_MMC_A)))
 #define		SPDR		(*((volatile unsigned char *)(IOPORT_BASE+IOPORT_SPDR)))
 #define		SPSR        	(*((volatile unsigned char *)(IOPORT_BASE+IOPORT_SPSR)))
+#ifndef SIMULATION
 #define		JOYSTICK	(*((volatile unsigned char *)(IOPORT_BASE+IOPORT_JOY)))
+#else
+extern uint8_t JOYSTICK;
+#endif
 
 #define		SERIAL_TxD	(*((volatile unsigned char *)(IOPORT_BASE+IOPORT_SERIAL_TxD)))
 #define		SERIAL_RxD	(*((volatile unsigned char *)(IOPORT_BASE+IOPORT_SERIAL_RxD)))
@@ -85,7 +94,11 @@
 
 
 #define		GREEN_LEDS	(*((volatile unsigned char *)(IOPORT_BASE+IOPORT_GLEDS)))
+#ifndef SIMULATION
 #define		OSD_CMD		(*((volatile unsigned char *)(IOPORT_BASE+IOPORT_OSDCMD)))
+#else
+extern uint8_t OSD_CMD;
+#endif
 
 #define		ROMLOAD_PAGE	(*((volatile unsigned char *)(IOPORT_BASE+IOPORT_ROM_PAGE)))
 #define		ROMLOAD_ADDR	(*((volatile uint16_t*)      (IOPORT_BASE+IOPORT_ROM_ADDR)))

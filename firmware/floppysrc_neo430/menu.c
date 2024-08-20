@@ -1,7 +1,7 @@
 // ====================================================================
-//                         VECTOR-06C FPGA REPLICA
+//                       VECTOR-06C FPGA REPLICA
 //
-//                 Copyright (C) 2007-2024 Viacheslav Slavinsky
+//               Copyright (C) 2007-2024 Viacheslav Slavinsky
 //
 // This code is distributed under modified BSD license. 
 // For complete licensing information see LICENSE.TXT.
@@ -23,8 +23,12 @@
 #include "menu.h"
 #include "philes.h"
 #include "serial.h"
+#include "timer.h"
 
 #include <string.h>
+#ifdef SIMULATION
+#include <assert.h>
+#endif
 
 
 extern uint8_t* dmem;
@@ -39,7 +43,7 @@ static uint8_t joy_status;
 #define STATE_MENU              0
 #define STATE_FSEL              1
 #define STATE_WAITBREAK         10
-#define STATE_WAITBREAK2        11
+#define STATE_FILESELECTED      11
 #define STATE_ABOOT2            12
 #define STATE_ABOOT             2
 
@@ -50,6 +54,7 @@ static char* menu_item[] = {    NULL,           TXT_MENU_UP,      NULL,
                                 NULL,           TXT_MENU_DOWN,    NULL};
 
 static int8_t menu_x, menu_y, menu_selected;
+static int8_t fsel_menu_x, fsel_menu_y;
 
 static uint8_t osdcmd = 0;
 
@@ -71,6 +76,14 @@ extern char* cnotice2;
 extern char* dude[];
 uint8_t dude_seqno;
 
+typedef struct _tui_page {
+    int32_t page_start;
+    uint8_t sel_x, sel_y;
+} tui_page_t;
+
+#define N_PAGES 3
+tui_page_t pages[N_PAGES];     // menu, fdd, rom
+int8_t current_page;            // current page
 
 static void switch_state(void);
 static void draw_fsel(void);
@@ -78,6 +91,10 @@ static void fsel_showselection(uint8_t on);
 static void fsel_getselected(char *file);
 void aboot_anim(void);
 void aboot_show(void);
+
+void menu_goto_page(int page);
+void init_pages();
+void save_page_state(int page);
 
 uint8_t menu_busy(uint8_t status) {
     char *text;
@@ -143,7 +160,7 @@ uint8_t menu_dispatch(uint8_t tick) {
                 }
                 break;
 
-            case STATE_WAITBREAK2:
+            case STATE_FILESELECTED:
                 if (!(joy_status & JOY_FIRE)) {
                     fsel_getselected(ptrfile + 10);
                     ser_puts("Selected image: "); ser_puts(ptrfile); ser_nl();
@@ -154,7 +171,7 @@ uint8_t menu_dispatch(uint8_t tick) {
 
             case STATE_ABOOT2:
                 if (!(joy_status & JOY_FIRE)) {
-                    menu_init();
+                    menu_goto_page(0);
                 }
                 break;
 
@@ -203,7 +220,7 @@ uint8_t menu_dispatch(uint8_t tick) {
                 fsel_showselection(1);
 
                 if (joy_status & JOY_FIRE) {
-                    state = STATE_WAITBREAK2;
+                    state = STATE_FILESELECTED;
                 }
 
                 break;
@@ -213,29 +230,55 @@ uint8_t menu_dispatch(uint8_t tick) {
     return result;
 }
 
-void menu_init() {
-    if (state != STATE_MENU) {
-        state = STATE_MENU;
-        joy_status = 0377;
-
-        osd_cls(1);
+void init_pages()
+{
+    for (int i = 0; i < N_PAGES; ++i) {
+        pages[i].page_start = 0;
+        pages[i].sel_x = pages[0].sel_y = 0;
     }
-
-    menu_x = 1;
-    menu_y = 1;
-    menu_selected = 0377;
-    osdcmd &= 1;        // clear reset bits, keep hold
-    OSD_CMD = osdcmd;
+    pages[0].sel_x = pages[0].sel_y = 1;
+    current_page = 0;
 }
 
-void fsel_init() {
-    fsel_pagestart = 0;
-    fsel_redraw = 1;
-    joy_status = 0xff;
+void menu_init() {
+    init_pages();
+    menu_goto_page(0);
+}
+
+void save_page_state(int page)
+{
+    if (page >= 0 && page < N_PAGES) {
+        pages[page].page_start = fsel_pagestart;
+        pages[page].sel_x = menu_x;
+        pages[page].sel_y = menu_y;
+    }
+}
+
+void menu_goto_page(int page)
+{
+    save_page_state(current_page);
     osd_cls(1);
-    menu_x = 0;
-    menu_y = 0;
-    menu_selected = 0;
+    joy_status = 0377;
+    current_page = page;
+    switch (page) {
+        case 0:
+        default:
+            state = STATE_MENU;
+            menu_x = 1;
+            menu_y = 1;
+            menu_selected = 0377;
+            osdcmd &= 1;        // clear reset bits, keep hold
+            OSD_CMD = osdcmd;
+            break;
+        case 1:
+        case 2:
+            menu_x = pages[current_page].sel_x;
+            menu_y = pages[current_page].sel_y;
+            fsel_pagestart = pages[current_page].page_start;
+            menu_selected = 0;
+            fsel_redraw = 1;
+            break;
+    }
 }
 
 void draw_menu() {
@@ -279,7 +322,7 @@ void switch_state(void) {
     if (state == STATE_WAITBREAK) {
         switch (menu_selected) {
             case SEL_HOLD:
-                osdcmd ^= 1;    // toggle hold 
+                osdcmd ^= 1;    // toggle hold (pause host)
                 OSD_CMD = osdcmd;
                 state = STATE_MENU;
                 break;
@@ -302,7 +345,7 @@ void switch_state(void) {
                 aboot_show();
                 break;
             case SEL_DISK:
-                fsel_init();
+                menu_goto_page(1);
                 state = STATE_FSEL;
                 break;
             default:

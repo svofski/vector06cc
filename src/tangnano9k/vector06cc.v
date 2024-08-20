@@ -606,8 +606,6 @@ end
 // -----------------------------------------------------
 
 
-//wire [21:0] halt_a_mangled = 
-//    {halt_addr[21:16], halt_addr[15],halt_addr[12:0],halt_addr[14:13]};
 wire [21:0] sideload_addr_mangled = 
     {sideload_addr[21:16], sideload_addr[15],sideload_addr[12:0],sideload_addr[14:13]};
 
