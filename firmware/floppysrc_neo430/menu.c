@@ -35,9 +35,13 @@ extern uint8_t* dmem;
 extern char* ptrfile;
 
 static int32_t fsel_pagestart;  // start refresh from here
-static uint8_t fsel_redraw;     // plz redraw file selector, teh slow
+//static uint8_t fsel_redraw;     // plz redraw file selector, teh slow
 static uint8_t fsel_hasnextpage; 
 
+#define INVALID_VIEW   1
+#define INVALID_FSEL   2        // this is only for files, menu has its own selection
+
+static uint8_t invalid;
 static uint8_t joy_status;
 
 #define STATE_MENU              0
@@ -53,8 +57,10 @@ static char* menu_item[] = {    NULL,           TXT_MENU_UP,      NULL,
                                 TXT_MENU_LEFT,  TXT_MENU_MIDDLE,  TXT_MENU_RIGHT,
                                 NULL,           TXT_MENU_DOWN,    NULL};
 
-static int8_t menu_x, menu_y, menu_selected;
-static int8_t fsel_menu_x, fsel_menu_y;
+#ifndef SIMULATION
+static 
+#endif
+int8_t menu_x, menu_y, menu_selected;
 
 static uint8_t osdcmd = 0;
 
@@ -79,13 +85,18 @@ uint8_t dude_seqno;
 typedef struct _tui_page {
     int32_t page_start;
     uint8_t sel_x, sel_y;
+    file_kind_t filter;
 } tui_page_t;
 
-#define N_PAGES 3
-tui_page_t pages[N_PAGES];     // menu, fdd, rom
+#define N_PAGES (1 + 5)
+tui_page_t pages[N_PAGES];     // menu, fdd, rom, edd, cas, wav
 int8_t current_page;            // current page
+int8_t return_to_page;
+#define PAGE_FSEL_FIRST 1         // first page (FDD)
+#define PAGE_FSEL_LAST  5         // last page (WAV)
 
 static void switch_state(void);
+static void draw_fsel_page(void);
 static void draw_fsel(void);
 static void fsel_showselection(uint8_t on);
 static void fsel_getselected(char *file);
@@ -96,8 +107,20 @@ void menu_goto_page(int page);
 void init_pages();
 void save_page_state(int page);
 
+static void invalidate()
+{
+    invalid |= INVALID_VIEW;
+}
+
+static void invalidate_fsel()
+{
+    invalid |= INVALID_FSEL;
+}
+
 uint8_t menu_busy(uint8_t status) {
+#if 0
     char *text;
+
     switch (status) {
         case 0: text = state == STATE_ABOOT2 ? TXT_MENU_ABOOTHALP : TXT_MENU_HALP;
                 break;
@@ -109,7 +132,60 @@ uint8_t menu_busy(uint8_t status) {
     }
     osd_gotoxy(0, 7);
     osd_puts(text);
+#endif
     return 0;
+}
+
+int is_empty(int x, int y)
+{
+    static char tmpname[8+3+1+1];
+
+    int8_t save_selected = menu_selected;
+    menu_selected = x + y * 2;
+    fsel_getselected(tmpname);
+    menu_selected = save_selected;
+    return tmpname[0] == 0 || tmpname[0] == '<'; // <NO FILES>
+}
+
+int check_move(int newx, int newy)
+{
+    if (newx < 0) {
+        return 0;
+    }
+    if (newx > 1) {
+        return 0;
+    }
+    if (newy < 0) {
+        return 0;
+    }
+    if (newy > FSEL_NLINES-1) {
+        return 0;
+    }
+    if (is_empty(newx, newy)) {
+        return 0;
+    }
+
+    return 1;
+}
+
+int find_last_good()
+{
+    int y = FSEL_NLINES - 1;
+    while (y >= 0) {
+        if (!is_empty(0, y)) return y;
+        --y;
+    }
+    return -1;
+}
+
+void adjust_fsel()
+{
+    while (is_empty(menu_x, menu_y) && menu_y > 0) {
+        --menu_y;
+    }
+    if (is_empty(menu_x, menu_y)) {
+        menu_x = 0;
+    }
 }
 
 // return MENURESULT_DISK etc.. when something is selected
@@ -138,15 +214,21 @@ uint8_t menu_dispatch(uint8_t tick) {
                 break;
 
             case STATE_MENU:
-                if (joy_status & JOY_UP) menu_y = 0;
-                else if (joy_status & JOY_DN) menu_y = 2;
-                else menu_y = 1;
+                if (joy_status & JOY_UP)
+                    menu_y = 0;
+                else if (joy_status & JOY_DN)
+                    menu_y = 2;
+                else
+                    menu_y = 1;
 
-                if (joy_status & JOY_LT) menu_x = 0;
-                else if (joy_status & JOY_RT) menu_x = 2;
-                else menu_x = 1;
+                if (joy_status & JOY_LT)
+                    menu_x = 0;
+                else if (joy_status & JOY_RT)
+                    menu_x = 2;
+                else
+                    menu_x = 1;
 
-                draw_menu();
+                invalidate();
 
                 if (joy_status & JOY_FIRE) {
                     state = STATE_WAITBREAK;
@@ -164,7 +246,7 @@ uint8_t menu_dispatch(uint8_t tick) {
                 if (!(joy_status & JOY_FIRE)) {
                     fsel_getselected(ptrfile + 10);
                     ser_puts("Selected image: "); ser_puts(ptrfile); ser_nl();
-                    menu_init();
+                    menu_goto_page(0);
                     result = MENURESULT_DISK;
                 }
                 break;
@@ -177,19 +259,21 @@ uint8_t menu_dispatch(uint8_t tick) {
 
             case STATE_FSEL:
                 if (joy_status & JOY_UP) {
-                    if (menu_y > 0)     {
+                    if (check_move(menu_x, menu_y - 1)) {
                         menu_y -= 1;
-                    } else {
+                    }
+                    else {
                         fsel_pagestart -= FSEL_PAGESIZE - 2;
                         menu_y = FSEL_NLINES - 1;
-                        fsel_redraw = 1;
+                        invalidate();
                     }
                 } 
 
                 if (joy_status & JOY_DN) {
-                    if (menu_y < FSEL_NLINES-1) {
+                    if (check_move(menu_x, menu_y + 1)) {
                         menu_y += 1;
-                    } else {
+                    }
+                    else {
                         menu_y = 0;
                         if (fsel_hasnextpage) {
                             fsel_pagestart += FSEL_PAGESIZE - 2;
@@ -197,27 +281,33 @@ uint8_t menu_dispatch(uint8_t tick) {
                         else {
                             fsel_pagestart = 0;
                         }
-                        fsel_redraw = 1;
+                        invalidate();
                     }
                 }
 
                 if (joy_status & JOY_LT) {
-                    menu_x = menu_x - 1;
-                    if (menu_x < 0) menu_x += 2;
+                    if (check_move(menu_x - 1, menu_y)) {
+                        menu_x = menu_x - 1;
+                    }
+                    else {
+                        menu_x = 0; // so that it's saved nicely
+                        menu_goto_page(current_page == PAGE_FSEL_FIRST ? PAGE_FSEL_LAST : current_page - 1);
+                        menu_x = 1;
+                    }
                 }
 
                 if (joy_status & JOY_RT) {
-                    menu_x = (menu_x + 1) % 2;
+                    if (check_move(menu_x + 1, menu_y)) {
+                        menu_x = menu_x + 1;
+                    }
+                    else {
+                        menu_x = 1; // to save it nicely
+                        menu_goto_page(current_page == PAGE_FSEL_LAST ? PAGE_FSEL_FIRST : current_page + 1);
+                        menu_x = 0;
+                    }
                 }
 
-                if (fsel_redraw) {
-                    fsel_redraw = 0;
-                    draw_fsel();
-                }
-
-                fsel_showselection(0);
-                menu_selected = menu_y*2 + menu_x;
-                fsel_showselection(1);
+                invalidate_fsel();
 
                 if (joy_status & JOY_FIRE) {
                     state = STATE_FILESELECTED;
@@ -226,6 +316,27 @@ uint8_t menu_dispatch(uint8_t tick) {
                 break;
         }
     }
+
+    if (invalid & INVALID_VIEW) {
+        switch (state) {
+            case STATE_MENU:
+                draw_menu();
+                break;
+            case STATE_FSEL:
+                draw_fsel_page();
+                draw_fsel();
+                adjust_fsel();
+                break;
+        }
+    }
+
+    if (invalid & INVALID_FSEL) {
+        fsel_showselection(0);
+        menu_selected = menu_y * 2 + menu_x;
+        fsel_showselection(1);
+    }
+
+    invalid = 0;
 
     return result;
 }
@@ -238,6 +349,13 @@ void init_pages()
     }
     pages[0].sel_x = pages[0].sel_y = 1;
     current_page = 0;
+    return_to_page = PAGE_FSEL_FIRST;
+
+    pages[1].filter = FK_FDD; 
+    pages[2].filter = FK_ROM;
+    pages[3].filter = FK_CAS;
+    pages[4].filter = FK_WAV;
+    pages[5].filter = FK_EDD;
 }
 
 void menu_init() {
@@ -258,7 +376,9 @@ void menu_goto_page(int page)
 {
     save_page_state(current_page);
     osd_cls(1);
-    joy_status = 0377;
+    if (current_page != 0) {
+        return_to_page = current_page;
+    }
     current_page = page;
     switch (page) {
         case 0:
@@ -272,13 +392,18 @@ void menu_goto_page(int page)
             break;
         case 1:
         case 2:
+        case 3:
+        case 4:
+        case 5:
+            philes_setfilter(pages[current_page].filter);
             menu_x = pages[current_page].sel_x;
             menu_y = pages[current_page].sel_y;
             fsel_pagestart = pages[current_page].page_start;
-            menu_selected = 0;
-            fsel_redraw = 1;
+            invalidate_fsel();
             break;
     }
+
+    invalidate();
 }
 
 void draw_menu() {
@@ -345,7 +470,7 @@ void switch_state(void) {
                 aboot_show();
                 break;
             case SEL_DISK:
-                menu_goto_page(1);
+                menu_goto_page(return_to_page);
                 state = STATE_FSEL;
                 break;
             default:
@@ -375,6 +500,20 @@ void find_last_pagestart()
     }
 }
 
+void draw_fsel_page(void)
+{
+    if (current_page < PAGE_FSEL_FIRST || current_page > PAGE_FSEL_LAST)
+        return;
+
+    osd_inv(0); osd_gotoxy(0,7);// osd_puts(TXT_MENU_HALP);
+    osd_puts(" FDD  ROM  CAS  WAV  EDD ");
+
+    char *uptr = dmem + 7 * 32 + (current_page - 1) * 5;
+    for (int i = 0; i < 5; ++i) {
+        *uptr++ |= 0200;
+    }
+}
+
 void draw_fsel(void) {
     int32_t i;
     char *uptr;
@@ -386,6 +525,8 @@ void draw_fsel(void) {
 
     fsel_hasnextpage = 1;
     ser_puts("opendir");
+
+    int nfiles = 0;
     if (philes_opendir() == FR_OK) {
         ser_puts(" ok"); ser_nl();
 
@@ -400,13 +541,22 @@ void draw_fsel(void) {
         }
 
         // show files
-        for (i = 0; i < FSEL_PAGESIZE; i++) {
+        for (i = 0; i < FSEL_PAGESIZE; ++i) {
             uptr = dmem + fsel_index2offs(i);
             memset(uptr, 32, 12);
             if (philes_nextfile(uptr, 0) != FR_OK) {
                 fsel_hasnextpage = 0;
                 // keep filling the screen though
             }
+            else {
+                ++nfiles;
+            }
+        }
+
+        if (nfiles == 0) {
+            uptr = dmem + fsel_index2offs(0);
+            memset(uptr, 32, 12);
+            strcpy(uptr, "<NO FILES>");
         }
     }
 }

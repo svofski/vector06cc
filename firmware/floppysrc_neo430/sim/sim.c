@@ -101,7 +101,10 @@ int main()
         tick = --delay == 0;
         menu_dispatch(tick);
         usleep(1000);
-        printf("%d\r", delay);
+
+        extern int8_t menu_x, menu_y, menu_selected, current_page;
+        printf("%3d menu_x=%d menu_y=%d menu_selected=%d current_page=%d\r", delay,
+                menu_x, menu_y, current_page);
     }
 
     return 0;

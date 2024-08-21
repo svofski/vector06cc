@@ -43,6 +43,8 @@ char *ptrfile = pathbuf;
 
 const char *default_path = "/VECTOR06/xxxxxxxx.xxx\0\0\0";
 
+static file_kind_t filter;
+
 static void strxcpy(char *dst, const char *src, int maxlen) {
     uint8_t i = maxlen;
     while (*src != 0 && i--) *dst++ = *src++;
@@ -75,9 +77,30 @@ file_kind_t philes_getkind(const char * filename)
     return FK_UNKNOWN;
 }
 
+void philes_setfilter(file_kind_t flt)
+{
+    filter = flt;
+}
+
+int filter_accept(file_kind_t k)
+{
+    if (k == filter) return 1;
+
+    switch (filter) {
+        case FK_ROM:
+            return k == FK_ROM || k == FK_R0M;
+        case FK_CAS:
+            return k == FK_CAS || k == FK_BAS || k == FK_ASC;
+        default:
+            break;
+    }
+    return 0;
+}
+
 void philes_init()
 {
     strncpy(ptrfile, default_path, PATHBUF_SZ); // initialise ptrfile
+    filter = FK_FDD;
 }
 
 FRESULT philes_mount() {
@@ -111,7 +134,7 @@ FRESULT philes_nextfile(char *filename, uint8_t terminate) {
             // nowai
         } else {
             int fk = philes_getkind(finfo.fname);
-            if (fk != FK_UNKNOWN) {
+            if (filter_accept(fk)) {
                 if (filename != 0) {
                     if (terminate) {
                         strncpy(filename, finfo.fname, 12);

@@ -27,7 +27,7 @@
 #define AUTOREPEAT 4096
 
 
-#define TXT_MENU_MIDDLE	" DISK "
+#define TXT_MENU_MIDDLE	" MEDIA "
 #define TXT_MENU_LEFT 	" RESET "
 #define TXT_MENU_RIGHT	" RESTART "
 #define TXT_MENU_UP		" HOLD "

@@ -44,6 +44,7 @@ typedef enum file_kind {
 void philes_init(void);
 FRESULT philes_mount(void);
 FRESULT philes_opendir(void);
+void philes_setfilter(file_kind_t flt);
 FRESULT philes_nextfile(char *filename, uint8_t terminate);
 file_kind_t philes_getkind(const char * filename);
 
