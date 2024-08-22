@@ -508,7 +508,7 @@ void draw_fsel_page(void)
     osd_inv(0); osd_gotoxy(0,7);// osd_puts(TXT_MENU_HALP);
     osd_puts(" FDD  ROM  CAS  WAV  EDD ");
 
-    char *uptr = dmem + 7 * 32 + (current_page - 1) * 5;
+    uint8_t *uptr = dmem + 7 * 32 + (current_page - 1) * 5;
     for (int i = 0; i < 5; ++i) {
         *uptr++ |= 0200;
     }
@@ -516,7 +516,7 @@ void draw_fsel_page(void)
 
 void draw_fsel(void) {
     int32_t i;
-    char *uptr;
+    uint8_t *uptr;
 
     // if rolling back over 0, find start of last page
     if (fsel_pagestart < 0) {
@@ -544,7 +544,7 @@ void draw_fsel(void) {
         for (i = 0; i < FSEL_PAGESIZE; ++i) {
             uptr = dmem + fsel_index2offs(i);
             memset(uptr, 32, 12);
-            if (philes_nextfile(uptr, 0) != FR_OK) {
+            if (philes_nextfile((char *)uptr, 0) != FR_OK) {
                 fsel_hasnextpage = 0;
                 // keep filling the screen though
             }
@@ -556,20 +556,20 @@ void draw_fsel(void) {
         if (nfiles == 0) {
             uptr = dmem + fsel_index2offs(0);
             memset(uptr, 32, 12);
-            strcpy(uptr, "<NO FILES>");
+            strcpy((char *)uptr, "<NO FILES>");
         }
     }
 }
 
 void fsel_showselection(uint8_t on) {
-    char* uptr = dmem + fsel_index2offs(menu_selected);
+    uint8_t * uptr = dmem + fsel_index2offs(menu_selected);
     uint8_t i = 12;
 
     while (i--) uptr[i] = on ? uptr[i] | 0200 : uptr[i] & 0177;
 }
 
 void fsel_getselected(char *file) {
-    char* uptr = dmem + fsel_index2offs(menu_selected);
+    uint8_t * uptr = dmem + fsel_index2offs(menu_selected);
     uint8_t u;
     uint8_t i = 12;
     while (i-- && ((u = 0177 & *uptr++) != 32)) {

@@ -869,10 +869,41 @@ videomod videomod(.clk_color_mod(clk_color_mod),
     .VGA_R(LCD_R[4:1]), .VGA_G(LCD_G[5:2]), .VGA_B(LCD_B[4:1]),
     .S_VIDEO_Y(LCD_G[0]), .S_VIDEO_C(LCD_G[1]));
 `else
-assign LCD_CLK = video_lcd_clk;
-assign LCD_DEN = video_lcd_den;
-assign LCD_HSYNC = vga_hs;
-assign LCD_VSYNC = vga_vs;
+
+// the purpose of this part is to produce the blackest picture we can for
+// a brief moment after powering up
+
+wire goth_den, goth_hs, goth_vs;
+
+VGAMod gothvideo
+  (.CLK(clk24),
+   .nRST(1),
+   .PixelClk(clk24),
+   .LCD_DE(goth_den),
+   .LCD_HSYNC(goth_hs),
+   .LCD_VSYNC(goth_vs));
+
+reg goth_vs_r;
+reg vanilla = 1'b0;
+reg [3:0] goth_counter = 4'b0;
+
+always @(posedge clk24)
+begin
+    if (!vanilla)
+    begin
+        goth_vs_r <= goth_vs;
+        if (goth_vs_r & ~goth_vs) 
+        begin
+            goth_counter <= goth_counter + 1'b1;
+            vanilla <= &goth_counter;
+        end
+    end
+end
+
+assign LCD_CLK =    video_lcd_clk;
+assign LCD_DEN =    vanilla ? video_lcd_den : goth_den;
+assign LCD_HSYNC =  vanilla ? vga_hs : goth_hs;
+assign LCD_VSYNC =  vanilla ? vga_vs : goth_vs;
 // FIX this for OSD!
 //assign LCD_R[4:1] = video_r;
 //assign LCD_G[5:2] = video_g;
@@ -881,9 +912,9 @@ assign LCD_VSYNC = vga_vs;
 wire [14:0] osd_555 = bgr233to555(osd_colour);
 wire [14:0] overlayed_bgr555 = osd_active ? osd_555 : bgr555;
 
-assign LCD_R[4:0] = overlayed_bgr555[4:0];
-assign LCD_G[5:1] = overlayed_bgr555[9:5];
-assign LCD_B[4:0] = overlayed_bgr555[14:10];
+assign LCD_R[4:0] = vanilla ? overlayed_bgr555[4:0]   : 5'd0;
+assign LCD_G[5:1] = vanilla ? overlayed_bgr555[9:5]   : 5'd0;
+assign LCD_B[4:0] = vanilla ? overlayed_bgr555[14:10] : 5'd0;
 
 `endif
 ///////////
