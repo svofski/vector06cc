@@ -56,7 +56,7 @@ parameter PWM_WIDTH = 10; // 24e6/2**10 = 23437hz, 72e6/2**10 = 70312
 // I2S interface
 // -------------------------------------
 
-reg [8:0] decimator;
+reg [8:0] decimator; // 24e6 / 512 = 46875
 always @(posedge clk24) decimator <= decimator + 1'd1;
 
 wire ma_ce = decimator == 0;
@@ -102,9 +102,12 @@ begin
         //pulses_sample[0] <= m04 + m14 + m24/* + m34*/;
         //sum <= pulses_sample[0] + pulses_sample[1] + pulses_sample[2] + pulses_sample[3];
 
-        sumL <= timer_hist[0][15:8] + timer_hist[1][15:8] + timer_hist[2][15:8] + timer_hist[3][15:8];
-        sumR <= timer_hist[0][7:0]  + timer_hist[1][7:0]  + timer_hist[2][7:0]  + timer_hist[3][7:0];
+        //sumL <= timer_hist[0][15:8] + timer_hist[1][15:8] + timer_hist[2][15:8] + timer_hist[3][15:8];
+        //sumR <= timer_hist[0][7:0]  + timer_hist[1][7:0]  + timer_hist[2][7:0]  + timer_hist[3][7:0];
     end
+
+    sumL <= {timerL, 2'b00};
+    sumR <= {timerR, 2'b00};
 
     ma_pulseL <= {sumL,7'b0}
         + {ay_soundC,5'b0} + {ay_soundB,4'b0}
