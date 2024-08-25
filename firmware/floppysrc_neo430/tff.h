@@ -52,6 +52,9 @@
 
 
 #include "integer.h"
+#if SIMULATION
+#include <stdio.h>
+#endif
 
 
 /* Type definition for cluster number */
@@ -117,8 +120,16 @@ typedef struct _FIL {
     DWORD   dir_sect;       /* Sector containing the directory entry */
     BYTE*   dir_ptr;        /* Ponter to the directory entry in the window */
 #endif
+#if SIMULATION
+    FILE* file;
+#endif
 } FIL;
 
+#if SIMULATION
+DWORD f_tell(FIL *);
+#else
+#define f_tell(fp) ((fp)->fptr)
+#endif
 
 /* File status structure */
 typedef struct _FILINFO {

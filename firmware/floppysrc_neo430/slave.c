@@ -34,9 +34,9 @@
 #include "menu.h"
 #include "philes.h"
 #include "diskio.h"
+#include "wavload.h"
 
 #include "serial.h"
-
 
 const char * S_ERROR = "ERROR";
 const char * S_ERRORnl = "ERROR\n";
@@ -124,6 +124,11 @@ uint8_t thrall(char *imagefile, volatile uint8_t *buffer)
                 fdd_mounted = 0; // avoid conflict with fdd image
                 rom_load(&file1, (uint8_t *)buffer, 0x0);
                 f_close(&file1);
+                loop_until_useraction();
+                break;
+            case FK_WAV:
+                fdd_mounted = 0;
+                wav_load(&file1, (uint8_t *)buffer);
                 loop_until_useraction();
                 break;
             default:

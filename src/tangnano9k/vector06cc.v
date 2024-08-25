@@ -134,7 +134,7 @@ clockster clockmaker(
     );
 
 
-wire tape_input;
+wire tape_input, tape_input_wav;
 wire [7:0]  ay_soundA,ay_soundB,ay_soundC;
 wire [7:0]  rs_soundA,rs_soundB,rs_soundC;
 wire [2:0]  vi53_out;
@@ -144,7 +144,7 @@ soundcodec soundnik(
     .clk24(clk24),
     .clk_pwm(clk_psram),
     //.clk_pwm(clk24),
-    .pulses({vv55int_pc_out[0],vi53_out}), 
+    .pulses({tape_input_wav | vv55int_pc_out[0],vi53_out}), 
     .ay_soundA(ay_soundA),  //
     .ay_soundB(ay_soundB),  //
     .ay_soundC(ay_soundC),  //
@@ -1168,7 +1168,9 @@ always @(kbd_key_shift or kbd_key_ctrl or kbd_key_rus) begin
     vv55int_pc_in[6] <= ~kbd_key_ctrl;
     vv55int_pc_in[7] <= ~kbd_key_rus;
 end
-always @(tape_input) vv55int_pc_in[4] <= tape_input;
+//always @(tape_input) vv55int_pc_in[4] <= tape_input;
+always @*
+    vv55int_pc_in[4] <= tape_input ^ tape_input_wav;
 always @* vv55int_pc_in[3:0] <= 4'b1111;
 
 
@@ -1348,6 +1350,9 @@ wire         romload_wr;    // write command
 
 `ifdef WITH_FLOPPY
 wire [7:0]  floppy_odata;
+wire [7:0]  wav_sample;
+
+assign tape_input_wav = wav_sample[7];
 
 //floppy_zpu_avalanche floppy_za(
 floppy_neo430 floppy_neo(
@@ -1390,10 +1395,13 @@ floppy_neo430 floppy_neo(
     .o_rom_page(romload_page),
     .o_rom_data(romload_data),
     .o_rom_wr  (romload_wr),
+
+    .o_wav_sample(wav_sample),
     
     // debug 
     .host_hold(floppy_death_by_floppy)
     );
+
 
 `else 
 assign floppy_death_by_floppy = 1'b0;
@@ -1410,6 +1418,7 @@ assign romload_addr = 0;
 assign romload_page = 0;
 assign romload_data = 0;
 assign romload_wr   = 0;
+assign tape_input_wav = 0;
 `endif
 
 

@@ -61,7 +61,10 @@ module floppy_neo430(
     output  [15:0]  o_rom_addr,   // regular addr
     output   [5:0]  o_rom_page,   // for kvaz loading (e.g. from .edd files)
     output   [7:0]  o_rom_data,   // rom/edd file data
-    output          o_rom_wr      // write strobe
+    output          o_rom_wr,     // write strobe
+
+    // -- WAV sample --
+    output   [7:0]  o_wav_sample  // wav player sample
 );
         
 parameter DISK_HAX = "../../../disk_neo430.hax";
@@ -89,6 +92,7 @@ parameter PORT_OSD_COMMAND      = 22;               // {ROMHOLD,F11,F12,HOLD}
 parameter PORT_ROM_PAGE         = 24;               // romload_addr[21:16]
 parameter PORT_ROM_ADDR         = 26;               // romload_addr[15:0]     --- word access only
 parameter PORT_ROM_DATA         = 28;               // romload_data, generate write strobe to o_rom_wr
+parameter PORT_WAVCTL           = 30;               // wav playback control
 
 wire ce = 1'b1;
 
@@ -117,8 +121,8 @@ wire [15:0] dmem_do16;
 wire [15:0] ioports_do16;
 
 wire imem_sel = cpu_addr < 12*1024;       // 12K imem
-wire dmem_sel = cpu_addr[15:12] == 4'hC;  // dmem
-wire bmem_sel = cpu_addr[15:12] == 4'hD;  // bufmem
+wire dmem_sel = cpu_addr[15:12] == 4'hC;  // dmem   $c000-$c3ff
+wire bmem_sel = cpu_addr[15:12] == 4'hD;  // bufmem $d000-$d3ff byte-accessible
 wire osdmem_sel = cpu_addr[15:12] == 4'hE;// osd display
 wire sysconfig_sel = &cpu_addr[15:4];     // $fff0..$ffff
 
@@ -201,17 +205,108 @@ dmem(
     .data_out(dmem_do16_x)
 );
 
+////////////////////////////////////////
+// sound player (e.g. wav tape loader)
+////////////////////////////////////////
+// 24e6/512 = 46875 (/500 to get 48000)
+// 2 ping-pong buffers in bufmem
+// competing with wd_ram_addr/wd_ram_rd for reading
+// competing with cpu when cpu writes data
+// 
+// wd_ram... is irrelevant because floppy would be inactive (ideally the
+// controller should report not ready or something)
+//
+// cpu accesses are rare, but it's hard to be sure when to access
+// next clock after imem_memrd seems to be always free
+
+
+reg [8:0] wav_addr = 0;
+reg [7:0] wav_sample = 0;
+
+assign  o_wav_sample = wav_sample;
+
+wire  bus_free = ~(cpu_memrd | |cpu_memwr | bmem_sel);
+//wire bus_free = ~bmem_sel;
+
+reg   [1:0] wav_read_rq = 0;  // read access request
+
+// PORT_WAVCTL write access
+// bit 1: A/B
+// bit 0: enable
+wire  wavctl_sel  = ioports_sel & cpu_addr[7:0] == PORT_WAVCTL;
+wire  wavctl_wr   = wavctl_sel & cpu_memwr[0];
+
+wire  [8:0] wav_addr_next = wav_addr + 1'b1;
+
+reg   [2:0] wavctl = 0;
+wire        wav_playback_en = wavctl[0];
+wire        wav_playback_ab = wavctl[1];
+wire        wav_rate        = wavctl[2];
+
+reg [9:0] div1k = 0;
+always @(posedge clk) div1k <= div1k + 1'b1;
+
+wire      ce_wav48 = &div1k[8:0];
+wire      ce_wav24 = &div1k[9:0];
+wire      ce_wav = wav_rate ? ce_wav24 : ce_wav48;
+
+
+always @(posedge clk)
+begin
+    if (~reset_n)
+    begin
+        wav_addr <= 0;
+        wav_sample <= 0;
+        //{wav_playback_ab, wav_playback_en} <= 2'b00;
+        wavctl <= 0;
+    end
+
+    if (ce_wav & wav_playback_en) 
+    begin
+        wav_addr <= wav_addr_next;    // advance sample pos and set read req
+        wav_read_rq <= {2'b01};
+        if (wav_addr_next == 0) wavctl[1] <= ~wavctl[1]; // switch a/b
+    end
+
+    // start/stop playback
+    if (wavctl_wr)
+    begin
+        wavctl <= cpu_do16[2:0];
+        wav_addr <= 0;
+    end
+
+    if (wav_read_rq[0] & bus_free) 
+    begin
+        wav_read_rq <= 2'b10;            // reset read rq and register sample
+    end
+
+    if (wav_read_rq[1])
+    begin
+        wav_read_rq <= 2'b00;
+        wav_sample <= bmem_do8;
+    end
+end
+
+
+// 00 x
+// 01 0
+// 10 1
+// 11 x
+wire [9:0] wav_ram_addr = {wav_playback_ab, wav_addr};
+wire       wav_ram_rd = wav_read_rq & bus_free;
 
 ////////////////////////////////////
 // bufmem $d000-$d3ff sector buffer
 ////////////////////////////////////
 
-wire bmem_cs = (wd_ram_rd|wd_ram_wr) || bmem_sel;
+wire bmem_cs = (wd_ram_rd|wd_ram_wr) || bmem_sel || wav_ram_rd;
 reg bmem_memrd_r;
 wire bmem_memrd = bmem_sel & cpu_memrd;
 always @(posedge clk) bmem_memrd_r <= bmem_memrd;
 
-wire [9:0] bmem_addr = (wd_ram_rd|wd_ram_wr) ? wd_ram_addr : cpu_addr[9:0];
+//wire [9:0] bmem_addr = (wd_ram_rd|wd_ram_wr) ? wd_ram_addr : cpu_addr[9:0];
+wire [9:0] bmem_addr =
+    (wd_ram_rd|wd_ram_wr) ? wd_ram_addr : wav_ram_rd ? wav_ram_addr : cpu_addr[9:0];
 
 wire [1:0] bmem_cpu_memwr = {bmem_sel,bmem_sel} & cpu_memwr;
 wire [1:0] bmem_wd_memwr = {wd_ram_wr & wd_ram_addr[0], wd_ram_wr & ~wd_ram_addr[0]};
@@ -419,6 +514,7 @@ begin
         PORT_TRACK:     ioports_do16_x <= {8'h0, wdport_track};
         PORT_SECTOR:    ioports_do16_x <= {8'h0, wdport_sector};
         PORT_JOY:       ioports_do16_x <= {8'h0, keyboard_keys};
+        PORT_WAVCTL:    ioports_do16_x <= {8'h0, 6'b0, wav_playback_ab, wav_playback_en};
         default:        ioports_do16_x <= 16'h0;
     endcase
 end

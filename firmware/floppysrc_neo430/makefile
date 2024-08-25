@@ -40,7 +40,7 @@
 EFFORT = -Os
 
 # Additional user flags:
-CC_USER_FLAGS += -DNEW_FATFS=0
+CC_USER_FLAGS += -DNEW_FATFS=0 -DNEO430
 FATFS_SRC = tff.c
 # FATFS_SRC = ff.c -DNEW_FATFS=1
 
@@ -48,7 +48,7 @@ FATFS_SRC = tff.c
 # old fatfs
 #APP_SRC = main.c fddimage.c menu.c mmc.c osd.c philes.c serial.c slave.c tff.c timer.c romload.c
 # new fatfs
-APP_SRC = main.c fddimage.c menu.c mmc.c osd.c philes.c serial.c slave.c $(FATFS_SRC) timer.c romload.c util.c rstrings.c
+APP_SRC = main.c fddimage.c menu.c mmc.c osd.c philes.c serial.c slave.c $(FATFS_SRC) timer.c romload.c util.c rstrings.c wav.c wavload.c
 
 # User's application include folders (don't forget the '-I' before each entry)
 APP_INC = -I .
@@ -135,7 +135,7 @@ endif
 CC_OPTS += ${CC_USER_FLAGS}
 
 # Linker flags
-LD_OPTS = -mcpu=msp430 -mrelax -nostartfiles
+LD_OPTS = -mcpu=msp430 -mrelax -nostartfiles -Wl,-Map=disk.map
 
 
 #-------------------------------------------------------------------------------

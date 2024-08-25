@@ -84,6 +84,7 @@ int test_buf()
     ser_puts("test_buf write...");
     //print_buff(Buffer);
 
+
     for (int i = 0; i < SECTOR_BUFFER_SZ; ++i) {
         Buffer[i] = i & 255;
     }
@@ -99,6 +100,12 @@ int test_buf()
         }
     }
     ser_puts(" OK\n");
+
+    WAVCTL = 1;
+    for (int i = 0; i < SECTOR_BUFFER_SZ; ++i) {
+        GREEN_LEDS = i & 255;
+    }
+    WAVCTL = 0;
 
     return SECTOR_BUFFER_SZ;
 }

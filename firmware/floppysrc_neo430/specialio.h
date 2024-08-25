@@ -50,6 +50,7 @@
 #define         IOPORT_ROM_PAGE         24                      /* upper 6 bits of addr for romload */
 #define         IOPORT_ROM_ADDR         26                      /* romload write address, word-only */
 #define         IOPORT_ROM_DATA         28                      /* romload data */
+#define         IOPORT_WAVCTL           30                      /* wav playback control */
 
 #define         OSDCMD_NONE             0
 #define         OSDCMD_HOLD             (1<<0)                  // pause
@@ -103,6 +104,8 @@ extern uint8_t OSD_CMD;
 #define		ROMLOAD_PAGE	(*((volatile unsigned char *)(IOPORT_BASE+IOPORT_ROM_PAGE)))
 #define		ROMLOAD_ADDR	(*((volatile uint16_t*)      (IOPORT_BASE+IOPORT_ROM_ADDR)))
 #define         ROMLOAD_DATA    (*((volatile uint8_t*)       (IOPORT_BASE+IOPORT_ROM_DATA)))
+
+#define		WAVCTL		(*((volatile unsigned char *)(IOPORT_BASE+IOPORT_WAVCTL)))
 
 #define		SECTOR_BUFFER_SZ	1024
 #define		SECTOR_BUFFER	((volatile BYTE *)0xd000)
