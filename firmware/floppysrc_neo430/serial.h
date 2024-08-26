@@ -33,6 +33,7 @@ void ser_putc(char c);
 void ser_puts(const char *s);
 void ser_nl(void);
 void print_hex(BYTE b);
+void print_dec_u32(uint32_t n);
 void print_ptr16(void * ptr);
 void print_buff(const BYTE *Buffer);
 

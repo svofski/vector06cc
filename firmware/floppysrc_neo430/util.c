@@ -36,3 +36,18 @@ void print_ptr16(void * ptr)
     print_hex(n & 255);
     print_hex(n >> 8);
 }
+
+
+void print_dec_u32(uint32_t n)
+{
+    char buf[11];
+    buf[10] = 0;
+    int pos = 10;
+
+    while (n > 0 && pos >= 0) {
+        buf[--pos] = n % 10 + '0';
+        n /= 10;
+    }
+    ser_puts(&buf[pos]);
+}
+

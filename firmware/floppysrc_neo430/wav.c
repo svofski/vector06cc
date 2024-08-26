@@ -2,6 +2,7 @@
 #include <string.h>
 #include "wav.h"
 #include "tff.h"
+#include "serial.h"
 
 #if SIMULATION
 #include <stdio.h>
@@ -57,6 +58,10 @@ FRESULT parse_header()
             "Block align: %u Bits per sample: %u\n",
             wavheader.NumChannels, wavheader.SampleRate, wavheader.ByteRate, 
             wavheader.BlockAlign, wavheader.BitsPerSample);
+#else
+    ser_puts("NumChannels: "); print_hex(wavheader.NumChannels);
+    ser_puts(" bits: "); print_hex(wavheader.BitsPerSample); 
+    ser_nl();
 #endif
 
     return f_lseek(wavfile, nextchunk);
@@ -70,6 +75,9 @@ FRESULT seek_data()
         if (f_read(wavfile, &chunk_sz, 4, &br) != FR_OK || br != 4) return WAV_ERROR;
         if (0 == memcmp(tokenbuf, "data", 4)) {
             // found data chunk, set at correct pos, chunk_sz bytes available
+#if SIMULATION
+            printf("data chunk, sz=%lu\n", chunk_sz);
+#endif
             return FR_OK;
         }
         if (f_lseek(wavfile, f_tell(wavfile) + chunk_sz) != FR_OK) return WAV_ERROR;
@@ -81,6 +89,7 @@ FRESULT wav_read_init(FIL *f)
     wavfile = f;
     FRESULT r = parse_header();
     if (r != FR_OK) return r;
+
     return seek_data();
 }
 
@@ -90,17 +99,29 @@ size_t wav_read_bytes(uint8_t *buf, size_t buf_sz)
     UINT br;
     while (pos < buf_sz) {
         if (chunk_sz == 0) {
-            if (seek_data() != FR_OK) return 0;
+            if (seek_data() != FR_OK) return pos;
         }
 
         int toread = buf_sz - pos;
         if (chunk_sz < toread) {
             toread = chunk_sz;
         }
-        if (f_read(wavfile, &buf[pos], toread, &br) != FR_OK || br != toread)
-            return 0;
+        //if (f_read(wavfile, &buf[pos], toread, &br) != FR_OK || br != toread)
+        //    return 0;
+        f_read(wavfile, &buf[pos], toread, &br);
         pos += br;
         chunk_sz -= br;
+
+#if SIMULATION        
+        printf("br=%d pos=%d chunk_sz=%d\n", br, pos, chunk_sz);
+#endif
+
+        if (br != toread) {
+#if SIMULATION        
+            printf("premature EOF\n");
+#endif
+            break;
+        }
     }
 
     return pos;
@@ -155,14 +176,8 @@ size_t wav_bytes_to_samples(uint8_t *buf, size_t buf_sz, uint8_t *dst)
             return 0;
     }
 }
-#include "serial.h"
 
 uint32_t wav_samplerate()
 {
-    //int sr = (int)wavheader.SampleRate;
-    //ser_puts("sr=");
-    //print_hex(sr>>8);
-    //print_hex(sr&255);
-    //ser_nl();
     return wavheader.SampleRate;
 }

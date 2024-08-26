@@ -19,12 +19,15 @@ size_t fill_buf(int ab, uint8_t *buffers)
     size_t br;
     while (pos < ABBUF_SZ) {
         br = wav_read_bytes(wavbuf, WAVBUF_SZ);
-
-        //ser_puts("[fill_buf]");
-
-        if (br == 0) return 0;
         pos += wav_bytes_to_samples(wavbuf, br, &buffers[ab * 512 + pos]);
+        if (br < WAVBUF_SZ) 
+            break;
     }
+
+    for (size_t i = pos; i < ABBUF_SZ; ++i) {
+        buffers[ab * 512 + pos] = 0;
+    }
+
     return pos;
 }
 
@@ -35,16 +38,26 @@ FRESULT wav_load(FIL *f, uint8_t *buffers)
     int ab = 0;
     WAVCTL = 0; // make sure playback is stopped
 
+    uint32_t total = 0;
+
 #ifdef BEEPTEST
     for (int i = 0; i < 512; ++i) {
         buffers[i] = (i & 8) ? 0 : 255;
         buffers[i + 512] = (i & 8) ? 0 : 255;
     }
 #else
-    fill_buf(ab, buffers);
+    total = fill_buf(ab, buffers);
 #endif
 
-    uint8_t ratediv = (wav_samplerate() >= 32000) ? 0 : 4; // pick wav playuback speed (0 ~44k, 1<<2 ~22k)
+    uint8_t ratediv;
+    uint32_t samplerate = wav_samplerate();
+    if (samplerate > 46000) 
+        ratediv = 2 << 2;
+    else if (samplerate > 32000)
+        ratediv = 0;
+    else
+        ratediv = 1 << 2;
+
     ser_puts("wav_load ratediv:"); print_hex(ratediv); ser_nl();
     WAVCTL = ratediv | 1;  // start playing (ab=0)
     for (;;) {
@@ -52,12 +65,12 @@ FRESULT wav_load(FIL *f, uint8_t *buffers)
 
 #ifdef BEEPTEST
         for (int i = 0; i < 512; ++i) {
-            //GREEN_LEDS = buffers[i + 512*ab] = (i & 8) ? 0 : 255;
             buffers[i + 512*ab] = (i & 8) ? 0 : 255;
         }
         size_t nsamps = ABBUF_SZ;
 #else
         size_t nsamps = fill_buf(ab, buffers);
+        total += nsamps;
 #endif
         while (((WAVCTL & 2) >> 1) != ab); // wait until it starts playing
         if (nsamps < ABBUF_SZ) {
@@ -67,7 +80,9 @@ FRESULT wav_load(FIL *f, uint8_t *buffers)
     while (((WAVCTL & 2) >> 1) == ab); // wait until it's done playing
     WAVCTL = 0; // stop
 
-    ser_puts("wav_load done\n");
+    ser_puts("wav_load done; total samples: ");
+    print_dec_u32(total);
+    ser_nl();
 
     return FR_OK;
 }

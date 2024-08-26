@@ -1168,9 +1168,10 @@ always @(kbd_key_shift or kbd_key_ctrl or kbd_key_rus) begin
     vv55int_pc_in[6] <= ~kbd_key_ctrl;
     vv55int_pc_in[7] <= ~kbd_key_rus;
 end
-//always @(tape_input) vv55int_pc_in[4] <= tape_input;
+
 always @*
-    vv55int_pc_in[4] <= tape_input ^ tape_input_wav;
+    vv55int_pc_in[4] <= ~tape_input_wav; //tape_input ^ tape_input_wav;
+
 always @* vv55int_pc_in[3:0] <= 4'b1111;
 
 

@@ -238,18 +238,35 @@ wire  wavctl_wr   = wavctl_sel & cpu_memwr[0];
 
 wire  [8:0] wav_addr_next = wav_addr + 1'b1;
 
-reg   [2:0] wavctl = 0;
+reg   [3:0] wavctl = 0;
 wire        wav_playback_en = wavctl[0];
 wire        wav_playback_ab = wavctl[1];
-wire        wav_rate        = wavctl[2];
+wire  [1:0] wav_rate        = wavctl[3:2];
 
-reg [9:0] div1k = 0;
-always @(posedge clk) div1k <= div1k + 1'b1;
+//reg [9:0] div1k = 0;
+//always @(posedge clk) div1k <= div1k + 1'b1;
+//
+//wire      ce_wav48 = &div1k[8:0];
+//wire      ce_wav24 = &div1k[9:0];
 
-wire      ce_wav48 = &div1k[8:0];
-wire      ce_wav24 = &div1k[9:0];
-wire      ce_wav = wav_rate ? ce_wav24 : ce_wav48;
+reg   [10:0] divsr = 0;
+wire  [10:0] divsr_next = divsr + 1'b1;
 
+localparam TOP_22050 = 24_000_000 / 22050;
+localparam TOP_44100 = 24_000_000 / 44100;
+localparam TOP_48000 = 24_000_000 / 48000;
+
+always @(posedge clk)
+begin
+    divsr <= divsr_next;
+    casez (wav_rate)
+        2'b00:  if (divsr_next == TOP_44100) divsr <= 0;
+        2'b01:  if (divsr_next == TOP_22050) divsr <= 0;
+        2'b1?:  if (divsr_next == TOP_48000) divsr <= 0;
+    endcase
+end
+
+wire ce_wav = divsr == 0;
 
 always @(posedge clk)
 begin
@@ -257,7 +274,6 @@ begin
     begin
         wav_addr <= 0;
         wav_sample <= 0;
-        //{wav_playback_ab, wav_playback_en} <= 2'b00;
         wavctl <= 0;
     end
 
