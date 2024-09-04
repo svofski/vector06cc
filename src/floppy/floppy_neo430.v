@@ -309,7 +309,7 @@ end
 // 10 1
 // 11 x
 wire [9:0] wav_ram_addr = {wav_playback_ab, wav_addr};
-wire       wav_ram_rd = wav_read_rq & bus_free;
+wire       wav_ram_rd = wav_read_rq[0] & bus_free;
 
 ////////////////////////////////////
 // bufmem $d000-$d3ff sector buffer
