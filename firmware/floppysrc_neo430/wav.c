@@ -159,7 +159,13 @@ size_t merge_stereo_i16(const uint8_t *buf, size_t buf_sz, uint8_t *dst)
     }
     else {
         for (i = 0, j = 0; j < jbuf_sz;) {
-            dst[i++] = jbuf[j++] / 256 + 128;
+            //int n = jbuf[j++] / 256 + 128;
+            //if (n < 128) n = 0; else n = 255;     -- smh ok
+            int n = jbuf[j++];
+            if (n < 0) n = 0; else n = 255;
+            dst[i++] = n;
+            //dst[i++] = (jbuf[j++] < 0) ? 0 : 255; -- wtf
+            //dst[i++] = jbuf[j++] / 256 + 128;     -- wtf
         }
     }
     return i;

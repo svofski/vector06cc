@@ -5,7 +5,7 @@
  "CMSER" : false,
  "CMSER_CHECKSUM" : false,
  "CMSER_MODE" : "auto",
- "COMPRESS" : false,
+ "COMPRESS" : true,
  "CPU" : false,
  "CRC_CHECK" : true,
  "Clock_Conversion" : true,

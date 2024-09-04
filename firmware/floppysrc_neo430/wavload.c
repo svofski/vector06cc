@@ -8,7 +8,7 @@
 
 #define ABBUF_SZ  512   // 2x 512, total of 1024 bytes
 
-#define WAVBUF_SZ 128
+#define WAVBUF_SZ 256
 
 uint8_t wavbuf[WAVBUF_SZ];
 
