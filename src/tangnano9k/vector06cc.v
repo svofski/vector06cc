@@ -144,7 +144,7 @@ soundcodec soundnik(
     .clk24(clk24),
     .clk_pwm(clk_psram),
     //.clk_pwm(clk24),
-    .pulses({tape_input_wav | vv55int_pc_out[0],vi53_out}), 
+    .pulses({tape_input_wav ^ vv55int_pc_out[0],vi53_out}), 
     .ay_soundA(ay_soundA),  //
     .ay_soundB(ay_soundB),  //
     .ay_soundC(ay_soundC),  //

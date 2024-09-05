@@ -206,48 +206,37 @@ dmem(
 );
 
 ////////////////////////////////////////
-// sound player (e.g. wav tape loader)
+// sound player (WAV tape loader)
 ////////////////////////////////////////
-// 24e6/512 = 46875 (/500 to get 48000)
-// 2 ping-pong buffers in bufmem
-// competing with wd_ram_addr/wd_ram_rd for reading
-// competing with cpu when cpu writes data
-// 
-// wd_ram... is irrelevant because floppy would be inactive (ideally the
-// controller should report not ready or something)
-//
-// cpu accesses are rare, but it's hard to be sure when to access
-// next clock after imem_memrd seems to be always free
 
+// 2 ping-pong buffers in buf0l/buf0h
+// from CPU side: buffer A is bufmem: 0   2   4   ... 1022
+//                buffer B is bufmem:   1   3   5 ...   1023
 
 reg [8:0] wav_addr = 0;
 reg [7:0] wav_sample = 0;
 
 assign  o_wav_sample = wav_sample;
 
-wire  bus_free = ~(cpu_memrd | |cpu_memwr | bmem_sel);
-//wire bus_free = ~bmem_sel;
-
 reg   [1:0] wav_read_rq = 0;  // read access request
 
-// PORT_WAVCTL write access
-// bit 1: A/B
-// bit 0: enable
+// PORT_WAVCTL
+//
+// bit 2-3: playback rate
+//            00: 44100
+//            01: 22050
+//            10: 48000
+// bit   1: playback buffer A/B (r/w)
+// bit   0: enable playback     (r/w)
 wire  wavctl_sel  = ioports_sel & cpu_addr[7:0] == PORT_WAVCTL;
 wire  wavctl_wr   = wavctl_sel & cpu_memwr[0];
 
 wire  [8:0] wav_addr_next = wav_addr + 1'b1;
 
 reg   [3:0] wavctl = 0;
-wire        wav_playback_en = wavctl[0];
-wire        wav_playback_ab = wavctl[1];
-wire  [1:0] wav_rate        = wavctl[3:2];
-
-//reg [9:0] div1k = 0;
-//always @(posedge clk) div1k <= div1k + 1'b1;
-//
-//wire      ce_wav48 = &div1k[8:0];
-//wire      ce_wav24 = &div1k[9:0];
+wire        wav_playback_en = wavctl[0];      // playback enable
+wire        wav_playback_ab = wavctl[1];      // 0: play 0,2,4... 1: play 1,3,5...
+wire  [1:0] wav_rate        = wavctl[3:2];    // playback samplerate
 
 reg   [10:0] divsr = 0;
 wire  [10:0] divsr_next = divsr + 1'b1;
@@ -291,38 +280,37 @@ begin
         wav_addr <= 0;
     end
 
-    if (wav_read_rq[0] & bus_free) 
-    begin
-        wav_read_rq <= 2'b10;            // reset read rq and register sample
-    end
+    if (wav_read_rq[0]) wav_read_rq <= 2'b10;  // reset read rq and register sample
 
     if (wav_read_rq[1])
     begin
         wav_read_rq <= 2'b00;
-        wav_sample <= bmem_do8;
+        wav_sample <= bmem_do8_wav;
     end
 end
 
+wire [9:0] wav_ram_addr = {wav_addr, wav_playback_ab};
+wire       wav_ram_rd = wav_read_rq[0];
 
-// 00 x
-// 01 0
-// 10 1
-// 11 x
-wire [9:0] wav_ram_addr = {wav_playback_ab, wav_addr};
-wire       wav_ram_rd = wav_read_rq[0] & bus_free;
-
-////////////////////////////////////
-// bufmem $d000-$d3ff sector buffer
-////////////////////////////////////
+////////////////////////////////////////////////
+// bufmem $d000-$d3ff sector and playback buffer
+////////////////////////////////////////////////
 
 wire bmem_cs = (wd_ram_rd|wd_ram_wr) || bmem_sel || wav_ram_rd;
+
 reg bmem_memrd_r;
 wire bmem_memrd = bmem_sel & cpu_memrd;
 always @(posedge clk) bmem_memrd_r <= bmem_memrd;
 
-//wire [9:0] bmem_addr = (wd_ram_rd|wd_ram_wr) ? wd_ram_addr : cpu_addr[9:0];
-wire [9:0] bmem_addr =
-    (wd_ram_rd|wd_ram_wr) ? wd_ram_addr : wav_ram_rd ? wav_ram_addr : cpu_addr[9:0];
+// bmem_addr_l/h are selected independently so that the CPU can fill the other
+// buffer while the current one is being played
+wire [9:0] bmem_addr_l =
+    (wd_ram_rd|wd_ram_wr) ? wd_ram_addr : 
+    (wav_ram_rd & ~wav_playback_ab) ? wav_ram_addr : cpu_addr[9:0];
+
+wire [9:0] bmem_addr_h =
+    (wd_ram_rd|wd_ram_wr) ? wd_ram_addr :
+    (wav_ram_rd & wav_playback_ab) ? wav_ram_addr : cpu_addr[9:0];
 
 wire [1:0] bmem_cpu_memwr = {bmem_sel,bmem_sel} & cpu_memwr;
 wire [1:0] bmem_wd_memwr = {wd_ram_wr & wd_ram_addr[0], wd_ram_wr & ~wd_ram_addr[0]};
@@ -332,23 +320,28 @@ wire [7:0] bmem_l_do_x;
 wire [7:0] bmem_h_do_x;
 wire [15:0] bmem_do16_x = {bmem_h_do_x, bmem_l_do_x};
 wire [15:0] bmem_do16 = bmem_memrd_r ? bmem_do16_x : 16'h0000;
-wire [7:0] bmem_do8 = bmem_addr[0] ? bmem_h_do_x : bmem_l_do_x;
+// used by wd1793
+wire [7:0] bmem_do8_wd = wd_ram_addr[0] ? bmem_h_do_x : bmem_l_do_x;
+// used by wav player
+wire [7:0] bmem_do8_wav = wav_playback_ab ? bmem_h_do_x : bmem_l_do_x;
 
 wire [7:0] bmem_l_di = wd_ram_wr ? wd_ram_odata : cpu_do16[7:0];
 wire [7:0] bmem_h_di = wd_ram_wr ? wd_ram_odata : cpu_do16[15:8];
 
+// even bytes, also playback buffer A
 ram #(.ADDR_WIDTH(9), .DEPTH(512), .DEBUG(0))
   buf0l(.clk(clk),
       .cs(bmem_cs),
-      .addr(bmem_addr[9:1]),
+      .addr(bmem_addr_l[9:1]),
       .we(bmem_memwr[0]),
       .data_in(bmem_l_di),
       .data_out(bmem_l_do_x));
 
+// odd bytes, also playback buffer B
 ram #(.ADDR_WIDTH(9), .DEPTH(512))
   buf0h(.clk(clk),
       .cs(bmem_cs),
-      .addr(bmem_addr[9:1]),
+      .addr(bmem_addr_h[9:1]),
       .we(bmem_memwr[1]),
       .data_in(bmem_h_di),
       .data_out(bmem_h_do_x));
@@ -594,7 +587,7 @@ wd1793 vg93(
     .buff_addr(wd_ram_addr), 
     .buff_rd(wd_ram_rd), 
     .buff_wr(wd_ram_wr), 
-    .buff_idata(bmem_do8),         // data read from ram
+    .buff_idata(bmem_do8_wd),         // data read from ram
     .buff_odata(wd_ram_odata),      // data to write to ram
     
     // workhorse interface

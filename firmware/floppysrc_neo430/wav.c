@@ -127,57 +127,67 @@ size_t wav_read_bytes(uint8_t *buf, size_t buf_sz)
     return pos;
 }
 
-size_t merge_stereo_u8(const uint8_t *buf, size_t buf_sz, uint8_t *dst)
+uint16_t merge_stereo_u8i(const uint8_t *buf, uint16_t buf_sz, uint8_t *dst)
 {
     if (wavheader.NumChannels == 2) {
-        size_t i, j;
+        // untested
+        unsigned i, j;
         for (i = 0, j = 0; j < buf_sz;) {
             int a = buf[j++];
             a += buf[j++];
-            dst[i++] = a >> 1;
+            dst[i] = a >> 1;
+            i += 2;
         }
         return i;
     }
     else {
-        memcpy(dst, buf, buf_sz);
+        // copy linear buf[j] to dst[i] stride 2
+        // it's like memcpy(dst, buf, buf_sz) but dst increments by 2 for each buf byte
+        for (unsigned i = 0, j = 0; j < buf_sz; i += 2, j += 1) {
+            dst[i] = buf[j];
+        }
+        return buf_sz;
     }
-    return buf_sz;
+    return 0;
 }
 
-size_t merge_stereo_i16(const uint8_t *buf, size_t buf_sz, uint8_t *dst)
+uint16_t merge_stereo_i16i(const uint8_t *buf, uint16_t buf_sz_bytes, uint8_t *dst)
 {
     int16_t * jbuf = (int16_t *) buf;
-    size_t jbuf_sz = buf_sz >> 1;
-    size_t i, j;
+    uint16_t jbuf_sz = buf_sz_bytes >> 1;
 
     if (wavheader.NumChannels == 2) {
-        for (i = 0, j = 0; j < jbuf_sz;) {
+        // untested
+        for (unsigned i = 0, j = 0; j < jbuf_sz;) {
             int a = jbuf[j++] / 2;
             a += jbuf[j++] / 2;
-            dst[i++] = a / 256 + 128; 
+            dst[i] = a / 256 + 128; 
+            i += 2;
         }
+        return jbuf_sz >> 1;
     }
     else {
-        for (i = 0, j = 0; j < jbuf_sz;) {
-            //int n = jbuf[j++] / 256 + 128;
-            //if (n < 128) n = 0; else n = 255;     -- smh ok
-            int n = jbuf[j++];
+        for (unsigned i = 0, j = 0; j < jbuf_sz; i += 2, j += 1) {
+            // somehow this works well
+            int n = jbuf[j];
             if (n < 0) n = 0; else n = 255;
-            dst[i++] = n;
-            //dst[i++] = (jbuf[j++] < 0) ? 0 : 255; -- wtf
-            //dst[i++] = jbuf[j++] / 256 + 128;     -- wtf
+            dst[i] = n;
+            // but not this...
+            //dst[i] = jbuf[j] < 0 ? 0 : 255;
         }
+        return jbuf_sz;
     }
-    return i;
+    return 0;
 }
 
-size_t wav_bytes_to_samples(uint8_t *buf, size_t buf_sz, uint8_t *dst)
+// interleaved buffers, stride 2
+uint16_t wav_bytes_to_samples_i(uint8_t *buf, uint16_t buf_sz, uint8_t *dst)
 {
     switch (wavheader.BitsPerSample) {
         case 8:
-            return merge_stereo_u8(buf, buf_sz, dst);
+            return merge_stereo_u8i(buf, buf_sz, dst);
         case 16:
-            return merge_stereo_i16(buf, buf_sz, dst);
+            return merge_stereo_i16i(buf, buf_sz, dst);
         default:
             return 0;
     }

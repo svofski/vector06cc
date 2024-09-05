@@ -10,6 +10,11 @@
 
 #define WAVBUF_SZ 256
 
+// The playback buffers share the same memory as the floppy sector buffer.
+// The buffers are interleaved: even addresses is buffer A, odd addresses is B
+
+//#define BEEPTEST
+
 uint8_t wavbuf[WAVBUF_SZ];
 
 // fill one a/b buffer
@@ -19,13 +24,13 @@ size_t fill_buf(int ab, uint8_t *buffers)
     size_t br;
     while (pos < ABBUF_SZ) {
         br = wav_read_bytes(wavbuf, WAVBUF_SZ);
-        pos += wav_bytes_to_samples(wavbuf, br, &buffers[ab * 512 + pos]);
+        pos += wav_bytes_to_samples_i(wavbuf, br, &buffers[ab + pos * 2]);
         if (br < WAVBUF_SZ) 
             break;
     }
 
-    for (size_t i = pos; i < ABBUF_SZ; ++i) {
-        buffers[ab * 512 + pos] = 0;
+    for (unsigned i = pos; i < ABBUF_SZ; ++i) {
+        buffers[ab + i * 2] = 0;
     }
 
     return pos;
@@ -42,8 +47,8 @@ FRESULT wav_load(FIL *f, uint8_t *buffers)
 
 #ifdef BEEPTEST
     for (int i = 0; i < 512; ++i) {
-        buffers[i] = (i & 8) ? 0 : 255;
-        buffers[i + 512] = (i & 8) ? 0 : 255;
+        buffers[i*2] = (i & 8) ? 0 : 255;         // A
+        buffers[i*2 + 1] = (i & 16) ? 0 : 255;    // B
     }
 #else
     total = fill_buf(ab, buffers);
@@ -64,8 +69,11 @@ FRESULT wav_load(FIL *f, uint8_t *buffers)
         ab = 1 ^ ab;
 
 #ifdef BEEPTEST
+        //for (int i = 0; i < 512; ++i) {
+        //    buffers[i + 512*ab] = (i & 8) ? 0 : 255;
+        //}
         for (int i = 0; i < 512; ++i) {
-            buffers[i + 512*ab] = (i & 8) ? 0 : 255;
+            buffers[i*2 + ab] = (i & (8<<ab)) ? 0 : 255;
         }
         size_t nsamps = ABBUF_SZ;
 #else
