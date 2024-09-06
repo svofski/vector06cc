@@ -78,8 +78,8 @@ static uint16_t inactivity;
 #define FSEL_PAGESIZE   12              // total of 12 items
 #define FSEL_NLINES     6               // 6 lines
 
-extern char* cnotice2;
-extern char* dude[];
+extern const char* cnotice2;
+extern const char* dude[];
 uint8_t dude_seqno;
 
 typedef struct _tui_page {
@@ -89,8 +89,8 @@ typedef struct _tui_page {
 } tui_page_t;
 
 #define N_PAGES (1 + 5)
-tui_page_t pages[N_PAGES];     // menu, fdd, rom, edd, cas, wav
-int8_t current_page;            // current page
+tui_page_t pages[N_PAGES];        // menu, fdd, rom, edd, cas, wav
+int8_t current_page;              // current page
 int8_t return_to_page;
 #define PAGE_FSEL_FIRST 1         // first page (FDD)
 #define PAGE_FSEL_LAST  5         // last page (WAV)
@@ -579,14 +579,14 @@ void fsel_getselected(char *file) {
 }
 
 
-char* aboot2   = "";
-char* aboot4   = "https://caglrc.cc";
-char* aboot3   = "github.com/svofski/vector06cc";
-char* aboot5   = "";
-char* aboot6   = "Thank you for using VECTOR-06CC!";
+const char* aboot2   = "";
+const char* aboot4   = "https://caglrc.cc";
+const char* aboot3   = "github.com/svofski/vector06cc";
+const char* aboot5   = "";
+const char* aboot6   = "Thank you for using VECTOR-06CC!";
 //char* aboot6   = "--------------------------------";
 
-char* dude[]   = {"\\o/",
+const char* dude[]   = {"\\o/",
     " | ",
     "/ \\",
 
@@ -602,7 +602,7 @@ char* dude[]   = {"\\o/",
     "_| ",
     "  \\"};
 
-uint8_t waverseq[] = {0,0,1,1,0,0,1,1,2,3,2,3,2,3,2,3};
+const uint8_t waverseq[] = {0,0,1,1,0,0,1,1,2,3,2,3,2,3,2,3};
 
 
 

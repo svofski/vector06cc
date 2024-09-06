@@ -45,7 +45,7 @@ void osd_gotoxy(uint8_t _x, uint8_t _y) {
     y = _y;
 }
 
-void osd_puts(char *s) {
+void osd_puts(const char *s) {
     uint8_t ofs = (y << 5) + x;
     int i;
     

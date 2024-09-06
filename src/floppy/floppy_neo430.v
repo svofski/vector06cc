@@ -238,24 +238,34 @@ wire        wav_playback_en = wavctl[0];      // playback enable
 wire        wav_playback_ab = wavctl[1];      // 0: play 0,2,4... 1: play 1,3,5...
 wire  [1:0] wav_rate        = wavctl[3:2];    // playback samplerate
 
-reg   [10:0] divsr = 0;
-wire  [10:0] divsr_next = divsr + 1'b1;
+// prescaler /4
+reg   [1:0] divsr_pre4 = 0;
+always @(posedge clk) divsr_pre4 <= divsr_pre4 + 1'b1;
+wire divsr_ce = divsr_pre4 == 0;
 
-localparam TOP_22050 = 24_000_000 / 22050;
-localparam TOP_44100 = 24_000_000 / 44100;
-localparam TOP_48000 = 24_000_000 / 48000;
+reg   [11:0] divsr = 0;
+wire  [11:0] divsr_next = divsr + 1'b1;
+
+localparam TOP_22050 = 24_000_000 / 4 / 22050;
+localparam TOP_44100 = 24_000_000 / 4 / 44100;
+localparam TOP_48000 = 24_000_000 / 4 / 48000;
+localparam TOP_2400  = 24_000_000 / 4 / 2400; 
 
 always @(posedge clk)
 begin
-    divsr <= divsr_next;
-    casez (wav_rate)
-        2'b00:  if (divsr_next == TOP_44100) divsr <= 0;
-        2'b01:  if (divsr_next == TOP_22050) divsr <= 0;
-        2'b1?:  if (divsr_next == TOP_48000) divsr <= 0;
-    endcase
+    if (divsr_ce)
+    begin
+        divsr <= divsr_next;
+        casex (wav_rate)
+            2'b00:  if (divsr_next == TOP_44100) divsr <= 0;
+            2'b01:  if (divsr_next == TOP_22050) divsr <= 0;
+            2'b10:  if (divsr_next == TOP_48000) divsr <= 0;
+            2'b11:  if (divsr_next == TOP_2400)  divsr <= 0;
+        endcase
+    end
 end
 
-wire ce_wav = divsr == 0;
+wire ce_wav = (divsr == 0) && divsr_ce;
 
 always @(posedge clk)
 begin
@@ -276,7 +286,7 @@ begin
     // start/stop playback
     if (wavctl_wr)
     begin
-        wavctl <= cpu_do16[2:0];
+        wavctl <= cpu_do16[3:0];
         wav_addr <= 0;
     end
 

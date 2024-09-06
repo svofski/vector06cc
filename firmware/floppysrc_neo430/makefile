@@ -48,7 +48,7 @@ FATFS_SRC = tff.c
 # old fatfs
 #APP_SRC = main.c fddimage.c menu.c mmc.c osd.c philes.c serial.c slave.c tff.c timer.c romload.c
 # new fatfs
-APP_SRC = main.c fddimage.c menu.c mmc.c osd.c philes.c serial.c slave.c $(FATFS_SRC) timer.c romload.c util.c rstrings.c wav.c wavload.c
+APP_SRC = main.c fddimage.c menu.c mmc.c osd.c philes.c serial.c slave.c $(FATFS_SRC) timer.c romload.c util.c rstrings.c wav.c cas.c wavload.c
 
 # User's application include folders (don't forget the '-I' before each entry)
 APP_INC = -I .

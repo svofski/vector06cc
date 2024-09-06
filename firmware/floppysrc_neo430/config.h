@@ -19,4 +19,7 @@
 #define NEW_FATFS 0 // default to the old version
 #endif
 
+#define WAVBUF_SZ 256   // wav/cas load buffer
+#define ABBUF_SZ  512   // playback buffers are 512 bytes, total of 1024 bytes
+
 #endif

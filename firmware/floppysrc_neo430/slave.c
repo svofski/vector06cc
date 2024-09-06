@@ -61,8 +61,8 @@ void printerr(uint8_t code, uint8_t nl)
 
 uint8_t thrall(char *imagefile, volatile uint8_t *buffer)
 {
-    uint8_t first = 0;
     uint8_t result;
+    uint8_t fs_mounted = 0;
 
     SLAVE_STATUS = CPU_STATUS_DRVNOTRDY;
 
@@ -74,31 +74,36 @@ uint8_t thrall(char *imagefile, volatile uint8_t *buffer)
     for(;;) {
         SLAVE_STATUS = CPU_STATUS_DRVNOTRDY;
         do {
-            ser_puts("mount: ");
-            result = philes_mount();
-            if (result != FR_OK) {
-                printerr(result, 1);
-                break;
-            }
-            ser_puts(S_OKnl);
+            if (!fs_mounted) {
+                ser_puts("mount: ");
+                result = philes_mount();
+                if (result != FR_OK) {
+                    printerr(result, 1);
+                    break;
+                }
+                ser_puts(S_OKnl);
 
-            ser_puts("opendir: ");
-            result = philes_opendir();
-            if (result != FR_OK) {
-                printerr(result, 1);
-                break;
-            }
-            ser_puts(S_OKnl);
+                fs_mounted = 1;
 
-            if (!first) {
+#if AUTO_FIRST_FILE
+                ser_puts("opendir: ");
+                result = philes_opendir();
+                if (result != FR_OK) {
+                    printerr(result, 1);
+                    break;
+                }
+                ser_puts(S_OKnl);
+
                 philes_nextfile(imagefile+10, 1);
-                first++;
+#endif
             }
+
+            loop_until_useraction();
 
             ser_nl();
             if ((result = f_open(&file1, imagefile, FA_READ)) != FR_OK) {
                 ser_puts("Error: ");
-                first = 0; // try to recover by re-reading the directory
+                fs_mounted = 0;
             } else {
                 ser_puts("=> ");
             }
@@ -112,27 +117,26 @@ uint8_t thrall(char *imagefile, volatile uint8_t *buffer)
             case FK_FDD:
                 fdd_load(&file1, &fddimage, (uint8_t *)buffer);
                 fdd_mounted = 1;
-                loop_until_useraction(); // until menu_dispatch() returns MENURESULT_DISK or something
                 break;
             case FK_ROM:
                 fdd_mounted = 0; // avoid confict with fdd image
                 rom_load(&file1, (uint8_t *)buffer, 0x100);
                 f_close(&file1);
-                loop_until_useraction();
                 break;
             case FK_R0M:
                 fdd_mounted = 0; // avoid conflict with fdd image
                 rom_load(&file1, (uint8_t *)buffer, 0x0);
                 f_close(&file1);
-                loop_until_useraction();
                 break;
             case FK_WAV:
                 fdd_mounted = 0;
                 wav_load(&file1, (uint8_t *)buffer);
-                loop_until_useraction();
+                break;
+            case FK_CAS:
+                fdd_mounted = 0;
+                cas_load(&file1, (uint8_t *)buffer);
                 break;
             default:
-                loop_until_useraction();
                 break;
             }
 

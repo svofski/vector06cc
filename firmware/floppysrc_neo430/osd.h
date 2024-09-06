@@ -24,7 +24,7 @@
 
 void osd_cls(uint8_t hdr);
 void osd_gotoxy(uint8_t _x, uint8_t _y);
-void osd_puts(char *s);
+void osd_puts(const char *s);
 void osd_inv(uint8_t i);
 
 #endif

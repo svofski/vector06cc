@@ -59,9 +59,9 @@ FRESULT parse_header()
             wavheader.NumChannels, wavheader.SampleRate, wavheader.ByteRate, 
             wavheader.BlockAlign, wavheader.BitsPerSample);
 #else
-    ser_puts("NumChannels: "); print_hex(wavheader.NumChannels);
-    ser_puts(" bits: "); print_hex(wavheader.BitsPerSample); 
-    ser_nl();
+    //ser_puts("NumChannels: "); print_hex(wavheader.NumChannels);
+    //ser_puts(" bits: "); print_hex(wavheader.BitsPerSample); 
+    //ser_nl();
 #endif
 
     return f_lseek(wavfile, nextchunk);
@@ -130,15 +130,16 @@ size_t wav_read_bytes(uint8_t *buf, size_t buf_sz)
 uint16_t merge_stereo_u8i(const uint8_t *buf, uint16_t buf_sz, uint8_t *dst)
 {
     if (wavheader.NumChannels == 2) {
-        // untested
-        unsigned i, j;
-        for (i = 0, j = 0; j < buf_sz;) {
-            int a = buf[j++];
-            a += buf[j++];
-            dst[i] = a >> 1;
-            i += 2;
-        }
-        return i;
+        //// untested
+        //unsigned i, j;
+        //for (i = 0, j = 0; j < buf_sz;) {
+        //    int a = buf[j++];
+        //    a += buf[j++];
+        //    dst[i] = a >> 1;
+        //    i += 2;
+        //}
+        //return i;
+        return 0;
     }
     else {
         // copy linear buf[j] to dst[i] stride 2
@@ -157,14 +158,15 @@ uint16_t merge_stereo_i16i(const uint8_t *buf, uint16_t buf_sz_bytes, uint8_t *d
     uint16_t jbuf_sz = buf_sz_bytes >> 1;
 
     if (wavheader.NumChannels == 2) {
-        // untested
-        for (unsigned i = 0, j = 0; j < jbuf_sz;) {
-            int a = jbuf[j++] / 2;
-            a += jbuf[j++] / 2;
-            dst[i] = a / 256 + 128; 
-            i += 2;
-        }
-        return jbuf_sz >> 1;
+        //// untested
+        //for (unsigned i = 0, j = 0; j < jbuf_sz;) {
+        //    int a = jbuf[j++] / 2;
+        //    a += jbuf[j++] / 2;
+        //    dst[i] = a / 256 + 128; 
+        //    i += 2;
+        //}
+        //return jbuf_sz >> 1;
+        return 0;
     }
     else {
         for (unsigned i = 0, j = 0; j < jbuf_sz; i += 2, j += 1) {

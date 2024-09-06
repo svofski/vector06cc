@@ -1,20 +1,19 @@
 #include <stdint.h>
 
+#include "config.h"
 #include "wav.h"
+#include "cas.h"
 #include "wavload.h"
 #include "tff.h"
 #include "specialio.h"
 #include "serial.h"
-
-#define ABBUF_SZ  512   // 2x 512, total of 1024 bytes
-
-#define WAVBUF_SZ 256
 
 // The playback buffers share the same memory as the floppy sector buffer.
 // The buffers are interleaved: even addresses is buffer A, odd addresses is B
 
 //#define BEEPTEST
 
+// global, also used by cas.c
 uint8_t wavbuf[WAVBUF_SZ];
 
 // fill one a/b buffer
@@ -63,15 +62,14 @@ FRESULT wav_load(FIL *f, uint8_t *buffers)
     else
         ratediv = 1 << 2;
 
+#if 0
     ser_puts("wav_load ratediv:"); print_hex(ratediv); ser_nl();
+#endif
     WAVCTL = ratediv | 1;  // start playing (ab=0)
     for (;;) {
         ab = 1 ^ ab;
 
 #ifdef BEEPTEST
-        //for (int i = 0; i < 512; ++i) {
-        //    buffers[i + 512*ab] = (i & 8) ? 0 : 255;
-        //}
         for (int i = 0; i < 512; ++i) {
             buffers[i*2 + ab] = (i & (8<<ab)) ? 0 : 255;
         }
@@ -88,9 +86,54 @@ FRESULT wav_load(FIL *f, uint8_t *buffers)
     while (((WAVCTL & 2) >> 1) == ab); // wait until it's done playing
     WAVCTL = 0; // stop
 
+#if 0
     ser_puts("wav_load done; total samples: ");
     print_dec_u32(total);
     ser_nl();
+#endif
+
+    return FR_OK;
+}
+
+
+FRESULT cas_load(FIL *f, uint8_t *buffers)
+{
+    if (cas_read_init(f) != FR_OK) return -1;
+
+    ser_puts("cas_load..");
+
+    int ab = 0;
+    WAVCTL = 0; // make sure playback is stopped
+    
+    uint16_t nsamps;
+#ifdef BEEPTEST
+    for (int i = 0; i < 512; ++i) {
+        buffers[i*2] = (i & 8) ? 0 : 255;         // A
+        buffers[i*2 + 1] = (i & 16) ? 0 : 255;    // B
+    }
+#else
+    nsamps = cas_fill_buf(ab, buffers);
+#endif
+    WAVCTL = (3 << 2) | 1;  // samplerate 3000 | ab = 0 | start playback
+
+    for (;;) {
+        ab = 1 ^ ab;
+
+#ifdef BEEPTEST
+        nsamps = ABBUF_SZ;
+#else
+        nsamps = cas_fill_buf(ab, buffers);
+#endif
+        while (((WAVCTL & 2) >> 1) != ab); // wait until buffer switchover
+        if (nsamps < ABBUF_SZ) {
+            break;
+        }
+    }
+    while (((WAVCTL & 2) >> 1) == ab) {} // wait until done playing
+
+    WAVCTL = 0; // stop
+
+    ser_puts("done\n");
 
     return FR_OK;
 }
