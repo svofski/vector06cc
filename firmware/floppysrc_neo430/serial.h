@@ -34,7 +34,7 @@ void ser_puts(const char *s);
 void ser_nl(void);
 void print_hex(BYTE b);
 void print_dec_u32(uint32_t n);
-void print_ptr16(void * ptr);
+void print_hex16(uint16_t n);
 void print_buff(const BYTE *Buffer);
 
 #else
@@ -50,6 +50,7 @@ void print_buff(const BYTE *Buffer);
 #define vputs(s) {}
 #define vputc(s) {}
 #define vputh(s) {}
+#define vputh16(s) {}
 #define vdump(s) {}
 #define vnl()    {}
 
@@ -62,10 +63,12 @@ void print_buff(const BYTE *Buffer);
 #undef vputs
 #undef vputc
 #undef vputh
+#undef vputh16
 #undef vnl
 #define vputs(s) ser_puts(s)
 #define vputc(c) ser_putc(c)
 #define vputh(x) print_hex(x)
+#define vputh16(x) print_hex16(x)
 #define vnl()    ser_nl()
 #endif
 

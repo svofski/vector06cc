@@ -3,6 +3,12 @@
 
 #define NOT_WITH_DMA
 
+// somehow on msp430 strings in RODATA makes code bigger
+//#define RSTRINGS_RODATA
+
+// run a test on sector buffer ram at startup
+//#define BUFRAM_TEST
+
 #define WITH_SERIAL
 
 #define VERBOSE 2	// 1: mostly quiet

@@ -94,6 +94,8 @@ parameter PORT_ROM_ADDR         = 26;               // romload_addr[15:0]     --
 parameter PORT_ROM_DATA         = 28;               // romload_data, generate write strobe to o_rom_wr
 parameter PORT_WAVCTL           = 30;               // wav playback control
 
+localparam IMEM_SIZE_KB = 16;
+
 wire ce = 1'b1;
 
 
@@ -120,7 +122,7 @@ wire [15:0] imem_do16;
 wire [15:0] dmem_do16;
 wire [15:0] ioports_do16;
 
-wire imem_sel = cpu_addr < 12*1024;       // 12K imem
+wire imem_sel = cpu_addr < IMEM_SIZE_KB*1024;       // imem
 wire dmem_sel = cpu_addr[15:12] == 4'hC;  // dmem   $c000-$c3ff
 wire bmem_sel = cpu_addr[15:12] == 4'hD;  // bufmem $d000-$d3ff byte-accessible
 wire osdmem_sel = cpu_addr[15:12] == 4'hE;// osd display
@@ -136,7 +138,7 @@ begin: _sysconfig
       case (cpu_addr[3:0])
           4'h0: sysconfig_do <= 16'h0000;    // cpuid
           4'h2: sysconfig_do <= 16'h0000;    // sys features
-          4'h6: sysconfig_do <= 12*1024;     // imem size in bytes
+          4'h6: sysconfig_do <= IMEM_SIZE_KB*1024;     // imem size in bytes
           4'hA: sysconfig_do <= 16'd2048;    // 2K dmem
           default: sysconfig_do <= 16'h0000;
       endcase
@@ -147,14 +149,7 @@ end
 always @*
     cpu_di16 <= imem_do16 | dmem_do16 | bmem_do16 | sysconfig_do | ioports_do16 | omem_do16;
 
-//reg cpu_memrd_r;
-//always @(posedge clk)
-//    cpu_memrd_r <= cpu_memrd;
-
 wire [15:0] cpu_addr_x;
-//reg [15:0] cpu_addr_r = 0;
-//always @(negedge clk)
-//    if (cpu_memrd || |cpu_memwr) cpu_addr_r <= cpu_addr;
 assign cpu_addr = cpu_addr_x;
 
 neo430_cpu_std_logic 
@@ -176,7 +171,9 @@ always @(posedge clk)
     imem_memrd_r <= imem_memrd;
 wire [15:0] imem_do16_x;
 assign imem_do16 = imem_memrd_r ? imem_do16_x : 16'h0000;
-ram #(.ADDR_WIDTH(14), .DATA_WIDTH(16), .DEPTH(12*1024/2), .HEXFILE(DISK_HAX)) 
+
+
+ram #(.ADDR_WIDTH(14), .DATA_WIDTH(16), .DEPTH(IMEM_SIZE_KB*1024/2), .HEXFILE(DISK_HAX)) 
 imem(
     .clk(clk),
     .cs(imem_memrd),

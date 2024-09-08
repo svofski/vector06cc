@@ -24,6 +24,7 @@
 #include "philes.h"
 #include "serial.h"
 #include "timer.h"
+#include "rstrings.h"
 
 #include <string.h>
 #ifdef SIMULATION
@@ -78,8 +79,6 @@ static uint16_t inactivity;
 #define FSEL_PAGESIZE   12              // total of 12 items
 #define FSEL_NLINES     6               // 6 lines
 
-extern const char* cnotice2;
-extern const char* dude[];
 uint8_t dude_seqno;
 
 typedef struct _tui_page {
@@ -579,32 +578,8 @@ void fsel_getselected(char *file) {
 }
 
 
-const char* aboot2   = "";
-const char* aboot4   = "https://caglrc.cc";
-const char* aboot3   = "github.com/svofski/vector06cc";
-const char* aboot5   = "";
-const char* aboot6   = "Thank you for using VECTOR-06CC!";
-//char* aboot6   = "--------------------------------";
-
-const char* dude[]   = {"\\o/",
-    " | ",
-    "/ \\",
-
-    "_o_",
-    " | ",
-    "/ \\",
-
-    "\\o_",
-    " |_",
-    "/  ",
-
-    "_o/",
-    "_| ",
-    "  \\"};
 
 const uint8_t waverseq[] = {0,0,1,1,0,0,1,1,2,3,2,3,2,3,2,3};
-
-
 
 void aboot_show() {
     osd_cls(1);

@@ -35,13 +35,12 @@
 #include "philes.h"
 #include "diskio.h"
 #include "wavload.h"
-
+#include "rstrings.h"
 #include "serial.h"
 
-const char * S_ERROR = "ERROR";
-const char * S_ERRORnl = "ERROR\n";
-const char * S_OK = "OK";
-const char * S_OKnl = "OK\n";
+const char * const S_ERROR = "ERROR";
+const char * const S_OK = "OK";
+const char * const S_OKnl = "OK\n";
 
 FDDImage fddimage;
 FIL     file1;

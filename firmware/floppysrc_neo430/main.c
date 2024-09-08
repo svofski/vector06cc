@@ -24,10 +24,9 @@
 #include "serial.h"
 #include "specialio.h"
 #include "integer.h"
-
 #include "diskio.h"
-
 #include "timer.h"
+#include "rstrings.h"
 
 #if NEW_FATFS
 #include "ff.h"
@@ -41,9 +40,6 @@
 
 #include "philes.h"
 
-void _zpu_interrupt(void) {}
-void _premain(void) {}
-
 /*---------------------------------------------------------*/
 /* User Provided Timer Function for FatFs module           */
 /*---------------------------------------------------------*/
@@ -55,16 +51,15 @@ DWORD get_fattime (void)
     return 0;
 }
 
-
 volatile BYTE* Buffer = SECTOR_BUFFER;
 
-void print_result(DRESULT result) {
+void print_result(uint8_t result) {
     switch (result) {
         case 0:
             break;
         default:
             ser_puts(" :( ");
-            print_hex((BYTE)result);
+            print_hex(result);
             ser_nl();
             break;
     }
@@ -79,6 +74,7 @@ void fill_filename(char *buf, char *fname) {
 
 extern char* ptrfile;
 
+#ifdef BUFRAM_TEST
 int test_buf()
 {
     ser_puts("test_buf write...");
@@ -109,26 +105,25 @@ int test_buf()
 
     return SECTOR_BUFFER_SZ;
 }
+#endif
 
 int main(void) {
-    DRESULT result;
-    FRESULT fresult;
-    
     SLAVE_STATUS = 0;
     GREEN_LEDS = 0xC3;
 
-    ser_puts("@");
+    ser_putc('@');
     delay2(10);
+#ifdef BUFRAM_TEST
     test_buf();
+#endif
 
     //ser_puts("A");
     
-    extern const char *cnotice1, *cnotice2;
     ser_nl(); ser_puts(cnotice1); 
     ser_nl(); ser_puts(cnotice2);
     ser_nl();
 
-    thrall(ptrfile, Buffer);
+    uint8_t result = thrall(ptrfile, Buffer);
     print_result(result);
-    ser_puts("\r\nWTF?");
+    for(;;);
 }

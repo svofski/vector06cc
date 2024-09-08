@@ -42,8 +42,7 @@ uint8_t rom_load(FIL * file, uint8_t * bufptr, uint32_t addr)
 
     release_ram();
 
-    vputs("rom_load() size=0x"); vputh(total>>8); vputh(total & 255); vnl();
-
+    vputs("rom_load() size=0x"); vputh16(total); vnl();
 
     return 0;
 }

@@ -55,7 +55,8 @@ APP_INC = -I .
 
 # Relative or absolute path to the NEO430 home folder (use default if not set by user)
 #NEO430_HOME ?= ../../..
-NEO430_HOME ?= /mnt/c/Gowin/refprojects/neo430
+#NEO430_HOME ?= /mnt/c/Gowin/refprojects/neo430
+NEO430_HOME ?= ./neo430
 
 #*******************************************************************************
 
@@ -74,8 +75,6 @@ NEO430_SRC_PATH=$(NEO430_HOME)/sw/lib/neo430/source
 NEO430_EXE_PATH=$(NEO430_HOME)/sw/tools/image_gen
 # Path to NEO430 core rtl folder
 NEO430_RTL_PATH=$(NEO430_HOME)/rtl/core
-# Marker file to verify NEO430 home folder
-NEO430_HOME_MARKER=$(NEO430_INC_PATH)/neo430.h
 
 
 #-------------------------------------------------------------------------------
@@ -214,9 +213,6 @@ disk_hax: image.dat
 #-------------------------------------------------------------------------------
 check: $(IMAGE_GEN)
 	@echo "--------------- Check: NEO430_HOME folder ---------------"
-ifneq ($(shell [ -e $(NEO430_HOME_MARKER) ] && echo 1 || echo 0 ), 1)
-$(error NEO430_HOME folder not found!)
-endif
 	@echo "NEO430_HOME: $(NEO430_HOME)"
 	@echo "--------------- Check: $(AS) ---------------"
 	@$(AS) -version
