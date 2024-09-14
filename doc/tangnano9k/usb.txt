@@ -1,0 +1,158 @@
+8BitDo SN30pro
+==============
+
+Device 0 Connected
+control in[complete]
+Enumerating 045e:028e, class:255, address:1
+control out[complete]
+control in[complete]
+control in[complete]
+Manufacture:8Bitdo SF30 Pro
+control in[complete]
+control in[complete]
+Product:Controller
+control in[complete]
+control in[complete]
+Serial:157F8F8
+control in[complete]
+control in[complete]
+control out[complete]
+inum:0, altsetting:0, numep:2, iclass:255, isubclass:93, iprotcol:1, iface:0
+        bcdHID:1.0, country:1, desc num:37, desc_type:129, desc_size:20
+control out[error]
+control in[complete]
+                Report descriptor:05 01 09 05 a1 01 a1 00 09 30 09 31 15 00 26 ff ff 35 00 46
+                        epaddr:0x81, attr:3, size:32, interval:4
+                        epaddr:0x01, attr:3, size:32, interval:8
+inum:1, altsetting:0, numep:4, iclass:255, isubclass:93, iprotcol:3, iface:0
+        bcdHID:1.0, country:1, desc num:1, desc_type:130, desc_size:320
+control out[error]
+control in[error]                                                                                                                                                                  Report descriptor:05 01 09 05 a1 01 a1 00 09 30 09 31 15 00 26 ff ff 35 00 46 00 01 01 25 81 14 00 00 00 00 13 01 08 00 00 07 05 81 03 20 00 04 07 05 01 03 20 00 08 09 04 01 00 04 ff 5d 03 00 1b 21 00 01 01 01 82 40 01 02 20 16 83 00 00 00 00 00 00 16 03 00 00 00 00 00 00 07 05 82 03 20 00 02 07 05 02 03 20 00 04 07 05 83 03 20 00 40 07 05 03 03 20 00 10 09 04 02 00 01 ff 5d 02 00 09 21 00 01 01 22 84 07 00 07 05 84 03 20 00 10 09 04 03 00 00 ff fd 13 04 06 41 00 01 01 03 38 75 01 15 00 25 01 05 07 19 68 29 9f 81 02 c0 06 01 ff 09 01 a1 01 85 07 09 03 15 00 26 ff 00 75 08 95 07 b1 02 09 04 15 00 26 ff 00 75 08 95 07 91 02 c0 1d 89 0e 14 8c 67 67 b8 a4 bd 17 23 31 55 96 55 a7 3b b7 c3 b3 ec 58 67 e7 16 e1 a9 4a 47 a1 5f ff 2d 2a 0b f1 a8 df e4 ad 05 95 d3 9c 2b 1f 3a 88 28 ac 14 db b8 99 92 96 70 23 66 b7 e3 a9 65 ee 6f 02 0e 62 44 b5 65 7b b5 2a 82 b2 15 11 7e 59 be aa 5e a6 f0 6e e6 11 2f a4 38 e4 1e 48 aa 37 5e ec cd b7 7f 78 1a 55 0d 87 f0 98 66 b7 be 9b a5 2a
+                        epaddr:0x82, attr:3, size:32, interval:2
+                        epaddr:0x02, attr:3, size:32, interval:4
+                        epaddr:0x83, attr:3, size:32, interval:64
+                        epaddr:0x03, attr:3, size:32, interval:16
+inum:2, altsetting:0, numep:1, iclass:255, isubclass:93, iprotcol:2, iface:0
+        bcdHID:1.0, country:1, desc num:34, desc_type:132, desc_size:7
+control out[error]
+control in[error]
+                Report descriptor:05 01 09 05 a1 01 a1
+                        epaddr:0x84, attr:3, size:32, interval:16
+inum:3, altsetting:0, numep:0, iclass:255, isubclass:253, iprotcol:19, iface:4
+
+** end **
+
+Aula USB Keyboard
+=================
+Root 0 connected
+Device 0 Connected
+control in[complete]
+Enumerating 1a2c:9cf4, class:0, address:1
+control out[complete]
+control in[complete]
+control in[complete]
+Manufacture:SEMICO
+control in[complete]
+control in[complete]
+Product:USB Gaming Keyboard
+control in[complete]
+control in[complete]
+control out[complete]
+inum:0, altsetting:0, numep:1, iclass:3, isubclass:1, iprotcol:1, iface:0
+        bcdHID:1.10, country:0, desc num:1, desc_type:34, desc_size:65
+control out[complete]
+control in[complete]
+                Report descriptor:05 01 09 06 a1 01 05 07 19 e0 29 e7 15 00 25 01 75 01 95 08 81 02 95 01 75 08 81 01 95 05 75 01 05 08 19 01 29 05 91 02 95 01 75 03 91 01 95 06 75 08 15 00 26 ff 00 05 07 19 00 2a ff 00 81 00 c0
+                        epaddr:0x81, attr:3, size:8, interval:10
+inum:1, altsetting:0, numep:1, iclass:3, isubclass:1, iprotcol:2, iface:0
+        bcdHID:1.10, country:0, desc num:1, desc_type:34, desc_size:205
+control out[complete]
+control in[complete]
+                Report descriptor:05 0c 09 01 a1 01 85 01 19 00 2a 80 03 15 00 26 80 03 95 01 75 10 81 00 c0 05 01 09 80 a1 01 85 02 19 81 29 83 15 00 25 01 75 01 95 03 81 02 95 05 81 01 c0 06 00 ff 09 01 a1 01 85 03 1a f1 00 2a f8 00 15 00 25 01 75 01 95 08 81 02 c0 05 01 09 06 a1 01 85 04 05 07 19 e0 29 e7 15 00 25 01 75 01 95 08 81 00 95 30 75 01 15 00 25 01 05 07 19 00 29 ff 81 02 c0 05 01 09 06 a1 01 85 05 95 38 75 01 15 00 25 01 05 07 19 30 29 67 81 02 c0 05 01 09 06 a1 01 85 06 95 38 75 01 15 00 25 01 05 07 19 68 29 9f 81 02 c0 06 01 ff 09 01 a1 01 85 07 09 03 15 00 26 ff 00 75 08 95 07 b1 02 09 04 15 00 26 ff 00 75 08 95 07 91 02 c0
+                        epaddr:0x82, attr:3, size:8, interval:10
+
+** end **
+
+Taobao Wireless Keyboard (via USB dongle)
+=========================================
+Root 0 connected
+Device 0 Connected
+control in[complete]
+Enumerating 05ac:024f, class:0, address:1
+control out[complete]
+control in[complete]
+control in[complete]
+Manufacture:SINO WEALTH
+control in[complete]
+control in[complete]
+Product:V7RBKyor
+control in[complete]
+control in[complete]
+control out[complete]
+inum:0, altsetting:0, numep:1, iclass:3, isubclass:1, iprotcol:1, iface:0
+        bcdHID:1.11, country:0, desc num:1, desc_type:34, desc_size:89
+control out[complete]
+control in[complete]
+                Report descriptor:05 01 09 06 a1 01 05 07 19 e0 29 e7 15 00 25 01 95 08 75 01 81 02 95 01 75 08 81 01 95 05 75 01 05 08 19 01 29 05 91 02 95 01 75 03 91 01 05 07 19 00 2a ff 00 95 05 75 08 15 00 26 ff 00 81 00 05 ff 09 03 75 08 95 01 81 02 05 c0 09 00 15 80 25 7f 95 40 75 08 b1 02 c0
+                        epaddr:0x81, attr:3, size:8, interval:1
+inum:1, altsetting:0, numep:1, iclass:3, isubclass:0, iprotcol:1, iface:0
+        bcdHID:1.11, country:0, desc num:1, desc_type:34, desc_size:292
+control out[complete]
+control in[complete]
+                Report descriptor:06 02 ff 09 02 a1 01 85 13 15 00 26 ff 00 75 08 95 13 09 02 81 00 09 02 91 00 c0 06 01 00 09 80 a1 01 85 01 19 81 29 83 15 00 25 01 95 03 75 01 81 02 95 01 75 05 81 01 c0 05 0c 09 01 a1 01 85 02 19 00 2a ff 02 15 00 26 ff 7f 95 01 75 10 81 00 c0 06 02 ff 09 01 a1 01 85 03 15 00 26 ff 00 09 2f 75 08 95 03 81 02 c0 05 01 09 06 a1 01 85 04 05 07 19 e0 29 e7 15 00 25 01 75 01 95 08 81 02 05 07 19 00 29 67 15 00 25 01 75 01 95 68 81 02 09 85 09 87 09 88 09 89 09 8a 09 8b 09 91 09 92 75 01 95 08 81 02 c0 06 00 ff 09 01 a1 01 85 05 15 00 26 ff 00 19 00 29 ff 75 08 95 05 b1 02 c0 06 00 ff 09 01 a1 01 85 06 15 00 26 ff 00 19 01 29 02 75 08 96 07 04 b1 02 c0 05 01 09 02 a1 01 85 07 09 01 a1 00 05 09 15 00 25 01 19 01 29 05 75 01 95 05 81 02 95 03 81 01 05 01 16 00 80 26 ff 7f 09 30 09 31 75 10 95 02 81 06 15 81 25 7f 09 38 75 08 95 01 81 06 05 0c 0a 38 02 95 01 81 06 c0 c0
+                        epaddr:0x82, attr:3, size:25, interval:1
+05ac:024f EP 0x81:      00 00 09 00 00 00 00 00
+05ac:024f EP 0x81:      00 00 09 19 00 00 00 00
+05ac:024f EP 0x82:      13 0a 01 00 04 02 01 00 00 00 00 00 00 00 00 00 00 00 00 25
+05ac:024f EP 0x81:      00 00 09 00 00 00 00 00
+05ac:024f EP 0x81:      00 00 00 00 00 00 00 00
+05ac:024f EP 0x81:      00 00 09 00 00 00 00 00
+05ac:024f EP 0x81:      00 00 09 08 00 00 00 00
+05ac:024f EP 0x81:      00 00 00 08 00 00 00 00
+05ac:024f EP 0x81:      00 00 00 00 00 00 00 00
+05ac:024f EP 0x81:      00 00 06 00 00 00 00 00
+05ac:024f EP 0x81:      00 00 00 00 00 00 00 00
+05ac:024f EP 0x81:      00 00 0e 00 00 00 00 00
+05ac:024f EP 0x81:      00 00 00 00 00 00 00 00
+
+
+Taobao Wireless Mouse (via USB dongle)
+======================================
+Root 0 connected
+Device 0 Connected
+control in[complete]
+Enumerating 1ea7:0066, class:0, address:1
+control out[complete]
+control in[complete]
+control in[complete]
+Product:2.4G Mouse
+control in[complete]
+control in[complete]
+control out[complete]
+inum:0, altsetting:0, numep:1, iclass:3, isubclass:1, iprotcol:1, iface:0
+        bcdHID:1.10, country:0, desc num:1, desc_type:34, desc_size:67
+control out[complete]
+control in[complete]                                                                                                                                                               Report descriptor:05 01 09 06 a1 01 05 08 19 01 29 05 15 00 25 01 95 05 75 01 91 02 95 01 75 03 91 01 05 07 1a e0 00 2a e7 00 15 00 25 01 95 08 75 01 81 02 95 01 75 08 81 01 19 00 2a ff 00 15 00 26 ff 00 95 06 81 00 c0
+                        epaddr:0x81, attr:3, size:8, interval:4
+inum:1, altsetting:0, numep:1, iclass:3, isubclass:1, iprotcol:2, iface:0
+        bcdHID:1.10, country:0, desc num:1, desc_type:34, desc_size:185
+control out[complete]
+control in[complete]                                                                                                                                                               Report descriptor:06 b5 ff 09 01 a1 01 85 b5 09 02 15 00 26 ff 00 75 08 95 07 81 02 09 02 15 00 26 ff 00 75 08 95 07 91 02 c0 05 01 09 02 a1 01 85 02 09 01 a1 00 05 09 19 01 29 08 15 00 25 01 95 08 75 01 81 02 05 01 09 30 09 31 16 01 f8 26 ff 07 75 0c 95 02 81 06 09 38 15 81 25 7f 75 08 95 01 81 06 05 0c 0a 38 02 95 01 81 06 c0 c0 05 0c 09 01 a1 01 85 01 19 01 2a ff 03 15 01 26 ff 03 95 01 75 10 81 00 c0 05 01 09 80 a1 01 85 03 1a 81 00 2a 83 00 15 00 25 01 95 03 75 01 81 02 95 05 81 01 c0 06 bc ff 09 88 a1 01 85 04 19 00 2a ff 00 15 00 26 ff 00 95 01 75 08 81 00 c0
+                        epaddr:0x82, attr:3, size:8, interval:2
+1ea7:0066 EP 0x82:      b5 67 aa 63 dc 52 19 11
+1ea7:0066 EP 0x82:      b5 20 00 43 00 04 0d 00
+1ea7:0066 EP 0x82:      02 00 09 50 00 00 00
+1ea7:0066 EP 0x82:      02 00 11 90 00 00 00
+1ea7:0066 EP 0x82:      02 00 1b 00 01 00 00
+1ea7:0066 EP 0x82:      02 00 22 50 01 00 00
+1ea7:0066 EP 0x82:      02 00 28 90 01 00 00
+1ea7:0066 EP 0x82:      02 00 26 a0 01 00 00
+1ea7:0066 EP 0x82:      02 00 1f 70 01 00 00
+1ea7:0066 EP 0x82:      02 00 15 40 01 00 00
+1ea7:0066 EP 0x82:      02 00 0c e0 00 00 00
+1ea7:0066 EP 0x82:      02 00 06 a0 00 00 00
+1ea7:0066 EP 0x82:      02 00 04 70 00 00 00
+
+
+
+

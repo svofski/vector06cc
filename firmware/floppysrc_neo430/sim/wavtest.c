@@ -18,13 +18,12 @@ int test(const char *path)
 {
     FIL wafil;
     FRESULT r = f_open(&wafil, path, FA_READ);
-
-    int raw = open("converted.raw", O_CREAT | O_WRONLY, 0644);
-
     if (r != FR_OK) {
         fprintf(stderr, "could not open %s\n", path);
         return 1;
     }
+
+    int raw = open("converted.raw", O_CREAT | O_WRONLY, 0644);
     
     if (wav_read_init(&wafil) != FR_OK) {
         fprintf(stderr, "could not initialise wav reader\n");
@@ -42,6 +41,7 @@ int test(const char *path)
             //printf("test: br=%d\n", br);
             total_bytes += br;
 
+            // this is invalid now
             nsamps = wav_bytes_to_samples(wavbuf, br, &sample[pos]);
             pos += nsamps;
 
@@ -76,34 +76,3 @@ int main()
     return 0;
 }
 
-// tff
-
-FRESULT f_open (
-    FIL *fp,            /* Pointer to the blank file object */
-    const char *path,   /* Pointer to the file name */
-    BYTE mode           /* Access mode and file open mode flags */
-)
-{
-    fp->file = fopen(path, "r");
-    if (fp->file == NULL) return FR_NO_FILE;
-
-    return FR_OK;
-}
-
-DWORD f_tell(FIL *f)
-{
-    return ftell(f->file);
-}
-
-FRESULT f_read(FIL *f, void *buf, UINT count, UINT* bytesread)
-{
-    size_t br = fread(buf, 1, count, f->file);
-    *bytesread = (UINT)br;
-    return FR_OK;
-}
-
-FRESULT f_lseek(FIL *f, DWORD pos)
-{
-    int res = fseek(f->file, pos, SEEK_SET);
-    return res >= 0 ? FR_OK : FR_NO_FILE;
-}

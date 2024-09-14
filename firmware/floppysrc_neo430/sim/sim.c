@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
-#include <termios.h>
 #include <stdlib.h>
 
 #include "integer.h"
@@ -15,12 +14,6 @@
 
 #include "console.h"
 
-#define VT_HOME "\033[H"
-#define VT_COLORSET "\033[37;46m\033[48;5;24m"
-#define VT_COLORRESET "\033[0;0m"
-#define VT_INVSET  "\033[7m"
-#define VT_INVRESET "\033[27m"
-
 // stub memory substitutes
 uint8_t DISPLAY_BASE[DISPLAY_RAMSIZE];
 uint8_t OSD_CMD;
@@ -28,22 +21,6 @@ uint8_t JOYSTICK;
 
 void osd_print(void);
 void console_print(void);
-
-/* Initialize new terminal i/o settings */
-static struct termios old, new1;
-void initTermios(int echo) {
-    tcgetattr(0, &old); /* grab old terminal i/o settings */
-    new1 = old; /* make new settings same as old settings */
-    new1.c_lflag &= ~ICANON; /* disable buffered i/o */
-    new1.c_lflag &= echo ? ECHO : ~ECHO; /* set echo mode */
-    tcsetattr(0, TCSANOW, &new1); /* use these new terminal i/o settings now */
-}
-
-/* Restore old terminal i/o settings */
-void resetTermios(void) {
-    tcsetattr(0, TCSANOW, &old);
-    puts(VT_COLORRESET);
-}
 
 int kbhit()
 {
@@ -56,9 +33,6 @@ int kbhit()
 
 int main()
 {
-    initTermios(0);
-    atexit(resetTermios);
-
     console_init();
 
     philes_init();
@@ -103,8 +77,8 @@ int main()
         usleep(1000);
 
         extern int8_t menu_x, menu_y, menu_selected, current_page;
-        printf("%3d menu_x=%d menu_y=%d menu_selected=%d current_page=%d\r", delay,
-                menu_x, menu_y, current_page);
+        printf("%3d menu_x=%d menu_y=%d menu_selected=%d current_page=%d\r",
+                delay, menu_x, menu_y, menu_selected, current_page);
     }
 
     return 0;

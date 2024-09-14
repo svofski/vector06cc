@@ -1,19 +1,19 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <termios.h>
 
-#define CONSOLE_X 40
-#define CONSOLE_Y 0
-
-#define CONSOLE_COL "\033[93;40m\033[48;5;235m"
-#define CONSOLE_NOCOL "\033[0;0m"
-
+#include "console.h"
 
 char * consolebuf[25];
 size_t console_nlines = sizeof(consolebuf)/sizeof(consolebuf[0]);
 int console_y = 0, console_x = 0;
 const int console_width = 64;
 int console_invalid;
+
+
+void initTermios(int echo);
+void resetTermios(void);
 
 void vt_gotoxy(int x, int y)
 {
@@ -22,10 +22,14 @@ void vt_gotoxy(int x, int y)
 
 void console_init()
 {
+    initTermios(0);
+    atexit(resetTermios);
+
     for (int i = 0; i < console_nlines; ++i) {
         consolebuf[i] = (char *) malloc(console_width + 1);
         consolebuf[i][0] = 0;
     }
+    console_y = console_x = 0;
     console_invalid = 1;
 }
 
@@ -89,3 +93,21 @@ void ser_puts(const char *s) {
 void ser_nl(void) {
     ser_putc('\n');
 }
+
+/* Initialize new terminal i/o settings */
+static struct termios old, new1;
+void initTermios(int echo) {
+    tcgetattr(0, &old); /* grab old terminal i/o settings */
+    new1 = old; /* make new settings same as old settings */
+    new1.c_lflag &= ~ICANON; /* disable buffered i/o */
+    new1.c_lflag &= echo ? ECHO : ~ECHO; /* set echo mode */
+    tcsetattr(0, TCSANOW, &new1); /* use these new terminal i/o settings now */
+}
+
+/* Restore old terminal i/o settings */
+void resetTermios(void) {
+    tcsetattr(0, TCSANOW, &old);
+    puts(VT_COLORRESET);
+}
+
+

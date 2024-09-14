@@ -54,7 +54,7 @@ FRESULT parse_header()
             || br != sizeof(wavheader_t)) return WAV_ERROR;
 
 #if SIMULATION
-    printf("WAV file: Channels: %d Sample rate: %lu Byte rate: %lu "
+    printf("WAV file: Channels: %d Sample rate: %u Byte rate: %u "
             "Block align: %u Bits per sample: %u\n",
             wavheader.NumChannels, wavheader.SampleRate, wavheader.ByteRate, 
             wavheader.BlockAlign, wavheader.BitsPerSample);
@@ -76,7 +76,7 @@ FRESULT seek_data()
         if (0 == memcmp(tokenbuf, "data", 4)) {
             // found data chunk, set at correct pos, chunk_sz bytes available
 #if SIMULATION
-            printf("data chunk, sz=%lu\n", chunk_sz);
+            printf("data chunk, sz=%u\n", chunk_sz);
 #endif
             return FR_OK;
         }
@@ -113,7 +113,7 @@ size_t wav_read_bytes(uint8_t *buf, size_t buf_sz)
         chunk_sz -= br;
 
 #if SIMULATION        
-        printf("br=%d pos=%d chunk_sz=%d\n", br, pos, chunk_sz);
+        printf("br=%u pos=%lu chunk_sz=%u\n", br, pos, chunk_sz);
 #endif
 
         if (br != toread) {
