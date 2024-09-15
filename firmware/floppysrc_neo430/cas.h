@@ -11,6 +11,8 @@ typedef enum {
 
 #define CAS_ERROR -3
 
+
 FRESULT cas_read_init(FIL *f);
 uint16_t cas_read_bytes(uint8_t *buf, uint16_t buf_sz);
 uint16_t cas_fill_buf(int ab, uint8_t *buffers);
+uint16_t cas_samplerate(void);

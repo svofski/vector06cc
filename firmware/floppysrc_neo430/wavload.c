@@ -16,6 +16,20 @@
 // global, also used by cas.c
 uint8_t wavbuf[WAVBUF_SZ];
 
+// return weird samplerate bits for WAVCTL
+static uint8_t samplerate_bv(uint16_t samplerate)
+{
+    switch (samplerate) {
+        case 2400:  return 3 << 2;
+        case 4800:  return 4 << 2;
+        case 22050: return 1 << 2;
+        case 44100: return 0 << 2;
+        case 48000: return 2 << 2;
+        default:    return 2 << 2;
+            break;
+    }
+}
+
 // fill one a/b buffer
 size_t fill_buf(int ab, uint8_t *buffers)
 {
@@ -55,12 +69,13 @@ FRESULT wav_load(FIL *f, uint8_t *buffers)
 
     uint8_t ratediv;
     uint32_t samplerate = wav_samplerate();
+
     if (samplerate > 46000) 
-        ratediv = 2 << 2;
+        ratediv = samplerate_bv(48000);
     else if (samplerate > 32000)
-        ratediv = 0;
+        ratediv = samplerate_bv(44100);
     else
-        ratediv = 1 << 2;
+        ratediv = samplerate_bv(22050);
 
 #if 0
     ser_puts("wav_load ratediv:"); print_hex(ratediv); ser_nl();
@@ -114,7 +129,9 @@ FRESULT cas_load(FIL *f, uint8_t *buffers)
 #else
     nsamps = cas_fill_buf(ab, buffers);
 #endif
-    WAVCTL = (3 << 2) | 1;  // samplerate 3000 | ab = 0 | start playback
+    //WAVCTL = (3 << 2) | 1;  // samplerate 2400 | ab = 0 | start playback
+    // samplerate 2400/4800, ab=0, start playback
+    WAVCTL = samplerate_bv(cas_samplerate()) | 1;
 
     for (;;) {
         ab = 1 ^ ab;

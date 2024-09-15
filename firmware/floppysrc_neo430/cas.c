@@ -128,14 +128,6 @@ uint16_t v06c_fill_buf(int ab, uint8_t *buffers)
     uint8_t *bp = buffers + ab;  // write pointer (stride 2)
 
     while (dstpos < ABBUF_SZ) {
-        // top up cas bytes (source)
-        //if (cas_avail == 0) {
-        //    br = cas_read_bytes(wavbuf, WAVBUF_SZ);
-        //    cas_avail = br;
-        //    cas_bufpos = 0;
-        //    if (cas_avail == 0)   // eof
-        //        break;
-        //}
         if (cas_avail == 0) 
             cas_fetch();
         if (cas_avail == 0)   // eof
@@ -330,4 +322,12 @@ uint16_t cas_fill_buf(int ab, uint8_t *buffers)
     }
 
     return 0;
+}
+
+uint16_t cas_samplerate(void)
+{
+    switch (caskind) {
+        case CAS_MSX: return 4800;
+        default:      return 2400;
+    }
 }
