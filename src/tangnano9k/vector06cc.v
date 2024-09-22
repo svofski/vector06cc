@@ -108,7 +108,7 @@ wire  delayed_reset_n;    // when PSRAM ready
 wire mreset_n = delayed_reset_n & ~kbd_key_blkvvod;
 wire mreset = !mreset_n;
 
-wire clk24, clkAudio, clk48, clk48p;
+wire clk24, clkAudio;
 wire ce12, ce6, ce6x, ce3, ce3f2, vi53_timer_ce, video_slice, pipe_ab;
 wire clkpal4FSC = 0;    // no PAL modulator
 wire clk_color_mod = 0; // no PAL color 
@@ -117,8 +117,6 @@ wire clk_psram, clk_psram_p;
 
 clockster clockmaker(
     .clk27(XTAL_27MHZ),     // input xtal, 27 mhz on fhtagn nano 9k
-    .clk48(clk48),          // ??
-    .clk48p(clk48p),        // ??
     .clk24(clk24),          // master clock
     .clk_psram(clk_psram),  // PSRAM clock
     .clk_psram_p(clk_psram_p),// PSRAM clock 90 deg
