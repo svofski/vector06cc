@@ -26,6 +26,10 @@
 //`define COMPOSITE_PWM   // use sigma-delta modulator on composite video out
 //`define WITH_SVIDEO 
 `define WITH_VGA
+//`define SCAN_2_1
+`define SCAN_5_3
+//`define SCAN_7INCH
+
 //`define WITH_SERIAL_PROBE
 
 `define OSD_TOP_FB_ROW    9'd250   // more is higher above (200 is cursed)

@@ -27,7 +27,8 @@
 //`default_nettype none
 
 //`define SCAN_2_1  // less BRAM usage
-`define SCAN_5_3
+//`define SCAN_5_3    // scale down and skip HSYNC pulses 288 * 5 / 3 = 480
+//`define SCAN_7INCH  // scale down by making lcd lines slower, 5 LCD lines per 6 vga lines
 
 module video(
     clk24,               // clock 24mhz
@@ -49,6 +50,8 @@ module video(
 
     lcd_clk_o,
     lcd_den_o,
+    lcd_hsync_o,           // scaled hsync for 480-line lcd
+    lcd_vsync_o,
 
     
     osd_hsync,
@@ -99,6 +102,8 @@ output          hsync;
 output          vsync;
 output          lcd_clk_o;
 output          lcd_den_o;
+output          lcd_hsync_o;
+output          lcd_vsync_o;
 
 output          osd_hsync;
 output          osd_vsync;
@@ -147,19 +152,33 @@ assign tvhs = tvhs2 | fb_row[0];
 
 // gated signals for line 6
 wire hsync_raw, vsync_raw;
+wire lcd_den_raw, lcd_clk_raw;
+wire [9:0] lcd_y;
+wire       lcd_newline;
+
 reg hsync_gate;
 reg clock_gate;
+`ifdef SCAN_7INCH
+assign hsync = hsync_raw;
+assign vsync = vsync_raw;// & !(fb_row > 255 || fb_row <= 260);
+assign lcd_den_o = lcd_den_raw;
+always @* hsync_gate <= 1'b1;
+always @* clock_gate <= 1'b1;
+`else
 assign hsync = hsync_raw | ~hsync_gate;
 assign vsync = vsync_raw;// & !(fb_row > 255 || fb_row <= 260);
-
-wire lcd_den_raw, lcd_clk_raw;
 assign lcd_den_o = lcd_den_raw & hsync_gate;
+`endif
 assign lcd_clk_o = lcd_clk_raw & clock_gate;
 
 vga_refresh     refresher(
                             .clk24(clk24),
                             .lcd_clk_o(lcd_clk_raw),
                             .lcd_den_o(lcd_den_raw),
+                            .lcd_hsync_o(lcd_hsync_o),
+                            .lcd_vsync_o(lcd_vsync_o),
+                            .lcd_y(lcd_y),
+                            .lcd_newline_o(lcd_newline),
                             .hsync(hsync_raw),
                             .vsync(vsync_raw),
                             .videoActive(videoActive),
@@ -173,6 +192,7 @@ vga_refresh     refresher(
                         );
 
 
+// interface to the framebuffer memory: vdata[SRAM_ADDR] -> coloridx_modeless
 framebuffer     winrar(
                             .clk24(clk24),
                             .ce12(ce12),
@@ -236,6 +256,10 @@ reg reset_line;
 always @(posedge clk24)
     reset_line <= fb_row[0] & !hsync;
 
+wire resetrd;
+
+always @* clock_gate <= 1'b1; // it's useless, yes, don't touch this line
+
 
 //         _________
 // ________         __________ fb_row[0]
@@ -263,8 +287,6 @@ always @* hsync_gate <= 1'b1;
 
 // probe by sabotage: <400 vsync breaks, <503 breaks <504 ok
 //always @* hsync_gate <= hsync_ctr < 504;
-
-always @* clock_gate <= 1'b1;
 
 rambuffer line1(.clk(clk24),
                 .cerd(1'b1),
@@ -328,26 +350,70 @@ end
 always @*
     hsync_gate <= (|div5sr) | retrace | (hsync_ctr > 495);
 
+assign resetrd = !hsync;
 
-// produce 24 * 5/6 = 20 mhz average clock
-reg [5:0] div56;
+`endif
+
+`ifdef SCAN_7INCH
+// 288 * 5 / 3 = 480
+// write 3 A lines slowly, while reading 5 lines from 3 B lines
+// write 3 B lines slowly, while reading 5 lines from 3 A lines
+
+reg [5:0] div6sr; // running 1 with period of 6 lines (3+3), see wren_line_[b2b1b0a2a1a0]
+reg [4:0] div5sr; // running 1 for 5 fast lines, 0, reset to 1
+reg [1:0] fb_row_r; // [0] = fast vga lines, [1] = slow v06c/tv lines
+
+reg wr_group;   // which group of 3 line buffers to write to
+
+wire [2:0] wren_line_a = div6sr[2:0];
+wire [2:0] wren_line_b = div6sr[5:3];
+wire [7:0] rc_a [2:0];
+wire [7:0] rc_b [2:0];
+
+reg       vsync_r = 0;
+
 always @(posedge clk24)
-    if (~reset_n)
-        div56 <= 6'b1;
+begin
+    fb_row_r <= fb_row[1:0];
+    vsync_r <= vsync;
+
+    if (vsync && !vsync_r)
+    begin
+        div6sr <= 6'b1;   // write a/b 3 + 3 lines
+        div5sr <= 5'b1;   // read line
+    end
+
     else
-        div56 <= {div56[4:0],div56[5]};
+    begin
 
-// 5 out of 6
-always @*
-    clock_gate <= 1'b1; //~div56[5];
+    // fast read 5 lcd lines, skip 6th (display 576 * 5/6 = 480 lines)
+    //if (fb_row[0] != fb_row_r[0])
+    //    div5sr <= {div5sr[3:0], div5sr[4]};
+    if (lcd_newline)
+        div5sr <= {div5sr[3:0], div5sr[4]};
 
-wire cerd = clock_gate;   // 20 MHz 
+    // slow write: 1 tv line = 2 vga lines
+    if (fb_row[1] != fb_row_r[1])
+    begin
+        div6sr <= {div6sr[4:0], div6sr[5]};
+        // reset read sr every 3 lines
+        //if (div6sr[5] | div6sr[2])  // 1 moving to [0] or [3]
+        //    div5sr <= 5'b1;
+    end
+
+    end
+end
+
+wire resetrd = !lcd_hsync_o;
+`endif
+
+wire cerd = clock_gate;
 
 rambuffer line_a_0(.clk(clk24),
                 .cerd(cerd),
                 .cewr(ce12),
                 .wren(wren_line_a[0]),
-                .resetrd(!hsync),
+                .resetrd(resetrd),
                 .resetwr(reset_line),
                 .din(realcolor_in),
                 .dout(rc_a[0]));
@@ -355,7 +421,7 @@ rambuffer line_a_1(.clk(clk24),
                 .cerd(cerd),
                 .cewr(ce12),
                 .wren(wren_line_a[1]),
-                .resetrd(!hsync),
+                .resetrd(resetrd),
                 .resetwr(reset_line),
                 .din(realcolor_in),
                 .dout(rc_a[1]));
@@ -363,7 +429,7 @@ rambuffer line_a_2(.clk(clk24),
                 .cerd(cerd),
                 .cewr(ce12),
                 .wren(wren_line_a[2]),
-                .resetrd(!hsync),
+                .resetrd(resetrd),
                 .resetwr(reset_line),
                 .din(realcolor_in),
                 .dout(rc_a[2]));
@@ -372,7 +438,7 @@ rambuffer line_b_0(.clk(clk24),
                 .cerd(cerd),
                 .cewr(ce12),
                 .wren(wren_line_b[0]),
-                .resetrd(!hsync),
+                .resetrd(resetrd),
                 .resetwr(reset_line),
                 .din(realcolor_in),
                 .dout(rc_b[0]));
@@ -380,7 +446,7 @@ rambuffer line_b_1(.clk(clk24),
                 .cerd(cerd),
                 .cewr(ce12),
                 .wren(wren_line_b[1]),
-                .resetrd(!hsync),
+                .resetrd(resetrd),
                 .resetwr(reset_line),
                 .din(realcolor_in),
                 .dout(rc_b[1]));
@@ -388,7 +454,7 @@ rambuffer line_b_2(.clk(clk24),
                 .cerd(cerd),
                 .cewr(ce12),
                 .wren(wren_line_b[2]),
-                .resetrd(!hsync),
+                .resetrd(resetrd),
                 .resetwr(reset_line),
                 .din(realcolor_in),
                 .dout(rc_b[2]));
@@ -450,8 +516,12 @@ wire [7:0] smallcolor_b = {read_b[14:13], read_b[9:7], read_b[4:2]};
 
 assign realcolor_out = videoActive ? (|wren_line_a ? smallcolor_a : smallcolor_b) : 8'b0;
 
+`ifdef SCAN_5_3
 assign bgr555_out = videoActive ? (|wren_line_a ? read_a : read_b) : 8'b0;
+`endif
 
+`ifdef SCAN_7INCH
+assign bgr555_out = (|wren_line_a ? read_a : read_b);
 `endif
 
 // hsync counter for debug /////////////////

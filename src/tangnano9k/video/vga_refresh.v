@@ -27,21 +27,27 @@
 
 `default_nettype wire
 
-module vga_refresh(clk24, lcd_clk_o, lcd_den_o, hsync, vsync, YPbPrvsync, videoActive, bordery, retrace, video_scroll_reg, fb_row, fb_row_count, tvhs, tvvs, tvx, tvy);
-input       clk24;
-output      lcd_clk_o;
-output      lcd_den_o;
-output      hsync;
-output      vsync;
-output      YPbPrvsync;
-output      videoActive;
-output      bordery;
-output      retrace;
-input   [7:0]   video_scroll_reg;
-output  [8:0]   fb_row;
-output  [8:0]   fb_row_count;
-output          tvhs, tvvs;
-output  [9:0]   tvx,tvy;
+module vga_refresh(
+    input           clk24,
+    output          lcd_clk_o,
+    output          lcd_den_o,
+    output          lcd_hsync_o,
+    output          lcd_vsync_o,
+    output  [9:0]   lcd_y,
+    output          lcd_newline_o,   // single clock hs
+    output          hsync,
+    output          vsync,
+    output          YPbPrvsync,
+    output          videoActive,
+    output          bordery,
+    output          retrace,
+    input   [7:0]   video_scroll_reg,
+    output  [8:0]   fb_row,
+    output  [8:0]   fb_row_count,
+    output          tvhs,
+    output          tvvs,
+    output  [9:0]   tvx,
+    output  [9:0]   tvy);
 
 // total = 624
 // visible = (16 + 256 + 16)*2 = 288*2 = 576
@@ -52,8 +58,8 @@ parameter SCREENHEIGHT = 10'd576;
 parameter VISIBLEHEIGHT = SCREENHEIGHT - 2*2*16;
 parameter SCROLLLOAD_X = 112;   // when on line 0 scroll register is copied into the line counter
 
-reg videoActiveX;           // 1 == X is within visible area
-reg videoActiveY;           // 1 == Y is within visible area
+reg videoActiveX = 0;           // 1 == X is within visible area
+reg videoActiveY = 0;           // 1 == Y is within visible area
 wire videoActive = videoActiveX & videoActiveY;
 
 assign retrace = !videoActiveY;
@@ -66,28 +72,27 @@ assign tvhs = !(tvx > 800-96);
 //assign tvvs = !(tvy < 6);
 assign tvvs = !(tvy == 623 && tvx == 800-96);
 
-reg[9:0] tvx;
-reg[9:0] tvy;
+reg[9:0] tvx = 0;
+reg[9:0] tvy = 0;
 
-reg[9:0] realx;  
-reg[9:0] realy;
+reg[9:0] realx = 0;  
+reg[9:0] realy = 0;
 
-reg[2:0] scanxx_state;      // x-machine state
-reg[2:0] scanyy_state;      // y-machine state
-reg[9:0] scanxx;            // x-state timer/counter
-reg[9:0] scanyy;            // y-state timer/counter
+reg[2:0] scanxx_state = 0;      // x-machine state
+reg[2:0] scanyy_state = 0;      // y-machine state
+reg[9:0] scanxx = 0;            // x-state timer/counter
+reg[9:0] scanyy = 0;            // y-state timer/counter
 
-reg bordery;
+reg bordery = 0;
 //
 // framebuffer variables
 //
-reg [8:0] fb_row;           // fb row
-reg [8:0] fb_row_count;
+reg [8:0] fb_row = 0;           // fb row
+reg [8:0] fb_row_count = 0;
 
 
 //assign lcd_den_o = videoActive;
 reg lcd_active_x;
-assign lcd_den_o = videoActiveY && lcd_active_x;
 assign lcd_clk_o = clk24;
 
 
@@ -173,7 +178,7 @@ always @(posedge clk24) begin
             end
             state2: // enter BACK PORCH
             begin
-                scanxx <= 10'd60;
+                scanxx <= 10'd61 - 1'b1;
                 scanxx_state <= state3;
                 //lcd_active_x <= 1'b1; // start early to offset the picture to the right
             end
@@ -216,6 +221,106 @@ always @(posedge clk24) begin
         tvy <= tvy + 1;
     end
 end
+
+// New plan for LCD HSYNC 
+//
+//  1     2     3     4     5     6     1
+//  H.....H.....H.....H.....H.....H.....H..   624 lines hsync (576 visible)
+//  L......L......L......L.......L......L..   520 lines hsync (576 visible down to 480)
+//
+//  vga time = 768
+//  lcd time = 768 + 768/5, dither extra time as 153+154+153+154+154
+//
+//  new signals: lcd_hsync_o, lcd_vsync_o
+reg [4:0] lcd_line = 0;
+reg [9:0] lcd_time = 0; // time in pixelclocks 0..(768+153)
+reg       vsync_r = 0;
+
+reg [9:0] sim_lcd_line = 0;
+integer sim_vga_line = 0;
+
+reg sim_hsync_r = 0;
+
+reg [9:0] lcd_visible_time = 0;
+
+reg lcd_newline = 0;
+assign lcd_newline_o = lcd_newline;
+
+always @(posedge clk24)
+begin
+    vsync_r <= vsync;
+    lcd_time <= lcd_time + 1'b1;
+    lcd_newline <= 1'b0;
+
+    //if (!vsync && vsync_r)
+    if (vsync && !vsync_r)
+    begin
+        lcd_line <= 5'b00001; // counts lcd lines with period 5
+        lcd_time <= 0;
+        //$display("counts: lcd_line=%d vga_line=%d", sim_lcd_line, sim_vga_line);
+        sim_lcd_line <= 0;
+        sim_vga_line <= 0;
+    end
+
+    if (lcd_time + 1'b1 == lcd_visible_time)
+    begin
+        lcd_line <= {lcd_line[3:0],lcd_line[4]};
+        lcd_time <= 0;
+        sim_lcd_line <= sim_lcd_line + 1;
+        lcd_newline <= 1'b1;
+
+        case ({lcd_line[3:0],lcd_line[4]})
+            5'b00001: lcd_visible_time <= 768 + 153;
+            5'b00010: lcd_visible_time <= 768 + 154;
+            5'b00100: lcd_visible_time <= 768 + 153;
+            5'b01000: lcd_visible_time <= 768 + 154;
+            5'b10000: lcd_visible_time <= 768 + 154;
+        endcase
+    end
+
+    sim_hsync_r <= hsync;
+    if (hsync && !sim_hsync_r)
+    begin
+        sim_vga_line <= sim_vga_line + 1;
+        $display("HSYNC vga_line=%d lcd_line=%d VS=%d",
+            sim_vga_line, sim_lcd_line, !vsync);
+    end
+
+end
+
+
+// example:
+// DE = time >= 63 && time <= 856
+// HS = >=11  <11+56
+
+
+reg lcd_hsync_r = 0;
+always @(posedge clk24) 
+    //lcd_hsync_r <= ~(lcd_time >= 11 && lcd_time < (11+56)) | ~vsync;
+    lcd_hsync_r <= ~(lcd_time >= 15 && lcd_time < (11+56)) | ~vsync;
+
+reg lcd_den_r = 0;
+//always @(posedge clk24)
+//    lcd_den_r = lcd_time >= 76
+//    && (lcd_time < lcd_visible_time - 55)
+//    && (sim_lcd_line >= 23) && (sim_lcd_line < 503);
+
+always @(posedge clk24)
+    lcd_den_r = lcd_time >= (11 + 56)
+    //&& (lcd_time < lcd_visible_time - 10) // whoa this shows a picture on both screens
+    && (lcd_time < lcd_visible_time - 9) // 9 shows boot on both, 7 stops working on 7"
+    //&& (lcd_time < lcd_visible_time - 77)
+            && (sim_lcd_line >= 23) && (sim_lcd_line < 503);
+
+assign lcd_vsync_o = vsync;
+assign lcd_hsync_o = lcd_hsync_r;
+`ifdef SCAN_7INCH
+assign lcd_den_o = lcd_den_r;
+`else
+assign lcd_den_o = videoActiveY && lcd_active_x;
+`endif
+
+assign lcd_y = sim_lcd_line - 23;
 
 endmodule
 
