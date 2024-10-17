@@ -539,20 +539,38 @@ end
                 
 // osd
 reg osd_vsync, osd_hsync;
-
 reg         osd_xdelaybuf;
-
 wire        osd_xdelay;
+wire        osd_xtrigger;
 
-oneshot #(`OSD_HPOS) lineos0(.clk(clk24), .ce(1'b1), .trigger(tv_mode[0] ? tvhs_local : hsync), .q(osd_xdelay));
+`ifdef SCAN_7INCH
+assign osd_xtrigger = lcd_newline;//lcd_hsync_o; // -- both kinda work
+`else
+assign osd_xtrigger = tv_mode[0] ? tvhs_local : hsync;
+`endif
 
-always @(posedge clk24) begin
-    osd_vsync = tv_mode[0] ? ~(tv_halfline == `OSD_TV_HALFLINE) : ~(fb_row_count == `OSD_TOP_FB_ROW);
+oneshot #(`OSD_HPOS) lineos0(.clk(clk24),
+    .ce(1'b1),
+    .trigger(osd_xtrigger),
+    .q(osd_xdelay));
 
+always @(posedge clk24)
+begin
+    `ifdef SCAN_7INCH
+    osd_xdelaybuf <= osd_xdelay;
+    osd_vsync <= ~(lcd_y == `OSD_TOP_FB_ROW);
+    //osd_hsync <= osd_xdelay;
+    if (~osd_xdelay & osd_xdelaybuf)
+        osd_hsync <= 1'b0;
+    if (ce6 & ~osd_hsync)
+        osd_hsync <= 1'b1;
+    `else
+    osd_vsync <= tv_mode[0] ? ~(tv_halfline == `OSD_TV_HALFLINE) : ~(fb_row_count == `OSD_TOP_FB_ROW);
     if (~tv_mode[0] | ce6) begin
         osd_xdelaybuf <= osd_xdelay;
         osd_hsync <= ~(osd_xdelaybuf & ~osd_xdelay);
     end
+    `endif
 end
 
 // tv

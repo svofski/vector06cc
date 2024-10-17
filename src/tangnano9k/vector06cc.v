@@ -781,7 +781,7 @@ video vidi(.clk24(clk24),
 
             .hsync(vga_hs), .vsync(vga_vs),
 
-            .lcd_hsync_o(video_lcd_hsync),        // lcd panel hsync
+            .lcd_hsync_o(video_lcd_hsync),        // lcd panel hsync (480 lines)
             .lcd_vsync_o(video_lcd_vsync),        // lcd panel vsync
             .lcd_clk_o(video_lcd_clk),
             .lcd_den_o(video_lcd_den), 

@@ -33,5 +33,9 @@
 //`define WITH_SERIAL_PROBE
 
 `define OSD_TOP_FB_ROW    9'd250   // more is higher above (200 is cursed)
+`ifdef SCAN_7INCH
+`define OSD_HPOS          9'd220
+`else
 `define OSD_HPOS          9'd170
+`endif
 `define OSD_TV_HALFLINE   275   // less is higher above
