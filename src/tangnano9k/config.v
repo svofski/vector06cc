@@ -26,7 +26,7 @@
 //`define COMPOSITE_PWM   // use sigma-delta modulator on composite video out
 //`define WITH_SVIDEO 
 `define WITH_VGA
-`define WITH_SERIAL_PROBE
+//`define WITH_SERIAL_PROBE
 
 `define OSD_TOP_FB_ROW    9'd250   // more is higher above (200 is cursed)
 `define OSD_HPOS          9'd170

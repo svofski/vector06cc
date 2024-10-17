@@ -675,15 +675,27 @@ reg psram_busy_p;
 reg[7:0] sram_data_in;
 //always @(negedge rdcpu_finished) sram_data_in = psram_addr[0] ? dramout[15:8] : dramout[7:0];
 
-always @(negedge rdcpu_finished) 
-    sram_data_in <= cpu_a_mangled[0] ? dramout[15:8] : dramout[7:0];
+reg rdcpu_finished_r;
+always @(negedge clk_psram)
+begin
+    rdcpu_finished_r <= rdcpu_finished;
+//always @(negedge rdcpu_finished) 
+    if (rdcpu_finished_r & ~rdcpu_finished)
+        sram_data_in <= cpu_a_mangled[0] ? dramout[15:8] : dramout[7:0];
+end
 
 //always @(posedge clk_psram_p) 
 //    if (rdcpu_finished) sram_data_in = psram_addr[0] ? dramout[15:8] : dramout[7:0];
 
 
 reg[31:0] vdata;
-always @(negedge memvidbusy) vdata <= {dramout2, dramout};
+//always @(negedge memvidbusy) vdata <= {dramout2, dramout};
+reg memvidbusy_r;
+always @(negedge clk_psram)
+begin
+    memvidbusy_r <= memvidbusy;
+    if (memvidbusy_r & ~memvidbusy) vdata <= {dramout2, dramout};
+end
 
 
 `else
@@ -1335,9 +1347,6 @@ wire        floppy_rden  = io_read & floppy_sel;
 
 wire        floppy_death_by_floppy;
 
-wire halt_uart_tx;
-
-
 wire floppy_uart_tx_wr;
 wire [7:0] floppy_uart_tx_data;
 
@@ -1648,12 +1657,13 @@ haltmode debugger(.clk24(clk24), .rst_n(delayed_reset_n),
 
 `else
 
-assign halt_uart_tx = 1'b1;
 assign halt_addr = 22'h0;
 assign halt_data = 8'h00;
-assign halt_wr = 1'b1;
+assign halt_wr = 1'b0;
 assign halt_halt = 1'b0;
 assign halt_fkeys = 12'b0;
+
+assign halt_uart_tx_data = 8'h00;
 
 assign halt_scancode = 8'h00;
 assign halt_scancode_ready = 1'b0;
