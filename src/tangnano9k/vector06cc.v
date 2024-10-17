@@ -740,8 +740,11 @@ wire retrace;           // 1 == retrace in progress
 
 wire vga_vs;
 wire vga_hs;
+
 wire video_lcd_clk;
 wire video_lcd_den;
+wire video_lcd_hsync;
+wire video_lcd_vsync;
 
 `ifdef WITH_TV
 wire [1:0]      tv_mode = {~KEY[2], 1'b1};
@@ -777,6 +780,9 @@ video vidi(.clk24(clk24),
             .SRAM_ADDR(VIDEO_A), 
 
             .hsync(vga_hs), .vsync(vga_vs),
+
+            .lcd_hsync_o(video_lcd_hsync),        // lcd panel hsync
+            .lcd_vsync_o(video_lcd_vsync),        // lcd panel vsync
             .lcd_clk_o(video_lcd_clk),
             .lcd_den_o(video_lcd_den), 
 
@@ -883,7 +889,7 @@ videomod videomod(.clk_color_mod(clk_color_mod),
 `else
 
 // the purpose of this part is to produce the blackest picture we can for
-// a brief moment after powering up
+// a brief moment after powering up to literally clear the tft matrix
 
 wire goth_den, goth_hs, goth_vs;
 
@@ -914,8 +920,13 @@ end
 
 assign LCD_CLK =    video_lcd_clk;
 assign LCD_DEN =    vanilla ? video_lcd_den : goth_den;
+`ifdef SCAN_7INCH
+assign LCD_HSYNC =  vanilla ? video_lcd_hsync : goth_hs;
+assign LCD_VSYNC =  vanilla ? video_lcd_vsync : goth_vs;
+`else
 assign LCD_HSYNC =  vanilla ? vga_hs : goth_hs;
 assign LCD_VSYNC =  vanilla ? vga_vs : goth_vs;
+`endif
 // FIX this for OSD!
 //assign LCD_R[4:1] = video_r;
 //assign LCD_G[5:2] = video_g;

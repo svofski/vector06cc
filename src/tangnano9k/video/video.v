@@ -404,7 +404,7 @@ begin
     end
 end
 
-wire resetrd = !lcd_hsync_o;
+assign resetrd = !lcd_hsync_o;
 `endif
 
 wire cerd = clock_gate;

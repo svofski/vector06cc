@@ -27,8 +27,8 @@
 //`define WITH_SVIDEO 
 `define WITH_VGA
 //`define SCAN_2_1
-`define SCAN_5_3
-//`define SCAN_7INCH
+//`define SCAN_5_3
+`define SCAN_7INCH
 
 //`define WITH_SERIAL_PROBE
 

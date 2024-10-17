@@ -296,8 +296,8 @@ end
 
 reg lcd_hsync_r = 0;
 always @(posedge clk24) 
-    //lcd_hsync_r <= ~(lcd_time >= 11 && lcd_time < (11+56)) | ~vsync;
-    lcd_hsync_r <= ~(lcd_time >= 15 && lcd_time < (11+56)) | ~vsync;
+    lcd_hsync_r <= ~(lcd_time >= 11 && lcd_time < (11+56)) | ~vsync;
+    //lcd_hsync_r <= ~(lcd_time >= 15 && lcd_time < (11+56)) | ~vsync;
 
 reg lcd_den_r = 0;
 //always @(posedge clk24)
