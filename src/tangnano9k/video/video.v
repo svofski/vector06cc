@@ -404,7 +404,8 @@ begin
     end
 end
 
-assign resetrd = !lcd_hsync_o;
+// fine adjust center on the screen
+oneshot #(30) osadj(.clk(clk24), .ce(1'b1), .trigger(lcd_hsync_o), .q(resetrd));
 `endif
 
 wire cerd = clock_gate;

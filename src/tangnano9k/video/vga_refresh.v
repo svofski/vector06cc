@@ -307,9 +307,7 @@ reg lcd_den_r = 0;
 
 always @(posedge clk24)
     lcd_den_r = lcd_time >= (11 + 56)
-    //&& (lcd_time < lcd_visible_time - 10) // whoa this shows a picture on both screens
     && (lcd_time < lcd_visible_time - 9) // 9 shows boot on both, 7 stops working on 7"
-    //&& (lcd_time < lcd_visible_time - 77)
             && (sim_lcd_line >= 23) && (sim_lcd_line < 503);
 
 assign lcd_vsync_o = vsync;
