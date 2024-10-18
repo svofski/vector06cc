@@ -18,6 +18,7 @@
 
 `define WITH_FLOPPY
 `define WITH_OSD
+
 //`define WITH_SDRAM
 `define WITH_PSRAM      // Tang Nano 9K GW1N-NR9 Q88P
 //`define FLOPPYLESS_HAX  // set FDC odata to $00 when compiling without floppy

@@ -154,7 +154,11 @@ assign tvhs = tvhs2 | fb_row[0];
 wire hsync_raw, vsync_raw;
 wire lcd_den_raw, lcd_clk_raw;
 wire [9:0] lcd_y;
+wire [9:0] lcd_x;
 wire       lcd_newline;
+wire       vga_newline;
+wire       tv_newline;
+wire       loadscroll;
 
 reg hsync_gate;
 reg clock_gate;
@@ -177,8 +181,12 @@ vga_refresh     refresher(
                             .lcd_den_o(lcd_den_raw),
                             .lcd_hsync_o(lcd_hsync_o),
                             .lcd_vsync_o(lcd_vsync_o),
-                            .lcd_y(lcd_y),
+                            .lcd_x_o(lcd_x),
+                            .lcd_y_o(lcd_y),
                             .lcd_newline_o(lcd_newline),
+                            .vga_newline_o(vga_newline),
+                            .tv_newline_o(tv_newline),
+                            .loadscroll_o(loadscroll),
                             .hsync(hsync_raw),
                             .vsync(vsync_raw),
                             .videoActive(videoActive),
@@ -313,9 +321,7 @@ rambuffer line2(.clk(clk24),
 
 reg [5:0] div6sr; // running 1 with period of 6 lines
 reg [4:0] div5sr; // running 1 with period of 5 lines
-reg [1:0] fb_row_r; // [0] = fast vga lines, [1] = slow v06c/tv lines
-
-reg wr_group;   // which group of 3 line buffers to write to
+reg [2:0] fb_row_r; // [0] = fast vga lines, [1] = slow v06c/tv lines
 
 wire [2:0] wren_line_a = div6sr[2:0];
 wire [2:0] wren_line_b = div6sr[5:3];
@@ -324,7 +330,7 @@ wire [7:0] rc_b [2:0];
 
 always @(posedge clk24)
 begin
-    fb_row_r <= fb_row[1:0];
+    fb_row_r <= fb_row[2:0];
 
     if (!vsync)
     begin
@@ -361,51 +367,44 @@ assign resetrd = !hsync;
 
 reg [5:0] div6sr; // running 1 with period of 6 lines (3+3), see wren_line_[b2b1b0a2a1a0]
 reg [4:0] div5sr; // running 1 for 5 fast lines, 0, reset to 1
-reg [1:0] fb_row_r; // [0] = fast vga lines, [1] = slow v06c/tv lines
-
-reg wr_group;   // which group of 3 line buffers to write to
 
 wire [2:0] wren_line_a = div6sr[2:0];
 wire [2:0] wren_line_b = div6sr[5:3];
 wire [7:0] rc_a [2:0];
 wire [7:0] rc_b [2:0];
 
-reg       vsync_r = 0;
+reg vga_linectr = 0;
 
 always @(posedge clk24)
 begin
-    fb_row_r <= fb_row[1:0];
-    vsync_r <= vsync;
+    if (vga_newline) vga_linectr <= ~vga_linectr;
 
-    if (vsync && !vsync_r)
+    // scroll loads at a specific moment in time. we must reset 
+    // line counters at the same time to ensure that 6/5 order is maintained
+    if (loadscroll)
     begin
         div6sr <= 6'b1;   // write a/b 3 + 3 lines
         div5sr <= 5'b1;   // read line
+        vga_linectr <= 1'b0;
     end
-
     else
     begin
+        if (lcd_newline)
+            div5sr <= {div5sr[3:0], div5sr[4]};
 
-    // fast read 5 lcd lines, skip 6th (display 576 * 5/6 = 480 lines)
-    //if (fb_row[0] != fb_row_r[0])
-    //    div5sr <= {div5sr[3:0], div5sr[4]};
-    if (lcd_newline)
-        div5sr <= {div5sr[3:0], div5sr[4]};
-
-    // slow write: 1 tv line = 2 vga lines
-    if (fb_row[1] != fb_row_r[1])
-    begin
-        div6sr <= {div6sr[4:0], div6sr[5]};
-        // reset read sr every 3 lines
-        //if (div6sr[5] | div6sr[2])  // 1 moving to [0] or [3]
-        //    div5sr <= 5'b1;
-    end
-
+        //// slow write: 1 tv line = 2 vga lines
+        if (vga_newline && vga_linectr)
+            div6sr <= {div6sr[4:0], div6sr[5]};
     end
 end
 
 // fine adjust center on the screen
-oneshot #(30) osadj(.clk(clk24), .ce(1'b1), .trigger(lcd_hsync_o), .q(resetrd));
+oneshot #(26) osadj(.clk(clk24), .ce(1'b1), .trigger(lcd_hsync_o), .q(resetrd));
+
+// mask horizontal overscan parts
+localparam H_MASK = (800 - 576) / 2 + /* not sure about this number */67;
+wire lcd_videoActive = lcd_x > H_MASK && lcd_x < H_MASK + 576;
+
 `endif
 
 wire cerd = clock_gate;
@@ -518,11 +517,11 @@ wire [7:0] smallcolor_b = {read_b[14:13], read_b[9:7], read_b[4:2]};
 assign realcolor_out = videoActive ? (|wren_line_a ? smallcolor_a : smallcolor_b) : 8'b0;
 
 `ifdef SCAN_5_3
-assign bgr555_out = videoActive ? (|wren_line_a ? read_a : read_b) : 8'b0;
+assign bgr555_out = videoActive ? (|wren_line_a ? read_a : read_b) : 15'b0;
 `endif
 
 `ifdef SCAN_7INCH
-assign bgr555_out = (|wren_line_a ? read_a : read_b);
+assign bgr555_out = lcd_videoActive ? (|wren_line_a ? read_a : read_b) : 15'b0;
 `endif
 
 // hsync counter for debug /////////////////

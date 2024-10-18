@@ -6,79 +6,79 @@
     <Device name="GW1NR-9C" pn="GW1NR-LV9QN88PC6/I5">gw1nr9c-004</Device>
     <FileList>
         <File path="src/gowin_rpll72/gowin_rpll72.v" type="file.verilog" enable="1"/>
-        <File path="../../../src/ay/ayglue.v" type="file.verilog" enable="1"/>
-        <File path="../../../src/border_delay.v" type="file.verilog" enable="1"/>
-        <File path="../../../src/floppy/dma_rw.v" type="file.verilog" enable="1"/>
-        <File path="../../../src/floppy/floppy.v" type="file.verilog" enable="0"/>
-        <File path="../../../src/floppy/floppy_neo430.v" type="file.verilog" enable="1"/>
-        <File path="../../../src/floppy/neo430/neo430_cpu.v" type="file.verilog" enable="0"/>
-        <File path="../../../src/floppy/spi.v" type="file.verilog" enable="1"/>
-        <File path="../../../src/floppy/timer100hz.v" type="file.verilog" enable="1"/>
-        <File path="../../../src/floppy/upi_uart/uart.v" type="file.verilog" enable="0"/>
-        <File path="../../../src/floppy/verilog-6502-copy/ALU.v" type="file.verilog" enable="1"/>
-        <File path="../../../src/floppy/verilog-6502-copy/cpu.v" type="file.verilog" enable="1"/>
-        <File path="../../../src/floppy/wd1793.v" type="file.verilog" enable="1"/>
-        <File path="../../../src/i8253/8253.v" type="file.verilog" enable="1"/>
-        <File path="../../../src/keyboard/keymatrix_ram.v" type="file.verilog" enable="1"/>
-        <File path="../../../src/keyboard/ps2k.v" type="file.verilog" enable="1"/>
-        <File path="../../../src/keyboard/scan2matrix.v" type="file.verilog" enable="1"/>
-        <File path="../../../src/keyboard/vectorkeys.v" type="file.verilog" enable="0"/>
-        <File path="../../../src/keyboard/vectorkeys2.v" type="file.verilog" enable="1"/>
-        <File path="../../../src/oneshot.v" type="file.verilog" enable="1"/>
-        <File path="../../../src/osd/chargen.v" type="file.verilog" enable="0"/>
-        <File path="../../../src/osd/screenbuffer.v" type="file.verilog" enable="0"/>
-        <File path="../../../src/osd/textmode.v" type="file.verilog" enable="1"/>
-        <File path="../../../src/ramdisk/kvaz.v" type="file.verilog" enable="1"/>
-        <File path="../../../src/specialkeys.v" type="file.verilog" enable="1"/>
-        <File path="../../../src/tangnano9k/audio/I2C_AV_Config.v" type="file.verilog" enable="0"/>
-        <File path="../../../src/tangnano9k/audio/I2C_Controller.v" type="file.verilog" enable="0"/>
-        <File path="../../../src/tangnano9k/audio/audio_io.v" type="file.verilog" enable="1"/>
-        <File path="../../../src/tangnano9k/blackvideo/VGAMod.v" type="file.verilog" enable="1"/>
-        <File path="../../../src/tangnano9k/bootrom/bootrom.v" type="file.verilog" enable="1"/>
-        <File path="../../../src/tangnano9k/clockster.v" type="file.verilog" enable="1"/>
-        <File path="../../../src/tangnano9k/gowin_rpll48p24/gowin_rpll48p24.v" type="file.verilog" enable="1"/>
-        <File path="../../../src/tangnano9k/hidkeyboard/hidmatrix.v" type="file.verilog" enable="1"/>
-        <File path="../../../src/tangnano9k/hidkeyboard/uarthid.v" type="file.verilog" enable="1"/>
-        <File path="../../../src/tangnano9k/k580vv55.v" type="file.verilog" enable="1"/>
-        <File path="../../../src/tangnano9k/multikvaz.v" type="file.verilog" enable="1"/>
-        <File path="../../../src/tangnano9k/palette_ram/palette_ram.v" type="file.verilog" enable="1"/>
-        <File path="../../../src/tangnano9k/psram/psram_controller.v" type="file.verilog" enable="1"/>
-        <File path="../../../src/tangnano9k/ram.v" type="file.verilog" enable="1"/>
-        <File path="../../../src/tangnano9k/rom.v" type="file.verilog" enable="1"/>
-        <File path="../../../src/tangnano9k/soundcodec.v" type="file.verilog" enable="1"/>
-        <File path="../../../src/tangnano9k/uart/haltmode.v" type="file.verilog" enable="1"/>
-        <File path="../../../src/tangnano9k/uart/intelhex_rx.v" type="file.verilog" enable="1"/>
-        <File path="../../../src/tangnano9k/uart/uart_rx.v" type="file.verilog" enable="1"/>
-        <File path="../../../src/tangnano9k/uart/uart_tx.v" type="file.verilog" enable="1"/>
-        <File path="../../../src/tangnano9k/uart/uart_tx_V2.v" type="file.verilog" enable="1"/>
-        <File path="../../../src/tangnano9k/vector06cc.v" type="file.verilog" enable="1"/>
-        <File path="../../../src/tangnano9k/vi53/k580vi53.v" type="file.verilog" enable="1"/>
-        <File path="../../../src/tangnano9k/video/vga_refresh.v" type="file.verilog" enable="1"/>
-        <File path="../../../src/tangnano9k/video/video.v" type="file.verilog" enable="1"/>
-        <File path="../../../src/tangnano9k/video/videomod.v" type="file.verilog" enable="1"/>
-        <File path="../../../src/tangnano9k/vram.v" type="file.verilog" enable="1"/>
-        <File path="../../../src/video/framebuffer.v" type="file.verilog" enable="1"/>
-        <File path="../../../src/video/rambuffer.v" type="file.verilog" enable="1"/>
-        <File path="../../../src/video/shiftreg2.v" type="file.verilog" enable="1"/>
-        <File path="../../../src/vm80/vm80a.v" type="file.verilog" enable="1"/>
-        <File path="../../../src/T80/T80.vhd" type="file.vhdl" enable="1"/>
-        <File path="../../../src/T80/T8080se.vhd" type="file.vhdl" enable="1"/>
-        <File path="../../../src/T80/T80_ALU.vhd" type="file.vhdl" enable="1"/>
-        <File path="../../../src/T80/T80_MCode.vhd" type="file.vhdl" enable="1"/>
-        <File path="../../../src/T80/T80_Pack.vhd" type="file.vhdl" enable="1"/>
-        <File path="../../../src/T80/T80_Reg.vhd" type="file.vhdl" enable="1"/>
-        <File path="../../../src/T80/T80sef.vhd" type="file.vhdl" enable="1"/>
-        <File path="../../../src/ay/ay8910.vhd" type="file.vhdl" enable="1"/>
-        <File path="../../../src/ay/ym2149.vhd" type="file.vhdl" enable="1"/>
-        <File path="../../../src/floppy/neo430/core/neo430_addr_gen.vhd" type="file.vhdl" enable="1" library="neo430"/>
-        <File path="../../../src/floppy/neo430/core/neo430_alu.vhd" type="file.vhdl" enable="1" library="neo430"/>
-        <File path="../../../src/floppy/neo430/core/neo430_control.vhd" type="file.vhdl" enable="1" library="neo430"/>
-        <File path="../../../src/floppy/neo430/core/neo430_cpu.vhd" type="file.vhdl" enable="1" library="neo430"/>
-        <File path="../../../src/floppy/neo430/core/neo430_package.vhd" type="file.vhdl" enable="1" library="neo430"/>
-        <File path="../../../src/floppy/neo430/core/neo430_reg_file.vhd" type="file.vhdl" enable="1" library="neo430"/>
-        <File path="../../../src/floppy/neo430/neo430_cpu_std_logic.vhd" type="file.vhdl" enable="1"/>
-        <File path="../../../src/floppy/uart/txd.vhd" type="file.vhdl" enable="1"/>
-        <File path="../../../src/i82c55/i82c55.vhd" type="file.vhdl" enable="1"/>
+        <File path="C:/Gowin/projects/vector06cc/src/ay/ayglue.v" type="file.verilog" enable="1"/>
+        <File path="C:/Gowin/projects/vector06cc/src/border_delay.v" type="file.verilog" enable="1"/>
+        <File path="C:/Gowin/projects/vector06cc/src/floppy/dma_rw.v" type="file.verilog" enable="1"/>
+        <File path="C:/Gowin/projects/vector06cc/src/floppy/floppy.v" type="file.verilog" enable="0"/>
+        <File path="C:/Gowin/projects/vector06cc/src/floppy/floppy_neo430.v" type="file.verilog" enable="1"/>
+        <File path="C:/Gowin/projects/vector06cc/src/floppy/neo430/neo430_cpu.v" type="file.verilog" enable="0"/>
+        <File path="C:/Gowin/projects/vector06cc/src/floppy/spi.v" type="file.verilog" enable="1"/>
+        <File path="C:/Gowin/projects/vector06cc/src/floppy/timer100hz.v" type="file.verilog" enable="1"/>
+        <File path="C:/Gowin/projects/vector06cc/src/floppy/upi_uart/uart.v" type="file.verilog" enable="0"/>
+        <File path="C:/Gowin/projects/vector06cc/src/floppy/verilog-6502-copy/ALU.v" type="file.verilog" enable="1"/>
+        <File path="C:/Gowin/projects/vector06cc/src/floppy/verilog-6502-copy/cpu.v" type="file.verilog" enable="1"/>
+        <File path="C:/Gowin/projects/vector06cc/src/floppy/wd1793.v" type="file.verilog" enable="1"/>
+        <File path="C:/Gowin/projects/vector06cc/src/i8253/8253.v" type="file.verilog" enable="1"/>
+        <File path="C:/Gowin/projects/vector06cc/src/keyboard/keymatrix_ram.v" type="file.verilog" enable="1"/>
+        <File path="C:/Gowin/projects/vector06cc/src/keyboard/ps2k.v" type="file.verilog" enable="1"/>
+        <File path="C:/Gowin/projects/vector06cc/src/keyboard/scan2matrix.v" type="file.verilog" enable="1"/>
+        <File path="C:/Gowin/projects/vector06cc/src/keyboard/vectorkeys.v" type="file.verilog" enable="0"/>
+        <File path="C:/Gowin/projects/vector06cc/src/keyboard/vectorkeys2.v" type="file.verilog" enable="1"/>
+        <File path="C:/Gowin/projects/vector06cc/src/oneshot.v" type="file.verilog" enable="1"/>
+        <File path="C:/Gowin/projects/vector06cc/src/osd/chargen.v" type="file.verilog" enable="0"/>
+        <File path="C:/Gowin/projects/vector06cc/src/osd/screenbuffer.v" type="file.verilog" enable="0"/>
+        <File path="C:/Gowin/projects/vector06cc/src/osd/textmode.v" type="file.verilog" enable="1"/>
+        <File path="C:/Gowin/projects/vector06cc/src/ramdisk/kvaz.v" type="file.verilog" enable="1"/>
+        <File path="C:/Gowin/projects/vector06cc/src/specialkeys.v" type="file.verilog" enable="1"/>
+        <File path="C:/Gowin/projects/vector06cc/src/tangnano9k/audio/I2C_AV_Config.v" type="file.verilog" enable="0"/>
+        <File path="C:/Gowin/projects/vector06cc/src/tangnano9k/audio/I2C_Controller.v" type="file.verilog" enable="0"/>
+        <File path="C:/Gowin/projects/vector06cc/src/tangnano9k/audio/audio_io.v" type="file.verilog" enable="1"/>
+        <File path="C:/Gowin/projects/vector06cc/src/tangnano9k/blackvideo/VGAMod.v" type="file.verilog" enable="1"/>
+        <File path="C:/Gowin/projects/vector06cc/src/tangnano9k/bootrom/bootrom.v" type="file.verilog" enable="1"/>
+        <File path="C:/Gowin/projects/vector06cc/src/tangnano9k/clockster.v" type="file.verilog" enable="1"/>
+        <File path="C:/Gowin/projects/vector06cc/src/tangnano9k/gowin_rpll48p24/gowin_rpll48p24.v" type="file.verilog" enable="1"/>
+        <File path="C:/Gowin/projects/vector06cc/src/tangnano9k/hidkeyboard/hidmatrix.v" type="file.verilog" enable="1"/>
+        <File path="C:/Gowin/projects/vector06cc/src/tangnano9k/hidkeyboard/uarthid.v" type="file.verilog" enable="1"/>
+        <File path="C:/Gowin/projects/vector06cc/src/tangnano9k/k580vv55.v" type="file.verilog" enable="1"/>
+        <File path="C:/Gowin/projects/vector06cc/src/tangnano9k/multikvaz.v" type="file.verilog" enable="1"/>
+        <File path="C:/Gowin/projects/vector06cc/src/tangnano9k/palette_ram/palette_ram.v" type="file.verilog" enable="1"/>
+        <File path="C:/Gowin/projects/vector06cc/src/tangnano9k/psram/psram_controller.v" type="file.verilog" enable="1"/>
+        <File path="C:/Gowin/projects/vector06cc/src/tangnano9k/ram.v" type="file.verilog" enable="1"/>
+        <File path="C:/Gowin/projects/vector06cc/src/tangnano9k/rom.v" type="file.verilog" enable="1"/>
+        <File path="C:/Gowin/projects/vector06cc/src/tangnano9k/soundcodec.v" type="file.verilog" enable="1"/>
+        <File path="C:/Gowin/projects/vector06cc/src/tangnano9k/uart/haltmode.v" type="file.verilog" enable="1"/>
+        <File path="C:/Gowin/projects/vector06cc/src/tangnano9k/uart/intelhex_rx.v" type="file.verilog" enable="1"/>
+        <File path="C:/Gowin/projects/vector06cc/src/tangnano9k/uart/uart_rx.v" type="file.verilog" enable="1"/>
+        <File path="C:/Gowin/projects/vector06cc/src/tangnano9k/uart/uart_tx.v" type="file.verilog" enable="1"/>
+        <File path="C:/Gowin/projects/vector06cc/src/tangnano9k/uart/uart_tx_V2.v" type="file.verilog" enable="1"/>
+        <File path="C:/Gowin/projects/vector06cc/src/tangnano9k/vector06cc.v" type="file.verilog" enable="1"/>
+        <File path="C:/Gowin/projects/vector06cc/src/tangnano9k/vi53/k580vi53.v" type="file.verilog" enable="1"/>
+        <File path="C:/Gowin/projects/vector06cc/src/tangnano9k/video/vga_refresh.v" type="file.verilog" enable="1"/>
+        <File path="C:/Gowin/projects/vector06cc/src/tangnano9k/video/video.v" type="file.verilog" enable="1"/>
+        <File path="C:/Gowin/projects/vector06cc/src/tangnano9k/video/videomod.v" type="file.verilog" enable="1"/>
+        <File path="C:/Gowin/projects/vector06cc/src/tangnano9k/vram.v" type="file.verilog" enable="1"/>
+        <File path="C:/Gowin/projects/vector06cc/src/video/framebuffer.v" type="file.verilog" enable="1"/>
+        <File path="C:/Gowin/projects/vector06cc/src/video/rambuffer.v" type="file.verilog" enable="1"/>
+        <File path="C:/Gowin/projects/vector06cc/src/video/shiftreg2.v" type="file.verilog" enable="1"/>
+        <File path="C:/Gowin/projects/vector06cc/src/vm80/vm80a.v" type="file.verilog" enable="1"/>
+        <File path="C:/Gowin/projects/vector06cc/src/T80/T80.vhd" type="file.vhdl" enable="1"/>
+        <File path="C:/Gowin/projects/vector06cc/src/T80/T8080se.vhd" type="file.vhdl" enable="1"/>
+        <File path="C:/Gowin/projects/vector06cc/src/T80/T80_ALU.vhd" type="file.vhdl" enable="1"/>
+        <File path="C:/Gowin/projects/vector06cc/src/T80/T80_MCode.vhd" type="file.vhdl" enable="1"/>
+        <File path="C:/Gowin/projects/vector06cc/src/T80/T80_Pack.vhd" type="file.vhdl" enable="1"/>
+        <File path="C:/Gowin/projects/vector06cc/src/T80/T80_Reg.vhd" type="file.vhdl" enable="1"/>
+        <File path="C:/Gowin/projects/vector06cc/src/T80/T80sef.vhd" type="file.vhdl" enable="1"/>
+        <File path="C:/Gowin/projects/vector06cc/src/ay/ay8910.vhd" type="file.vhdl" enable="1"/>
+        <File path="C:/Gowin/projects/vector06cc/src/ay/ym2149.vhd" type="file.vhdl" enable="1"/>
+        <File path="C:/Gowin/projects/vector06cc/src/floppy/neo430/core/neo430_addr_gen.vhd" type="file.vhdl" enable="1" library="neo430"/>
+        <File path="C:/Gowin/projects/vector06cc/src/floppy/neo430/core/neo430_alu.vhd" type="file.vhdl" enable="1" library="neo430"/>
+        <File path="C:/Gowin/projects/vector06cc/src/floppy/neo430/core/neo430_control.vhd" type="file.vhdl" enable="1" library="neo430"/>
+        <File path="C:/Gowin/projects/vector06cc/src/floppy/neo430/core/neo430_cpu.vhd" type="file.vhdl" enable="1" library="neo430"/>
+        <File path="C:/Gowin/projects/vector06cc/src/floppy/neo430/core/neo430_package.vhd" type="file.vhdl" enable="1" library="neo430"/>
+        <File path="C:/Gowin/projects/vector06cc/src/floppy/neo430/core/neo430_reg_file.vhd" type="file.vhdl" enable="1" library="neo430"/>
+        <File path="C:/Gowin/projects/vector06cc/src/floppy/neo430/neo430_cpu_std_logic.vhd" type="file.vhdl" enable="1"/>
+        <File path="C:/Gowin/projects/vector06cc/src/floppy/uart/txd.vhd" type="file.vhdl" enable="1"/>
+        <File path="C:/Gowin/projects/vector06cc/src/i82c55/i82c55.vhd" type="file.vhdl" enable="1"/>
         <File path="src/tangnano9k.cst" type="file.cst" enable="1"/>
         <File path="src/vector06cc.sdc" type="file.sdc" enable="1"/>
         <File path="src/clocks.rao" type="file.gao" enable="0"/>

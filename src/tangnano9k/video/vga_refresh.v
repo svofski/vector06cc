@@ -33,10 +33,14 @@ module vga_refresh(
     output          lcd_den_o,
     output          lcd_hsync_o,
     output          lcd_vsync_o,
-    output  [9:0]   lcd_y,
-    output          lcd_newline_o,   // single clock hs
+    output  [9:0]   lcd_x_o,
+    output  [9:0]   lcd_y_o,
     output          hsync,
     output          vsync,
+    output          lcd_newline_o,   // single clock lcd hsync (+)
+    output          vga_newline_o,   // single clock vga hsync (+)
+    output          tv_newline_o,    // single clock tv hsync  (+)
+    output          loadscroll_o,
     output          YPbPrvsync,
     output          videoActive,
     output          bordery,
@@ -97,6 +101,11 @@ assign lcd_clk_o = clk24;
 
 
 parameter state0 = 3'b000, state1 = 3'b001, state2 = 3'b010, state3 = 3'b011, state4 = 3'b100, state5 = 3'b101, state6 = 3'b110, state7 = 3'b111;
+
+reg [7:0] testreg = 0;
+reg [6:0] testreg2 = 0;
+
+assign loadscroll_o = scanyy_state == state5 && realx == SCROLLLOAD_X && scanyy == VISIBLEHEIGHT;
 
 always @(posedge clk24) begin
     if (scanyy == 0) begin 
@@ -203,7 +212,7 @@ always @(posedge clk24) begin
         scanxx <= scanxx - 1'b1;
 
     // load scroll register at this precise moment
-    if (scanyy_state == state5 && realx == SCROLLLOAD_X && scanyy == VISIBLEHEIGHT) begin
+    if (loadscroll_o) begin
         fb_row <= {video_scroll_reg, 1'b1};
         fb_row_count <= 511;
     end
@@ -245,6 +254,14 @@ reg [9:0] lcd_visible_time = 0;
 
 reg lcd_newline = 0;
 assign lcd_newline_o = lcd_newline;
+
+reg vga_hsync_r = 0;
+always @(posedge clk24) vga_hsync_r <= hsync;
+assign vga_newline_o = vga_hsync_r && ~hsync;
+
+reg tv_hsync_r = 0;
+always @(posedge clk24) tv_hsync_r <= tvhs;
+assign tv_newline_o = tv_hsync_r && ~tvhs;
 
 always @(posedge clk24)
 begin
@@ -288,23 +305,11 @@ begin
 
 end
 
-
-// example:
-// DE = time >= 63 && time <= 856
-// HS = >=11  <11+56
-
-
 reg lcd_hsync_r = 0;
 always @(posedge clk24) 
     lcd_hsync_r <= ~(lcd_time >= 11 && lcd_time < (11+56)) | ~vsync;
-    //lcd_hsync_r <= ~(lcd_time >= 15 && lcd_time < (11+56)) | ~vsync;
 
 reg lcd_den_r = 0;
-//always @(posedge clk24)
-//    lcd_den_r = lcd_time >= 76
-//    && (lcd_time < lcd_visible_time - 55)
-//    && (sim_lcd_line >= 23) && (sim_lcd_line < 503);
-
 always @(posedge clk24)
     lcd_den_r = lcd_time >= (11 + 56)
     && (lcd_time < lcd_visible_time - 9) // 9 shows boot on both, 7 stops working on 7"
@@ -318,7 +323,8 @@ assign lcd_den_o = lcd_den_r;
 assign lcd_den_o = videoActiveY && lcd_active_x;
 `endif
 
-assign lcd_y = sim_lcd_line - 23;
+assign lcd_y_o = sim_lcd_line - 23;
+assign lcd_x_o = lcd_time;
 
 endmodule
 
