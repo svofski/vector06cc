@@ -8,6 +8,8 @@
 //   Read latency is 12 cycles (1x) or 15 cycles(2x). In my test, 2x latency happens about 
 //   0.05% of time.
 
+// Modified by svofski 19.10.2024: updated FSM to case
+
 `default_nettype wire
 
 module PsramController #(
