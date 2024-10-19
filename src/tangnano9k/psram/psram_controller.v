@@ -90,123 +90,135 @@ always @(posedge clk) begin
     dq_sr <= {dq_sr[47:0], 16'b0};          // shift 16-bits each cycle
     ck_e_p <= ck_e;
 
-    if (state == INIT_ST && cfg_now) begin
-        cycles_sr <= 24'b1;
-        ram_cs_n <= 0;
-        state <= CONFIG_ST;
-    end
-    if (state == CONFIG_ST) begin
-        if (cycles_sr[0]) begin
-            //dq_sr <= {8'h60, 8'h00, 8'h01, 8'h00, 8'h00, 8'h00, 8'h8f, CR_LATENCY, 4'h7};      // last byte, 'e' (3 cycle latency max 83Mhz), '7' (variable 1x/2x latency)
-            dq_sr <= {8'h60, 8'h00, 8'h01, 8'h00, 8'h00, 8'h00, 8'h8f, CR_LATENCY, 4'h6};      // last byte, 'e' (3 cycle latency max 83Mhz), '7' (variable 1x/2x latency)
-            dq_oen <= 0;
-            ck_e <= 1;      // this needs to be earlier 1 cycle to allow for phase shifted clk_p
-        end 
-        if (cycles_sr[4]) begin
-            state <= IDLE_ST;
-            ck_e <= 0;
-            cycles_sr <= 24'b1;
-            dq_oen <= 1;
-            ram_cs_n <= 1;
-        end
-    end
-    if (state == IDLE_ST) begin
-        rwds_oen <= 1;
-        ck_e <= 0;
-        ram_cs_n <= 1;
-
-        // cpu_rd / cpu_wr priority high
-        // rdvid priority low
-
-        {memcpubusy,memvidbusy,rdcpu_finished} <= 3'b000;
-        if (read_combined | write_combined | rdv_combined) 
+    case (state)
+    INIT_ST:
         begin
-            // start read/write operation (W955D8MBYA Table 2)
-            //47     = r/w (1 = read, 0 = write) 
-            //46   0 = memory space
-            //45   1 = burst type = register read/write: "For register read, only the first two bytes of read data is valid"
-            //      14-bit                     18-bit   13-bit   3-bit             total 48-bit CA
-            //xx = read_combined ? 1'b1 : write_combined ? 1'b0 : 1'b1 /* rdv_combined */
-            //dq_sr <= {rdv | ~write_combined, 13'b000_0000_0000_00, addr[21:4], 13'b0, addr[3:1], 16'b0000_0100_1101_0100};
-            dq_sr <= {read_combined ? 1'b1 : write_combined ? 1'b0 : 1'b1, 13'b000_0000_0000_00, addr[21:4], 13'b0, addr[3:1], 16'b0000_0100_1101_0100};
-            if (read_combined | write_combined)
-                memcpubusy <= 1'b1;
-            else
-                memvidbusy <= 1'b1;
-
-            if ((read_combined | write_combined) & rdv)
-                rdv_later <= rdv;
-
-            ram_cs_n <= 0;
-            ck_e <= 1;
-            dq_oen <= 0;
-            {wait_for_rd_data, wait_for_rd_data2} <= 2'b00;
-            w_din <= din;
-            cycles_sr <= 32'b10;    // start from cycle 1
-            state <= rdv ? READ_ST : 
-                write_combined ? WRITE_ST : READ_ST;
-        end
-    end
-
-    if (state == READ_ST)  begin
-        // latch conflicting requests
-        if (memvidbusy && read) read_later <= 1;
-        if (memvidbusy && write) write_later <= 1;
-        if (memcpubusy && rdv) rdv_later <= 1;
-
-        if (cycles_sr[3]) begin
-            // command sent, now wait for result
-            dq_oen <= 1;
-        end 
-        if (cycles_sr[9])
-            wait_for_rd_data <= 1;
-        if (wait_for_rd_data && (rwds_in_ris ^ rwds_in_fal)) begin     // sample rwds falling edge to get a word / \_
-            dout <= {dq_in_ris, dq_in_fal};
-            wait_for_rd_data <= 0;
-
-            if (memvidbusy) 
-                wait_for_rd_data2 <= 1;   // read second word
-            else
+            if (cfg_now) 
             begin
-                ram_cs_n <= 1;            // cpu read finished
+                cycles_sr <= 24'b1;
+                ram_cs_n <= 0;
+                state <= CONFIG_ST;
+            end
+        end
+    CONFIG_ST:
+        begin
+            if (cycles_sr[0]) begin
+                //dq_sr <= {8'h60, 8'h00, 8'h01, 8'h00, 8'h00, 8'h00, 8'h8f, CR_LATENCY, 4'h7};      // last byte, 'e' (3 cycle latency max 83Mhz), '7' (variable 1x/2x latency)
+                dq_sr <= {8'h60, 8'h00, 8'h01, 8'h00, 8'h00, 8'h00, 8'h8f, CR_LATENCY, 4'h6};      // last byte, 'e' (3 cycle latency max 83Mhz), '7' (variable 1x/2x latency)
+                dq_oen <= 0;
+                ck_e <= 1;      // this needs to be earlier 1 cycle to allow for phase shifted clk_p
+            end 
+            if (cycles_sr[4]) begin
+                state <= IDLE_ST;
                 ck_e <= 0;
-                rdcpu_finished <= 1'b1;
-                read_later <= 0;
+                cycles_sr <= 24'b1;
+                dq_oen <= 1;
+                ram_cs_n <= 1;
+            end
+        end
+    IDLE_ST:
+        begin
+            rwds_oen <= 1;
+            ck_e <= 0;
+            ram_cs_n <= 1;
+
+            // cpu_rd / cpu_wr priority high
+            // rdvid priority low
+
+            {memcpubusy,memvidbusy,rdcpu_finished} <= 3'b000;
+            if (read_combined | write_combined | rdv_combined) 
+            begin
+                // start read/write operation (W955D8MBYA Table 2)
+                //47     = r/w (1 = read, 0 = write) 
+                //46   0 = memory space
+                //45   1 = burst type = register read/write: "For register read, only the first two bytes of read data is valid"
+                //      14-bit                     18-bit   13-bit   3-bit             total 48-bit CA
+                //xx = read_combined ? 1'b1 : write_combined ? 1'b0 : 1'b1 /* rdv_combined */
+                //dq_sr <= {rdv | ~write_combined, 13'b000_0000_0000_00, addr[21:4], 13'b0, addr[3:1], 16'b0000_0100_1101_0100};
+                dq_sr <= {read_combined ? 1'b1 : write_combined ? 1'b0 : 1'b1, 13'b000_0000_0000_00, addr[21:4], 13'b0, addr[3:1], 16'b0000_0100_1101_0100};
+                if (read_combined | write_combined)
+                    memcpubusy <= 1'b1;
+                else
+                    memvidbusy <= 1'b1;
+
+                if ((read_combined | write_combined) & rdv)
+                    rdv_later <= rdv;
+
+                ram_cs_n <= 0;
+                ck_e <= 1;
+                dq_oen <= 0;
+                {wait_for_rd_data, wait_for_rd_data2} <= 2'b00;
+                w_din <= din;
+                cycles_sr <= 32'b10;    // start from cycle 1
+                state <= rdv ? READ_ST : 
+                    write_combined ? WRITE_ST : READ_ST;
+            end
+        end
+
+    READ_ST:
+        begin
+            // latch conflicting requests
+            if (memvidbusy && read) read_later <= 1;
+            if (memvidbusy && write) write_later <= 1;
+            if (memcpubusy && rdv) rdv_later <= 1;
+
+            if (cycles_sr[3]) begin
+                // command sent, now wait for result
+                dq_oen <= 1;
+            end 
+            if (cycles_sr[9])
+                wait_for_rd_data <= 1;
+            if (wait_for_rd_data && (rwds_in_ris ^ rwds_in_fal)) begin     // sample rwds falling edge to get a word / \_
+                dout <= {dq_in_ris, dq_in_fal};
+                wait_for_rd_data <= 0;
+
+                if (memvidbusy) 
+                    wait_for_rd_data2 <= 1;   // read second word
+                else
+                begin
+                    ram_cs_n <= 1;            // cpu read finished
+                    ck_e <= 0;
+                    rdcpu_finished <= 1'b1;
+                    read_later <= 0;
+                    state <= IDLE_ST;
+                end
+            end
+            else
+            if (wait_for_rd_data2 && (rwds_in_ris ^ rwds_in_fal)) begin     // sample rwds falling edge to get a word / \_
+                dout2 <= {dq_in_ris, dq_in_fal};
+                wait_for_rd_data2 <= 0;
+                ram_cs_n <= 1;
+                ck_e <= 0;
+                rdv_later <= 0;
                 state <= IDLE_ST;
             end
         end
-        else
-        if (wait_for_rd_data2 && (rwds_in_ris ^ rwds_in_fal)) begin     // sample rwds falling edge to get a word / \_
-            dout2 <= {dq_in_ris, dq_in_fal};
-            wait_for_rd_data2 <= 0;
-            ram_cs_n <= 1;
-            ck_e <= 0;
-            rdv_later <= 0;
-            state <= IDLE_ST;
-        end
-    end
 
-    if (state == WRITE_ST) begin
-        // latch conflicting requests
-        if (rdv) rdv_later <= 1;
-
-        if (cycles_sr[5])
-            additional_latency <= rwds_in_fal;  // sample RWDS to see if we need additional latency
-        // Write timing is trickier - we sample RWDS at cycle 5 to determine whether we need to wait another tACC.
-        // If it is low, data starts at 2+LATENCY. If high, then data starts at 2+LATENCY*2.
-        if (cycles_sr[2+LATENCY] && (LATENCY == 3 ? ~rwds_in_fal : ~additional_latency)
-            || cycles_sr[2+LATENCY*2]) 
+    WRITE_ST:
         begin
-            rwds_oen <= 0;
-            rwds_out_ris <= byte_write ? ~addr[0] : 1'b0;       // RWDS is data mask (1 means not writing)
-            rwds_out_fal <= byte_write ? addr[0] : 1'b0;
-            dq_sr[63:48] <= w_din;
-            write_later <= 0;
-            state <= IDLE_ST;
-        end
+            // latch conflicting requests
+            if (rdv) rdv_later <= 1;
 
-        write_later <= 1'b0;
-    end
+            if (cycles_sr[5])
+                additional_latency <= rwds_in_fal;  // sample RWDS to see if we need additional latency
+            // Write timing is trickier - we sample RWDS at cycle 5 to determine whether we need to wait another tACC.
+            // If it is low, data starts at 2+LATENCY. If high, then data starts at 2+LATENCY*2.
+            if (cycles_sr[2+LATENCY] && (LATENCY == 3 ? ~rwds_in_fal : ~additional_latency)
+                || cycles_sr[2+LATENCY*2]) 
+            begin
+                rwds_oen <= 0;
+                rwds_out_ris <= byte_write ? ~addr[0] : 1'b0;       // RWDS is data mask (1 means not writing)
+                rwds_out_fal <= byte_write ? addr[0] : 1'b0;
+                dq_sr[63:48] <= w_din;
+                write_later <= 0;
+                state <= IDLE_ST;
+            end
+
+            write_later <= 1'b0;
+        end
+    default:
+        state <= INIT_ST;
+    endcase
 
     if (~resetn) begin
         state <= INIT_ST;
