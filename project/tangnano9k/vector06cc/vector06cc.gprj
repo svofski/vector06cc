@@ -36,7 +36,9 @@
         <File path="../../../src/tangnano9k/blackvideo/VGAMod.v" type="file.verilog" enable="1"/>
         <File path="../../../src/tangnano9k/bootrom/bootrom.v" type="file.verilog" enable="1"/>
         <File path="../../../src/tangnano9k/clockster.v" type="file.verilog" enable="1"/>
-        <File path="../../../src/tangnano9k/gowin_rpll48p24/gowin_rpll48p24.v" type="file.verilog" enable="1"/>
+        <File path="../../../src/tangnano9k/gowin_rpll24/gowin_rpll24.v" type="file.verilog" enable="1"/>
+        <File path="../../../src/tangnano9k/gowin_rpll120/gowin_rpll120.v" type="file.verilog" enable="1"/>
+        <File path="../../../src/tangnano9k/gowin_clkdiv5/gowin_clkdiv5.v" type="file.verilog" enable="1"/>
         <File path="../../../src/tangnano9k/hidkeyboard/hidmatrix.v" type="file.verilog" enable="1"/>
         <File path="../../../src/tangnano9k/hidkeyboard/uarthid.v" type="file.verilog" enable="1"/>
         <File path="../../../src/tangnano9k/k580vv55.v" type="file.verilog" enable="1"/>

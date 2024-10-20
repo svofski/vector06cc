@@ -21,9 +21,10 @@
 
 module clockster(
     input  clk27,
-    output clk48,
+    output clk48,		// why?
     output clk48p,
     output clk24,
+    output clk120,      // hdmi x5 clock    
     output clkAudio,
     output clk_psram,
     output clk_psram_p,
@@ -52,12 +53,24 @@ assign video_slice = qvideo_slice;
 assign pipe_ab = qpipe_ab;
 assign ce1m5 = qce1m5;
 
-Gowin_rPLL48p24 your_momma(
-    .clkout(clk48), //output clkout
-    .clkoutp(clk48p), //output clkoutp
-    .clkoutd(clk24), //output clkoutd
+`ifdef WITH_HDMI
+wire pll_lock120;
+
+Gowin_rPLL120 your_momma120(
+    .clkout(clk120),
+    .clkin(clk27),
+    .lock(pll_lock120));
+
+Gowin_CLKDIV5 clk120to24(
+    .clkout(clk24),
+    .hclkin(clk120),
+    .resetn(pll_lock120));
+`else
+Gowin_rPLL24 your_momma(
+    .clkout(clk24), //output clkout
     .clkin(clk27) //input clkin
 );
+`endif
 
 Gowin_rPLL72 your_momma2(
     .clkout(clk_psram),   //output clkout

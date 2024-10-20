@@ -30,6 +30,7 @@
 //`define SCAN_2_1
 //`define SCAN_5_3
 `define SCAN_7INCH
+//`define WITH_HDMI   // soon
 
 //`define WITH_SERIAL_PROBE
 

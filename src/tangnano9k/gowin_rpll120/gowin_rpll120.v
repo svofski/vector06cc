@@ -1,32 +1,30 @@
-//Copyright (C)2014-2023 Gowin Semiconductor Corporation.
+//Copyright (C)2014-2024 Gowin Semiconductor Corporation.
 //All rights reserved.
 //File Title: IP file
-//GOWIN Version: V1.9.9 Beta-4 Education
+//Tool Version: V1.9.9.03 Education (64-bit)
 //Part Number: GW1NR-LV9QN88PC6/I5
 //Device: GW1NR-9
 //Device Version: C
-//Created Time: Thu Apr 11 02:56:00 2024
+//Created Time: Sun Sep 22 20:21:09 2024
 
-module Gowin_rPLL48p24 (clkout, clkoutp, clkoutd, clkin);
+module Gowin_rPLL120 (clkout, lock, clkin);
 
 output clkout;
-output clkoutp;
-output clkoutd;
+output lock;
 input clkin;
 
-wire lock_o;
+wire clkoutp_o;
+wire clkoutd_o;
 wire clkoutd3_o;
-wire gw_vcc;
 wire gw_gnd;
 
-assign gw_vcc = 1'b1;
 assign gw_gnd = 1'b0;
 
 rPLL rpll_inst (
     .CLKOUT(clkout),
-    .LOCK(lock_o),
-    .CLKOUTP(clkoutp),
-    .CLKOUTD(clkoutd),
+    .LOCK(lock),
+    .CLKOUTP(clkoutp_o),
+    .CLKOUTD(clkoutd_o),
     .CLKOUTD3(clkoutd3_o),
     .RESET(gw_gnd),
     .RESET_P(gw_gnd),
@@ -37,17 +35,17 @@ rPLL rpll_inst (
     .ODSEL({gw_gnd,gw_gnd,gw_gnd,gw_gnd,gw_gnd,gw_gnd}),
     .PSDA({gw_gnd,gw_gnd,gw_gnd,gw_gnd}),
     .DUTYDA({gw_gnd,gw_gnd,gw_gnd,gw_gnd}),
-    .FDLY({gw_vcc,gw_vcc,gw_vcc,gw_vcc})
+    .FDLY({gw_gnd,gw_gnd,gw_gnd,gw_gnd})
 );
 
 defparam rpll_inst.FCLKIN = "27";
 defparam rpll_inst.DYN_IDIV_SEL = "false";
 defparam rpll_inst.IDIV_SEL = 8;
 defparam rpll_inst.DYN_FBDIV_SEL = "false";
-defparam rpll_inst.FBDIV_SEL = 15;
+defparam rpll_inst.FBDIV_SEL = 39;
 defparam rpll_inst.DYN_ODIV_SEL = "false";
-defparam rpll_inst.ODIV_SEL = 16;
-defparam rpll_inst.PSDA_SEL = "0100";       // 90 deg
+defparam rpll_inst.ODIV_SEL = 4;
+defparam rpll_inst.PSDA_SEL = "0000";
 defparam rpll_inst.DYN_DA_EN = "false";
 defparam rpll_inst.DUTYDA_SEL = "1000";
 defparam rpll_inst.CLKOUT_FT_DIR = 1'b1;
@@ -63,4 +61,4 @@ defparam rpll_inst.CLKOUTD_SRC = "CLKOUT";
 defparam rpll_inst.CLKOUTD3_SRC = "CLKOUT";
 defparam rpll_inst.DEVICE = "GW1NR-9C";
 
-endmodule //Gowin_rPLL48p24
+endmodule //Gowin_rPLL120
