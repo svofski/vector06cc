@@ -1,0 +1,1 @@
+vector06cc-specific carrier board for Tang Nano 9k
