@@ -284,12 +284,20 @@ end
 reg [1:0] reset_rq = 2'b00;
 always @(posedge clk24)
 begin: _RESET_sync
-    if (mreset | blksbr_reset_pulse)
-        reset_rq <= 2'b01;
-    if (~int_rq_hist & int_rq_tick & reset_rq[0])
-        reset_rq <= 2'b10;  // set reset
-    if (reset_rq[1])
-        reset_rq <= 2'b00;  // reset done
+    //if (mreset | blksbr_reset_pulse)
+    //    reset_rq <= 2'b01;
+    ////if (~int_rq_hist & int_rq_tick & reset_rq[0])
+    //if (~vga_vs & reset_rq[0])
+    //    reset_rq <= 2'b10;  // set reset
+    //if (reset_rq[1])
+    //    reset_rq <= 2'b00;  // reset done
+
+    case (reset_rq)
+        2'b00: if (mreset | blksbr_reset_pulse) reset_rq <= 2'b01;
+        2'b01: if (~vga_vs) reset_rq <= 2'b10;
+        2'b10: reset_rq <= 2'b00;
+    default:   reset_rq <= 2'b00;
+    endcase
 end
 wire RESET_n = ~reset_rq[1];
 
