@@ -30,6 +30,12 @@
 //`define SCAN_5_3    // scale down and skip HSYNC pulses 288 * 5 / 3 = 480
 //`define SCAN_7INCH  // scale down by making lcd lines slower, 5 LCD lines per 6 vga lines
 
+`ifdef SCAN_5_3
+    `define SCALEDOWN53
+`elsif SCAN_7INCH
+    `define SCALEDOWN53
+`endif
+
 module video(
     clk24,               // clock 24mhz
     ce12,               // 12mhz clock enable for vga-scan (buffer->vga)
@@ -409,6 +415,7 @@ wire lcd_videoActive = lcd_x > H_MASK && lcd_x < H_MASK + 576;
 
 wire cerd = clock_gate;
 
+`ifdef SCALEDOWN53
 rambuffer line_a_0(.clk(clk24),
                 .cerd(cerd),
                 .cewr(ce12),
@@ -515,6 +522,7 @@ wire [7:0] smallcolor_a = {read_a[14:13], read_a[9:7], read_a[4:2]};
 wire [7:0] smallcolor_b = {read_b[14:13], read_b[9:7], read_b[4:2]};
 
 assign realcolor_out = videoActive ? (|wren_line_a ? smallcolor_a : smallcolor_b) : 8'b0;
+`endif // SCALEDOWN53
 
 `ifdef SCAN_5_3
 assign bgr555_out = videoActive ? (|wren_line_a ? read_a : read_b) : 15'b0;

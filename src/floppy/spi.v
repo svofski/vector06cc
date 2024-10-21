@@ -19,7 +19,7 @@
 //
 // --------------------------------------------------------------------
 
-module spi(clk, ce, reset_n, mosi, miso, sck, di, wr, do, dsr);
+module spi(clk, ce, reset_n, mosi, miso, sck, di, wr, doo, dsr);
 input		clk;
 input 		ce;
 input		reset_n;
@@ -30,7 +30,7 @@ output		sck;
 input [7:0]	di;
 input		wr;
 
-output[7:0]	do;
+output[7:0]	doo;
 output reg	dsr;
 
 reg [7:0]	shiftreg;
@@ -40,7 +40,7 @@ reg [1:0]	state = 0;
 reg 		scken = 0;
 
 assign sck = ~clk & scken;
-assign do = shiftreg;
+assign doo = shiftreg;
 
 always @(posedge clk or negedge reset_n) begin
 	if (!reset_n) begin

@@ -21,11 +21,10 @@
 
 module clockster(
     input  clk27,
-    output clk48,		// why?
-    output clk48p,
     output clk24,
     output clk120,      // hdmi x5 clock    
     output clkAudio,
+    output clk_p5,
     output clk_psram,
     output clk_psram_p,
     output ce12,
@@ -53,6 +52,16 @@ assign video_slice = qvideo_slice;
 assign pipe_ab = qpipe_ab;
 assign ce1m5 = qce1m5;
 
+wire pll_lock72;
+
+Gowin_rPLL72 pll72(
+    .clkout(clk_psram),   //output clkout
+    .clkoutp(clk_psram_p), //output clkoutp
+    .clkin(clk27), //input clkin
+    .lock(pll_lock72)
+);
+
+
 `ifdef WITH_HDMI
 wire pll_lock120;
 
@@ -64,19 +73,18 @@ Gowin_rPLL120 your_momma120(
 Gowin_CLKDIV5 clk120to24(
     .clkout(clk24),
     .hclkin(clk120),
-    .resetn(pll_lock120));
+    .resetn(pll_lock120 & pll_lock72)); // important to reset on both PLLs lock
+
+assign clk_p5 = clk120;
+
 `else
 Gowin_rPLL24 your_momma(
     .clkout(clk24), //output clkout
     .clkin(clk27) //input clkin
 );
+assign clk_p5 = 1'b0;
+assign pll_lock120 = 1'b1;
 `endif
-
-Gowin_rPLL72 your_momma2(
-    .clkout(clk_psram),   //output clkout
-    .clkoutp(clk_psram_p), //output clkoutp
-    .clkin(clk27) //input clkin
-);
 
 always @(posedge clk24) begin
     if (initctr != 3) begin

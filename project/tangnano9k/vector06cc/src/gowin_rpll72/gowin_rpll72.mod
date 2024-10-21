@@ -23,11 +23,11 @@
 -rst_sig_p false
 -fclkin 27
 -clkfb_sel 0
--en_lock false
+-en_lock true
 -clkout_bypass false
 -en_clkoutp true
 -clkoutp_bypass false
--psda_sel 4
+-psda_sel 6
 -dutyda_sel 8
 -en_clkoutd false
 -clkoutd_bypass false

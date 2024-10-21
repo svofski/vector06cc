@@ -27,10 +27,11 @@
 //`define COMPOSITE_PWM   // use sigma-delta modulator on composite video out
 //`define WITH_SVIDEO 
 `define WITH_VGA
-//`define SCAN_2_1
+`define SCAN_2_1
 //`define SCAN_5_3
-`define SCAN_7INCH
-//`define WITH_HDMI   // soon
+//`define SCAN_7INCH
+`define WITH_HDMI   // WIP
+//`define WITH_LCD
 
 //`define WITH_SERIAL_PROBE
 

@@ -408,7 +408,7 @@ spi sd0(.clk(clk),
         .sck(sd_clk),
         .di(cpu_do16[7:0]), 
         .wr(spdr_memwr), 
-        .do(spdr_do), 
+        .doo(spdr_do), 
         .dsr(spdr_dsr)
         );
 

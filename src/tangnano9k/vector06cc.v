@@ -57,6 +57,15 @@ module vector06cc(
     input           BUTTON,
 
 
+`ifdef WITH_HDMI
+    // HDMI
+    output          tmds_clk_n,
+    output          tmds_clk_p,
+    output [2:0]    tmds_d_n,
+    output [2:0]    tmds_d_p,
+`endif
+
+`ifdef WITH_LCD
     output          LCD_CLK,
     output          LCD_HSYNC,
     output          LCD_VSYNC,
@@ -64,8 +73,7 @@ module vector06cc(
     output  [4:0]   LCD_R,
     output  [5:0]   LCD_G,
     output  [4:0]   LCD_B,
-
-
+`endif
     //////////////////    SD Card Interface   ////////////////////////
     input           SD_DAT,                 //  SD Card Data            (MISO)
     output          SD_DAT3,                //  SD Card Data 3          (CSn)
@@ -114,15 +122,15 @@ wire clkpal4FSC = 0;    // no PAL modulator
 wire clk_color_mod = 0; // no PAL color 
 
 wire clk_psram, clk_psram_p;
+wire clk_p5;
 
 clockster clockmaker(
     .clk27(XTAL_27MHZ),     // input xtal, 27 mhz on fhtagn nano 9k
-    .clk48(clk48),          // ??
-    .clk48p(clk48p),        // ??
     .clk24(clk24),          // master clock
     .clk_psram(clk_psram),  // PSRAM clock
     .clk_psram_p(clk_psram_p),// PSRAM clock 90 deg
     .clkAudio(clkAudio),
+    .clk_p5(clk_p5),
     .ce12(ce12), 
     .ce6(ce6),              // tv pixel clock
     .ce6x(ce6x),
@@ -896,9 +904,13 @@ videomod videomod(.clk_color_mod(clk_color_mod),
     .S_VIDEO_Y(LCD_G[0]), .S_VIDEO_C(LCD_G[1]));
 `else
 
+wire [14:0] osd_555 = bgr233to555(osd_colour);
+wire [14:0] overlayed_bgr555 = osd_active ? osd_555 : bgr555;
+
+`ifdef WITH_LCD
+
 // the purpose of this part is to produce the blackest picture we can for
 // a brief moment after powering up to literally clear the tft matrix
-
 wire goth_den, goth_hs, goth_vs;
 
 VGAMod gothvideo
@@ -940,14 +952,14 @@ assign LCD_VSYNC =  vanilla ? vga_vs : goth_vs;
 //assign LCD_G[5:2] = video_g;
 //assign LCD_B[4:1] = video_b;
 
-wire [14:0] osd_555 = bgr233to555(osd_colour);
-wire [14:0] overlayed_bgr555 = osd_active ? osd_555 : bgr555;
-
 assign LCD_R[4:0] = vanilla ? overlayed_bgr555[4:0]   : 5'd0;
 assign LCD_G[5:1] = vanilla ? overlayed_bgr555[9:5]   : 5'd0;
 assign LCD_B[4:0] = vanilla ? overlayed_bgr555[14:10] : 5'd0;
 
 `endif
+
+`endif // WITH_LCD
+
 ///////////
 // RST38 //
 ///////////
@@ -993,8 +1005,6 @@ wire        kbd_key_blkvvod_phy;
 wire        kbd_key_scrolllock;
 wire [5:0]  kbd_keys_osd;
 
-//wire osd_command_f11 = 0; // temporary while everything is disabled
-
 `ifdef WITH_KEYBOARD
 
     wire [7:0]  kbd_rowselect = ~vv55int_pa_out;
@@ -1023,8 +1033,8 @@ wire [5:0]  kbd_keys_osd;
         .o_debug(uarthid_debug)
     );
 
-    always @(posedge clk24)
-        LED[5:0] <= uarthid_debug[5:0];//{kbd_key_shift,kbd_key_ctrl,kbd_key_rus,kbd_key_blkvvod_phy,kbd_key_blksbr,kbd_keys_osd};
+    //always @(posedge clk24)
+    //    LED[5:0] <= uarthid_debug[5:0];//{kbd_key_shift,kbd_key_ctrl,kbd_key_rus,kbd_key_blkvvod_phy,kbd_key_blksbr,kbd_keys_osd};
     `endif
     
     `ifndef WITH_KEYBOARD_PS2
@@ -1688,6 +1698,54 @@ assign halt_scancode = 8'h00;
 assign halt_scancode_ready = 1'b0;
 
 assign halt_uart_tx_wr = 1'b0;
+
+`endif
+
+`ifdef WITH_HDMI
+
+wire [23:0] overlayed_rgb24 = {overlayed_bgr555[4:0],3'b0,
+    overlayed_bgr555[9:5],3'b0,
+    overlayed_bgr555[14:10],3'b0};
+
+reg [23:0] rgb = 24'd0;
+reg [9:0] cx, cy;
+reg [9:0] frame_width, frame_height, screen_width, screen_height;
+// Border test (left = red, top = green, right = blue, bottom = blue, fill = black)
+always @(posedge clk24)
+  rgb <= 
+    //{cx < 16 ? ~8'd0 : 8'd0, cy < 16 ? ~8'd0 : 8'd0, cx >= screen_width - 16 || cy >= screen_height - 16 ? ~8'd0 : 8'd0} ^ 
+    overlayed_rgb24;
+
+// 752x576 (768x624) 50Hz 
+hdmi #(.VIDEO_ID_CODE(18),
+       .VIDEO_REFRESH_RATE(50),
+       .AUDIO_RATE(48000),
+       .AUDIO_BIT_WIDTH(16),
+       .START_X(620),
+       .START_Y(196)
+       )
+  hdmi(
+  .clk_pixel_x5(clk_p5),
+  .clk_pixel(clk24),
+  //.clk_audio(clk_audio),
+  .reset(~SYS_RESETN),
+  .vsync0(1'b0),
+  .hsync0(1'b0),
+  //.vsync0(hdmi_vsync0),
+  //.hsync0(hdmi_hsync0),
+  .rgb(rgb),
+  //.audio_sample_word(audio_sample_word),
+  .tmds_clk_n(tmds_clk_n),
+  .tmds_clk_p(tmds_clk_p),
+  .tmds_d_n(tmds_d_n),
+  .tmds_d_p(tmds_d_p),
+  .cx(cx),
+  .cy(cy),
+  .frame_width(frame_width),
+  .frame_height(frame_height),
+  .screen_width(screen_width),
+  .screen_height(screen_height)
+);
 
 `endif
 
