@@ -202,7 +202,14 @@ always @(posedge clk) begin
             if (rdv) rdv_later <= 1;
 
             if (cycles_sr[5])
+                `ifdef PSRAM_WRITE_ALWAYS_ADD_LATENCY
+                // it seems that it's fine when it's always present, maybe a tad
+                // more stable
+                additional_latency <= 1'b1;
+                `else
                 additional_latency <= rwds_in_fal;  // sample RWDS to see if we need additional latency
+                `endif
+
             // Write timing is trickier - we sample RWDS at cycle 5 to determine whether we need to wait another tACC.
             // If it is low, data starts at 2+LATENCY. If high, then data starts at 2+LATENCY*2.
             if (cycles_sr[2+LATENCY] && (LATENCY == 3 ? ~rwds_in_fal : ~additional_latency)

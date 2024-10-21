@@ -31,6 +31,7 @@
 //`define SCAN_5_3
 //`define SCAN_7INCH
 `define WITH_HDMI   // WIP
+`define PSRAM_WRITE_ALWAYS_ADD_LATENCY  // could be more stable
 //`define WITH_LCD
 
 //`define WITH_SERIAL_PROBE
