@@ -32,9 +32,18 @@ module PsramController #(
     output reg [15:0] dout2,  // second wrod
     output busy,              // 1 while an operation is in progress
 
+    `ifdef PSRAM_INTERNAL_CPUBYTE
+    input cpu_byte_sel,       // for early data retrieval
+    output reg [7:0] cpu_byte,    // cpu_byte_sel ? dout[15:8] : dout[7:0]
+    `endif
+
     output reg memcpubusy,        // busy for cpu
     output reg memvidbusy,        // busy for video
     output reg rdcpu_finished,    // cpu data ready
+
+    `ifdef PSRAM_INTERNAL_VDATA
+    output reg [31:0] vdata,      // video data 32 bits
+    `endif
 
     // HyperRAM physical interface. Gowin interface is for 2 dies. 
     // We currently only use the first die (4MB).
@@ -127,6 +136,10 @@ always @(posedge clk) begin
             // cpu_rd / cpu_wr priority high
             // rdvid priority low
 
+            //`ifdef PSRAM_INTERNAL_VDATA
+            //if (memvidbusy) vdata <= {dout2, dout};
+            //`endif
+
             {memcpubusy,memvidbusy,rdcpu_finished} <= 3'b000;
             if (read_combined | write_combined | rdv_combined) 
             begin
@@ -183,6 +196,10 @@ always @(posedge clk) begin
                     rdcpu_finished <= 1'b1;
                     read_later <= 0;
                     state <= IDLE_ST;
+
+                    `ifdef PSRAM_INTERNAL_CPUBYTE
+                    cpu_byte <= cpu_byte_sel ? dq_in_ris : dq_in_fal;
+                    `endif
                 end
             end
             else
@@ -193,6 +210,11 @@ always @(posedge clk) begin
                 ck_e <= 0;
                 rdv_later <= 0;
                 state <= IDLE_ST;
+                
+                `ifdef PSRAM_INTERNAL_VDATA
+                vdata <= {dq_in_ris, dq_in_fal, dout};
+                memvidbusy <= 1'b0; // is it useful to drop it early?
+                `endif
             end
         end
 
@@ -237,7 +259,6 @@ always @(posedge clk) begin
     end 
 end
 
-
 // 150us initialization delay
 //
 // Generate cfg_now pulse after 150us delay
@@ -270,6 +291,7 @@ end
 // Tristate DDR output
 wire dq_out_tbuf[7:0];
 wire dq_oen_tbuf[7:0];
+wire cs_n_tbuf, rwds_tbuf, rwds_oen_tbuf, ck_tbuf;
 ODDR oddr_cs_n(
     .CLK(clk), .D0(ram_cs_n), .D1(ram_cs_n), .Q0(cs_n_tbuf)
 );

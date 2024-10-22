@@ -43,7 +43,11 @@ module soundcodec(
 
     output reg [1:0] o_pwm,
 
-    output  oAUD_MCLK,
+`ifdef WITH_HDMI
+    output  hdmi_audio_clk,         // sample clock
+    output  [31:0] hdmi_audio_sample,
+`endif
+    output  oAUD_MCLK,      // ~12MHz
     output  oAUD_BCK,
     output  oAUD_DACDAT,
     output  oAUD_LRCK,
@@ -56,8 +60,16 @@ parameter PWM_WIDTH = 10; // 24e6/2**10 = 23437hz, 72e6/2**10 = 70312
 // I2S interface
 // -------------------------------------
 
-reg [8:0] decimator; // 24e6 / 512 = 46875
-always @(posedge clk24) decimator <= decimator + 1'd1;
+reg [8:0] decimator; // 24e6 / 500 = 48000
+localparam DECIMATOR_MAX = 9'd499;
+always @(posedge clk24)
+begin
+    decimator <= decimator - 1'd1;
+    if (decimator == 0)
+        decimator <= DECIMATOR_MAX;
+    if (~reset_n)
+        decimator <= DECIMATOR_MAX;
+end
 
 wire ma_ce = decimator == 0;
 
@@ -205,6 +217,15 @@ begin
     o_pwm[0] <= delta_sigma_accu[0][PWM_WIDTH];
     o_pwm[1] <= delta_sigma_accu[1][PWM_WIDTH];
 end
+
+`ifdef WITH_HDMI
+reg [31:0] hdmi_audio_sample_r;
+always @(posedge clk24)
+    if (ma_ce) hdmi_audio_sample_r <= {mixed[0], mixed[1]};
+
+assign hdmi_audio_sample = hdmi_audio_sample_r;
+assign hdmi_audio_clk = decimator[8];
+`endif
 
 
 endmodule

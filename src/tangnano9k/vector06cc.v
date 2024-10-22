@@ -148,6 +148,11 @@ wire [7:0]  rs_soundA,rs_soundB,rs_soundC;
 wire [2:0]  vi53_out;
 reg  [7:0]  CovoxData;
 
+`ifdef WITH_HDMI_AUDIO
+wire [31:0] hdmi_audio_sample;
+wire        hdmi_audio_clk;
+`endif
+
 soundcodec soundnik(
     .clk24(clk24),
     .clk_pwm(clk_psram),
@@ -163,6 +168,11 @@ soundcodec soundnik(
     .tapein(tape_input), 
     .reset_n(mreset_n),
     .o_pwm(BEEP)
+`ifdef WITH_HDMI_AUDIO
+    ,
+    .hdmi_audio_clk(hdmi_audio_clk),
+    .hdmi_audio_sample(hdmi_audio_sample)
+`endif
 `ifdef WITH_WM8978
     ,
     .oAUD_MCLK(I2S_MCLK),
@@ -653,6 +663,34 @@ begin
     if (SYNC & ~io_stack_pre) io_stack_long <= 1'b0;
 end
 
+wire [31:0] vdata;
+
+
+`ifdef PSRAM_INTERNAL_VDATA
+`else
+reg[31:0] vdata_r;
+assign vdata = vdata_r;
+
+reg memvidbusy_r;
+always @(negedge clk_psram)
+begin
+    memvidbusy_r <= memvidbusy;
+    if (memvidbusy_r & ~memvidbusy) vdata_r <= {dramout2, dramout};
+end
+`endif
+
+`ifdef PSRAM_INTERNAL_CPUBYTE
+wire [7:0] sram_data_in;
+`else
+reg  [7:0] sram_data_in;
+reg rdcpu_finished_r;
+always @(negedge clk_psram)
+begin
+    rdcpu_finished_r <= rdcpu_finished;
+    if (rdcpu_finished_r & ~rdcpu_finished)
+        sram_data_in <= cpu_a_mangled[0] ? dramout[15:8] : dramout[7:0];
+end
+`endif
 
 localparam PSRAM_FREQ = 72_000_000;
 localparam PSRAM_LATENCY = 3;
@@ -678,41 +716,21 @@ PsramController #(
     .memvidbusy(memvidbusy),
     .rdcpu_finished(rdcpu_finished),
 
+    `ifdef PSRAM_INTERNAL_VDATA
+    .vdata(vdata),
+    `endif
+
+    `ifdef PSRAM_INTERNAL_CPUBYTE
+    .cpu_byte(sram_data_in),
+    .cpu_byte_sel(cpu_a_mangled[0]),
+    `endif
+
     // PSRAM i/o
     .O_psram_ck(O_psram_ck),
     .IO_psram_rwds(IO_psram_rwds), 
     .IO_psram_dq(IO_psram_dq),
     .O_psram_cs_n(O_psram_cs_n)
 );
-
-reg psram_busy_p;
-
-//address[0] ? dout[15:8] : dout[7:0]
-reg[7:0] sram_data_in;
-//always @(negedge rdcpu_finished) sram_data_in = psram_addr[0] ? dramout[15:8] : dramout[7:0];
-
-reg rdcpu_finished_r;
-always @(negedge clk_psram)
-begin
-    rdcpu_finished_r <= rdcpu_finished;
-//always @(negedge rdcpu_finished) 
-    if (rdcpu_finished_r & ~rdcpu_finished)
-        sram_data_in <= cpu_a_mangled[0] ? dramout[15:8] : dramout[7:0];
-end
-
-//always @(posedge clk_psram_p) 
-//    if (rdcpu_finished) sram_data_in = psram_addr[0] ? dramout[15:8] : dramout[7:0];
-
-
-reg[31:0] vdata;
-//always @(negedge memvidbusy) vdata <= {dramout2, dramout};
-reg memvidbusy_r;
-always @(negedge clk_psram)
-begin
-    memvidbusy_r <= memvidbusy;
-    if (memvidbusy_r & ~memvidbusy) vdata <= {dramout2, dramout};
-end
-
 
 `else
 
@@ -1708,39 +1726,51 @@ wire [23:0] overlayed_rgb24 = {overlayed_bgr555[4:0],3'b0,
     overlayed_bgr555[14:10],3'b0};
 
 reg [23:0] rgb = 24'd0;
-reg [9:0] cx, cy;
-reg [9:0] frame_width, frame_height, screen_width, screen_height;
+wire [9:0] hdmi_cx, hdmi_cy;
+wire [9:0] frame_width, frame_height, screen_width, screen_height;
 // Border test (left = red, top = green, right = blue, bottom = blue, fill = black)
 always @(posedge clk24)
   rgb <= 
     //{cx < 16 ? ~8'd0 : 8'd0, cy < 16 ? ~8'd0 : 8'd0, cx >= screen_width - 16 || cy >= screen_height - 16 ? ~8'd0 : 8'd0} ^ 
     overlayed_rgb24;
 
+`ifdef WITH_HDMI_AUDIO
+reg [15:0] unpacked_audio_sample[0:1];
+always @* //(posedge clk24)
+begin
+    unpacked_audio_sample[0] <= hdmi_audio_sample[15:0];
+    unpacked_audio_sample[1] <= hdmi_audio_sample[31:16];
+end
+`endif
+
 // 752x576 (768x624) 50Hz 
 hdmi #(.VIDEO_ID_CODE(18),
        .VIDEO_REFRESH_RATE(50),
        .AUDIO_RATE(48000),
-       .AUDIO_BIT_WIDTH(16),
+       .AUDIO_BIT_WIDTH(16)
+       `ifndef WITH_HDMI_AUDIO
+       ,
        .START_X(620),
        .START_Y(196)
+       `endif
        )
   hdmi(
   .clk_pixel_x5(clk_p5),
   .clk_pixel(clk24),
-  //.clk_audio(clk_audio),
   .reset(~SYS_RESETN),
-  .vsync0(1'b0),
-  .hsync0(1'b0),
-  //.vsync0(hdmi_vsync0),
-  //.hsync0(hdmi_hsync0),
   .rgb(rgb),
-  //.audio_sample_word(audio_sample_word),
+
+  `ifdef WITH_HDMI_AUDIO
+  .clk_audio(hdmi_audio_clk),
+  .audio_sample_word(unpacked_audio_sample),
+  `endif
+
   .tmds_clk_n(tmds_clk_n),
   .tmds_clk_p(tmds_clk_p),
   .tmds_d_n(tmds_d_n),
   .tmds_d_p(tmds_d_p),
-  .cx(cx),
-  .cy(cy),
+  .cx(hdmi_cx),
+  .cy(hdmi_cy),
   .frame_width(frame_width),
   .frame_height(frame_height),
   .screen_width(screen_width),

@@ -287,8 +287,9 @@ assign testpin = {reset_line, wren_line1, reset_line, mode512};
 // realcolor_out what actually goes to VGA DAC
 assign realcolor_out = videoActive ? (wren_line1 ? rc_b : rc_a) : 8'b0;
 
-assign bgr555_out = videoActive ? 
-    (wren_line1 ? bgr233to555(rc_b) : bgr233to555(rc_a)) : 8'b0;
+//assign bgr555_out = videoActive ? 
+//    (wren_line1 ? bgr233to555(rc_b) : bgr233to555(rc_a)) : 8'b0;
+assign bgr555_out = wren_line1 ? bgr233to555(rc_b) : bgr233to555(rc_a);
 
 
 wire [7:0] rc_a;

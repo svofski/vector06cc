@@ -38,7 +38,7 @@
         <File path="C:/Gowin/projects/vector06cc/src/tangnano9k/clockster.v" type="file.verilog" enable="1"/>
         <File path="C:/Gowin/projects/vector06cc/src/tangnano9k/gowin_clkdiv5/gowin_clkdiv5.v" type="file.verilog" enable="1"/>
         <File path="C:/Gowin/projects/vector06cc/src/tangnano9k/gowin_rpll120/gowin_rpll120.v" type="file.verilog" enable="1"/>
-        <File path="C:/Gowin/projects/vector06cc/src/tangnano9k/gowin_rpll24/gowin_rpll24.v" type="file.verilog" enable="0"/>
+        <File path="C:/Gowin/projects/vector06cc/src/tangnano9k/gowin_rpll24/gowin_rpll24.v" type="file.verilog" enable="1"/>
         <File path="C:/Gowin/projects/vector06cc/src/tangnano9k/hdmi+a/audio_clock_regeneration_packet.sv" type="file.verilog" enable="1"/>
         <File path="C:/Gowin/projects/vector06cc/src/tangnano9k/hdmi+a/audio_info_frame.sv" type="file.verilog" enable="1"/>
         <File path="C:/Gowin/projects/vector06cc/src/tangnano9k/hdmi+a/audio_sample_packet.sv" type="file.verilog" enable="1"/>
